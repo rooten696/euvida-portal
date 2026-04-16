@@ -1,6 +1,6 @@
 import Link from 'next/link';
 
-// Zde si dočasně nasimulujeme data z databáze
+// Dočasná data, než napojíme databázi
 const featuredCountries = [
   { id: 'ESP', name: 'Španělsko', description: 'Země slunce, vášně a nekonečné rozmanitosti.', flag: '🇪🇸' },
   { id: 'CZE', name: 'Česko', description: 'Srdce Evropy s bohatou historií a kulturou.', flag: '🇨🇿' },
@@ -9,10 +9,10 @@ const featuredCountries = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900">
+    <main className="min-h-screen bg-gray-50 text-gray-900 font-sans">
       
       {/* --- HERO SEKCE (Úvodní banner) --- */}
-      <section className="bg-emerald-800 text-white py-20 px-4 text-center">
+      <section className="bg-blue-900 text-white py-20 px-4 text-center">
         <h1 className="text-5xl font-bold mb-4">
           Objevte Evropu bez hranic.
         </h1>
@@ -38,17 +38,15 @@ export default function HomePage() {
         <h2 className="text-3xl font-bold mb-8 text-center">Oblíbené destinace</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          
           {featuredCountries.map((country) => (
             <Link href={`/cs/${country.id}`} key={country.id}>
-              <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer border border-gray-100 hover:-translate-y-1">
+              <div className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow cursor-pointer border border-gray-100">
                 <div className="text-4xl mb-4">{country.flag}</div>
                 <h3 className="text-2xl font-bold mb-2">{country.name}</h3>
                 <p className="text-gray-600">{country.description}</p>
               </div>
             </Link>
           ))}
-
         </div>
       </section>
 
