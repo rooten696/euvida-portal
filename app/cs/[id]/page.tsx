@@ -2,24 +2,21 @@ import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 
-// Inicializace Supabase klienta (stejně jako na hlavní stránce)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Tohle je naše chytrá šablona. Všimni si 'params', ze kterých získáme to 'id' z adresy.
-export default async function CountryPage({ params }: { params: { id: string } }) {
-  const countryId = params.id;
+export default async function CountryPage({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const countryId = resolvedParams.id;
 
-  // Dotaz do databáze: "Vyber všechno z tabulky countries, kde se id rovná zkratce z adresy, a vrať mi jen jeden výsledek (single)"
   const { data: country, error } = await supabase
     .from('countries')
     .select('*')
     .eq('id', countryId)
     .single();
 
-  // Pokud země v databázi neexistuje, ukážeme klasickou chybovou stránku 404
   if (error || !country) {
     notFound();
   }
@@ -27,14 +24,13 @@ export default async function CountryPage({ params }: { params: { id: string } }
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 font-sans">
       
-      {/* --- Tlačítko Zpět --- */}
+      {/* Hlavička */}
       <div className="max-w-5xl mx-auto px-4 py-6">
         <Link href="/" className="text-blue-600 hover:underline font-medium flex items-center gap-2">
           &larr; Zpět na přehled
         </Link>
       </div>
 
-      {/* --- Hlavička konkrétní země --- */}
       <header className="bg-blue-900 text-white py-16 px-4 text-center border-b-4 border-yellow-400">
         <div className="text-6xl mb-4">{country.flag}</div>
         <h1 className="text-5xl font-bold mb-4">{country.name}</h1>
@@ -43,16 +39,50 @@ export default async function CountryPage({ params }: { params: { id: string } }
         </p>
       </header>
 
-      {/* --- Obsahová část --- */}
+      {/* Obsahová část rozdělená do mřížky */}
       <section className="max-w-5xl mx-auto py-12 px-4">
-        <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100 mb-8">
-          <h2 className="text-2xl font-bold mb-4 text-blue-900">Základní informace</h2>
-          <p className="text-gray-700 leading-relaxed">
-            Toto je automaticky vygenerovaná stránka pro <strong>{country.name}</strong>. 
-            Všechna data v hlavičce (vlajka, název, popisek) se automaticky načetla ze Supabase. 
-            Později si do databáze přidáme i sloupečky pro delší texty (práce, bydlení, kultura), 
-            aby se nám to propsalo rovnou sem.
-          </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          {/* Box 1: Obecné informace */}
+          {country.general_info && (
+            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2">
+                <span>📍</span> Obecné informace
+              </h2>
+              <p className="text-gray-700 leading-relaxed">{country.general_info}</p>
+            </div>
+          )}
+
+          {/* Box 2: Cestování a turistika */}
+          {country.travel_tourism && (
+            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2">
+                <span>✈️</span> Cestování a turistika
+              </h2>
+              <p className="text-gray-700 leading-relaxed">{country.travel_tourism}</p>
+            </div>
+          )}
+
+          {/* Box 3: Život a práce */}
+          {country.life_work && (
+            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2">
+                <span>💼</span> Život a práce
+              </h2>
+              <p className="text-gray-700 leading-relaxed">{country.life_work}</p>
+            </div>
+          )}
+
+          {/* Box 4: Kultura a jídlo */}
+          {country.culture_food && (
+            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
+              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2">
+                <span>🍷</span> Kultura a jídlo
+              </h2>
+              <p className="text-gray-700 leading-relaxed">{country.culture_food}</p>
+            </div>
+          )}
+
         </div>
       </section>
 
