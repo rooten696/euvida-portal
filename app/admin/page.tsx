@@ -18,9 +18,9 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState('');
 
   // Paměť pro náš formulář
-  const [formData, setFormData] = useState({
-    id: '', name: '', flag: '', description: '', general_info: '', travel_tourism: '', life_work: '', culture_food: ''
-  });
+const [formData, setFormData] = useState({
+  id: '', name: '', flag: '', description: '', general_info: '', travel_tourism: '', life_work: '', culture_food: '', image_url: ''
+});
   const [status, setStatus] = useState('');
 
   // Zjištění, zda jsi už přihlášený (když stránku obnovíš)
@@ -136,6 +136,10 @@ export default function AdminPage() {
               <label className="block text-sm font-bold mb-2">Krátký popisek *</label>
               <input required type="text" name="description" value={formData.description} onChange={handleChange} className="w-full border rounded-lg p-3 bg-gray-50" />
             </div>
+            <div className="col-span-2">
+  <label className="block text-sm font-bold mb-2">Odkaz na fotografii (Unsplash URL)</label>
+  <input type="text" name="image_url" value={formData.image_url} onChange={handleChange} placeholder="https://images.unsplash.com/photo-..." className="w-full border rounded-lg p-3 bg-gray-50" />
+</div>
           </div>
 
           <hr className="my-6" />

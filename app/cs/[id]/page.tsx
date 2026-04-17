@@ -7,6 +7,37 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Tato funkce vygeneruje unikátní metadata pro každou zemi na základě dat ze Supabase
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = await params;
+  const countryId = resolvedParams.id;
+
+  // Stáhneme data pro metadata (stejně jako v těle stránky)
+  const { data: country } = await supabase
+    .from('countries')
+    .select('name, description, image_url')
+    .eq('id', countryId)
+    .single();
+
+  if (!country) return { title: 'Země nenalezena | Euvida' };
+
+  return {
+    title: `${country.name} | Euvida - Průvodce zemí`,
+    description: country.description,
+    openGraph: {
+      title: `${country.name}: Vše o životě a cestování`,
+      description: country.description,
+      images: [
+        {
+          url: country.image_url || '/og-default.jpg', // Použije fotku země pro náhled na sítích
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+  };
+}
+
 export default async function CountryPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const countryId = resolvedParams.id;
@@ -31,12 +62,34 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
         </Link>
       </div>
 
-      <header className="bg-blue-900 text-white py-16 px-4 text-center border-b-4 border-yellow-400">
-        <div className="text-6xl mb-4">{country.flag}</div>
-        <h1 className="text-5xl font-bold mb-4">{country.name}</h1>
-        <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-          {country.description}
-        </p>
+    {/* Nová, filmová hlavička s obrázkem na pozadí */}
+      <header className="relative py-32 px-4 text-center overflow-hidden border-b-4 border-yellow-400">
+        
+        {/* Obrázek na pozadí (pokud v databázi existuje) */}
+        {country.image_url ? (
+          <div 
+            className="absolute inset-0 z-0 bg-cover bg-center"
+            style={{ backgroundImage: `url('${country.image_url}')` }}
+          />
+        ) : (
+          /* Pojistka: Pokud země fotku nemá, ukáže se klasická modrá barva */
+          <div className="absolute inset-0 z-0 bg-blue-900" />
+        )}
+        
+        {/* Tmavý poloprůhledný filtr */}
+        <div className="absolute inset-0 bg-slate-900/60 z-10" />
+
+        {/* Texty hlavičky (zvednuté nad filtr díky z-20) */}
+        <div className="relative z-20">
+          <div className="text-6xl mb-4 drop-shadow-md">{country.flag}</div>
+          <h1 className="text-6xl font-extrabold mb-4 text-white drop-shadow-lg tracking-tight">
+            {country.name}
+          </h1>
+          <p className="text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-md font-medium leading-relaxed">
+            {country.description}
+          </p>
+        </div>
+        
       </header>
 
       {/* Obsahová část rozdělená do mřížky */}
