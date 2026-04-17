@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, Session } from '@supabase/supabase-js';
 import Link from 'next/link';
 
 // Připojení k databázi
@@ -12,7 +12,7 @@ const supabase = createClient(
 
 export default function AdminPage() {
   // Paměť pro přihlášení
-  const [session, setSession] = useState<any>(null);
+const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
@@ -56,8 +56,7 @@ const [formData, setFormData] = useState({
       setStatus('❌ Chyba při ukládání: ' + error.message);
     } else {
       setStatus('✅ Země úspěšně přidána!');
-      setFormData({ id: '', name: '', flag: '', description: '', general_info: '', travel_tourism: '', life_work: '', culture_food: '' });
-    }
+setFormData({ id: '', name: '', flag: '', description: '', general_info: '', travel_tourism: '', life_work: '', culture_food: '', image_url: '' });    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
