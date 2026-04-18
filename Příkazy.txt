@@ -1,0 +1,11 @@
+-stažení
+git pull
+
+-spuštìní localhost
+npm run dev
+
+-nahrání na server
+git add .
+git commit -m "xxx"
+git push
+

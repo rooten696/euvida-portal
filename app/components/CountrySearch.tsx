@@ -2,9 +2,15 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-
+type Country = {
+  id: string;
+  name: string;
+  flag: string;
+  description: string;
+  image_url: string;
+};
 // Komponenta přijme data ze serveru (initialCountries)
-export default function CountrySearch({ initialCountries }: { initialCountries: any[] }) {
+export default function CountrySearch({ initialCountries }: { initialCountries: Country[] }) {
   // Zde ukládáme to, co uživatel aktuálně píše
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -51,7 +57,7 @@ export default function CountrySearch({ initialCountries }: { initialCountries: 
         ) : (
           /* Hláška, když hledání nic nenajde */
           <div className="col-span-3 text-center py-12 text-gray-500 text-lg">
-            Nenalezli jsme žádnou zemi odpovídající výrazu "{searchTerm}".
+            Nenalezli jsme žádnou zemi odpovídající výrazu &quot;{searchTerm};.
           </div>
         )}
       </div>
