@@ -66,9 +66,9 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
     li: (props: React.ComponentPropsWithoutRef<'li'>) => <li {...props} />
   };
 
-  // NOVÉ: Markdown styly pro malé kartičky (Regiony)
+  // Markdown styly pro malé kartičky (Regiony)
   const regionMarkdownComponents = {
-    p: (props: React.ComponentPropsWithoutRef<'p'>) => <p className="text-gray-600 text-sm leading-relaxed mb-3" {...props} />,
+    p: (props: React.ComponentPropsWithoutRef<'p'>) => <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3" {...props} />,
     strong: (props: React.ComponentPropsWithoutRef<'strong'>) => <strong className="font-bold text-gray-900" {...props} />,
     ul: (props: React.ComponentPropsWithoutRef<'ul'>) => <ul className="list-disc pl-4 mb-3 text-gray-600 text-sm space-y-1" {...props} />,
     li: (props: React.ComponentPropsWithoutRef<'li'>) => <li {...props} />
@@ -137,7 +137,7 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {regions.map((region: Region) => (
-                <div key={region.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-md transition-shadow flex flex-col">
+                <Link href={`/region/${region.id}`} key={region.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col cursor-pointer">
                   {region.image_url && (
                     <div className="h-48 overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -150,21 +150,23 @@ export default async function CountryPage({ params }: { params: Promise<{ id: st
                   )}
                   <div className="p-6 flex-grow flex flex-col">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-xl font-bold text-gray-900">{region.name}</h3>
+                      <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{region.name}</h3>
                       {region.language && (
                         <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded-md uppercase shrink-0 ml-2">
                           {region.language}
                         </span>
                       )}
                     </div>
-                    {/* ZDE JE NASAZENÝ NÁŠ NOVÝ PŘEKLADAČ */}
                     <div className="flex-grow">
                       <ReactMarkdown components={regionMarkdownComponents}>
                         {region.description}
                       </ReactMarkdown>
                     </div>
+                    <div className="mt-4 text-sm font-bold text-blue-600 group-hover:text-blue-800 flex items-center gap-1">
+                      Prozkoumat region <span className="text-lg">&rarr;</span>
+                    </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           </div>

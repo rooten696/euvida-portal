@@ -15,6 +15,7 @@ type CountryData = {
   image_url: string;
 };
 
+// 1. Přidány nové sloupce pro teploty
 type RegionData = {
   id?: string;
   country_id: string;
@@ -22,9 +23,16 @@ type RegionData = {
   language: string;
   description: string;
   image_url: string;
+  temp_spring_air?: string;
+  temp_summer_air?: string;
+  temp_autumn_air?: string;
+  temp_winter_air?: string;
+  temp_spring_sea?: string;
+  temp_summer_sea?: string;
+  temp_autumn_sea?: string;
+  temp_winter_sea?: string;
 };
 
-// 1. Přidán typ pro Místa
 type PlaceData = {
   id?: string;
   region_id: string;
@@ -37,6 +45,13 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
+
+// Pomocný prázdný objekt pro reset formuláře regionu, ať to nemusíme všude vypisovat ručně
+const emptyRegion: RegionData = {
+  country_id: '', name: '', language: '', description: '', image_url: '',
+  temp_spring_air: '', temp_summer_air: '', temp_autumn_air: '', temp_winter_air: '',
+  temp_spring_sea: '', temp_summer_sea: '', temp_autumn_sea: '', temp_winter_sea: ''
+};
 
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -55,9 +70,7 @@ export default function AdminPage() {
 
   // REGIONY
   const [regions, setRegions] = useState<RegionData[]>([]);
-  const [regionFormData, setRegionFormData] = useState<RegionData>({
-    country_id: '', name: '', language: '', description: '', image_url: ''
-  });
+  const [regionFormData, setRegionFormData] = useState<RegionData>(emptyRegion);
   const [isEditingRegion, setIsEditingRegion] = useState(false);
   const [isRegionActive, setIsRegionActive] = useState(false);
   const [regionToDelete, setRegionToDelete] = useState<string | null>(null);
@@ -117,13 +130,11 @@ export default function AdminPage() {
     setIsCountryActive(false);
     setCountryToDelete(false);
     
-    // Reset regionů
-    setRegionFormData({ country_id: country.id, name: '', language: '', description: '', image_url: '' });
+    setRegionFormData({ ...emptyRegion, country_id: country.id });
     setIsEditingRegion(false);
     setIsRegionActive(false);
     setRegionToDelete(null);
 
-    // Reset míst
     setPlaces([]);
     setPlaceFormData({ region_id: '', name: '', description: '', image_url: '' });
     setIsEditingPlace(false);
@@ -177,7 +188,6 @@ export default function AdminPage() {
     setIsRegionActive(false);
     setRegionToDelete(null);
 
-    // Reset míst pro vybraný region
     setPlaceFormData({ region_id: region.id!, name: '', description: '', image_url: '' });
     setIsEditingPlace(false);
     setIsPlaceActive(false);
@@ -188,7 +198,7 @@ export default function AdminPage() {
   };
 
   const handleNewRegion = () => {
-    setRegionFormData({ country_id: formData.id, name: '', language: '', description: '', image_url: '' });
+    setRegionFormData({ ...emptyRegion, country_id: formData.id });
     setIsEditingRegion(false);
     setIsRegionActive(true);
     setRegionToDelete(null);
@@ -365,7 +375,6 @@ export default function AdminPage() {
                 <button onClick={handleNewRegion} className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-bold text-sm hover:bg-yellow-200">+ Nový region</button>
               </div>
               
-              {/* Seznam regionů */}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
                 {regions.map(r => (
                   <div key={r.id} onClick={() => selectRegion(r)} className={`p-3 rounded-xl border cursor-pointer flex justify-between items-center transition-all ${regionFormData.id === r.id ? 'border-yellow-500 bg-yellow-50 shadow-sm' : 'border-gray-100 hover:bg-gray-50'}`}>
@@ -382,8 +391,7 @@ export default function AdminPage() {
                 ))}
               </div>
 
-              {/* Formulář regionu */}
-{(isEditingRegion || isRegionActive) && (
+              {(isEditingRegion || isRegionActive) && (
                 <form onSubmit={handleRegionSubmit} className="bg-yellow-50/50 p-6 rounded-xl border border-yellow-100 space-y-4">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-yellow-800">{isEditingRegion ? `Region: ${regionFormData.name}` : 'Nový region'}</h3>
@@ -397,6 +405,33 @@ export default function AdminPage() {
                     <input disabled={!isRegionActive} placeholder="Jazyk(y)" name="language" value={regionFormData.language} onChange={handleRegionChange} className={inputClass} />
                     <input disabled={!isRegionActive} placeholder="Foto URL" name="image_url" value={regionFormData.image_url} onChange={handleRegionChange} className={`col-span-2 ${inputClass}`} />
                     <textarea required disabled={!isRegionActive} placeholder="Popis regionu (podporuje Markdown)..." name="description" value={regionFormData.description} onChange={handleRegionChange} rows={3} className={`col-span-2 ${inputClass}`} />
+                    
+                    {/* NOVÁ SEKCE: POČASÍ */}
+                    <div className="col-span-2 mt-4 pt-4 border-t border-yellow-200">
+                      <h4 className="font-bold text-yellow-800 mb-4 text-xs uppercase tracking-wider">🌡️ Průměrné teploty (°C)</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
+                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">🌸 Jaro</label>
+                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 18-22)" name="temp_spring_air" value={regionFormData.temp_spring_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} title="Vzduch" />
+                          <input disabled={!isRegionActive} placeholder="Moře (např. 16)" name="temp_spring_sea" value={regionFormData.temp_spring_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} title="Moře" />
+                        </div>
+                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
+                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">☀️ Léto</label>
+                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 28-35)" name="temp_summer_air" value={regionFormData.temp_summer_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
+                          <input disabled={!isRegionActive} placeholder="Moře (např. 24)" name="temp_summer_sea" value={regionFormData.temp_summer_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
+                        </div>
+                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
+                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">🍂 Podzim</label>
+                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 20-25)" name="temp_autumn_air" value={regionFormData.temp_autumn_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
+                          <input disabled={!isRegionActive} placeholder="Moře (např. 21)" name="temp_autumn_sea" value={regionFormData.temp_autumn_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
+                        </div>
+                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
+                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">❄️ Zima</label>
+                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 12-16)" name="temp_winter_air" value={regionFormData.temp_winter_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
+                          <input disabled={!isRegionActive} placeholder="Moře (např. 14)" name="temp_winter_sea" value={regionFormData.temp_winter_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   
                   {isRegionActive && (
@@ -410,7 +445,7 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* TŘETÍ PATRO: MÍSTA (Zobrazí se pouze pokud je vybrán existující region) */}
+          {/* TŘETÍ PATRO: MÍSTA */}
           {isEditingRegion && regionFormData.id && (
             <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
               <div className="flex justify-between items-center border-b pb-4">
@@ -418,7 +453,6 @@ export default function AdminPage() {
                 <button onClick={handleNewPlace} className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold text-sm hover:bg-green-200">+ Nové místo</button>
               </div>
               
-              {/* Seznam míst */}
               {places.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {places.map(p => (
@@ -436,8 +470,7 @@ export default function AdminPage() {
                 <p className="text-gray-400 text-sm italic">Zatím tu nejsou žádná místa. Přidejte první!</p>
               )}
 
-              {/* Formulář pro místo */}
-{(isEditingPlace || isPlaceActive) && (
+              {(isEditingPlace || isPlaceActive) && (
                 <form onSubmit={handlePlaceSubmit} className="bg-green-50/50 p-6 rounded-xl border border-green-100 space-y-4">
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-bold text-green-800">{isEditingPlace ? `Místo: ${placeFormData.name}` : 'Nové místo'}</h3>
@@ -463,7 +496,6 @@ export default function AdminPage() {
             </div>
           )}
 
-          {/* Notifikace o uložení dole */}
           {status && (
             <div className={`p-4 rounded-lg font-bold sticky bottom-4 z-50 text-center shadow-lg transition-all ${status.includes('❌') ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-green-100 text-green-800 border border-green-200'}`}>
               {status}
