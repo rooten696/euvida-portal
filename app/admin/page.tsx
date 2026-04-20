@@ -15,7 +15,7 @@ type CountryData = {
   image_url: string;
 };
 
-// 1. Přidány nové sloupce pro teploty
+// Aktualizovaný typ pro Region (přidány 4 nové textové sloupce)
 type RegionData = {
   id?: string;
   country_id: string;
@@ -23,6 +23,10 @@ type RegionData = {
   language: string;
   description: string;
   image_url: string;
+  general_info?: string;
+  nature_and_landscapes?: string;
+  history_and_culture?: string;
+  transport_and_life?: string;
   temp_spring_air?: string;
   temp_summer_air?: string;
   temp_autumn_air?: string;
@@ -46,9 +50,9 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Pomocný prázdný objekt pro reset formuláře regionu, ať to nemusíme všude vypisovat ručně
 const emptyRegion: RegionData = {
   country_id: '', name: '', language: '', description: '', image_url: '',
+  general_info: '', nature_and_landscapes: '', history_and_culture: '', transport_and_life: '',
   temp_spring_air: '', temp_summer_air: '', temp_autumn_air: '', temp_winter_air: '',
   temp_spring_sea: '', temp_summer_sea: '', temp_autumn_sea: '', temp_winter_sea: ''
 };
@@ -401,12 +405,46 @@ export default function AdminPage() {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <input required disabled={!isRegionActive} placeholder="Název regionu" name="name" value={regionFormData.name} onChange={handleRegionChange} className={inputClass} />
-                    <input disabled={!isRegionActive} placeholder="Jazyk(y)" name="language" value={regionFormData.language} onChange={handleRegionChange} className={inputClass} />
-                    <input disabled={!isRegionActive} placeholder="Foto URL" name="image_url" value={regionFormData.image_url} onChange={handleRegionChange} className={`col-span-2 ${inputClass}`} />
-                    <textarea required disabled={!isRegionActive} placeholder="Popis regionu (podporuje Markdown)..." name="description" value={regionFormData.description} onChange={handleRegionChange} rows={3} className={`col-span-2 ${inputClass}`} />
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="text-xs font-bold text-yellow-700 uppercase">Název regionu</label>
+                      <input required disabled={!isRegionActive} name="name" value={regionFormData.name} onChange={handleRegionChange} className={inputClass} />
+                    </div>
+                    <div className="col-span-2 md:col-span-1">
+                      <label className="text-xs font-bold text-yellow-700 uppercase">Jazyk(y)</label>
+                      <input disabled={!isRegionActive} name="language" value={regionFormData.language} onChange={handleRegionChange} className={inputClass} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-bold text-yellow-700 uppercase">Foto URL</label>
+                      <input disabled={!isRegionActive} name="image_url" value={regionFormData.image_url} onChange={handleRegionChange} className={inputClass} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="text-xs font-bold text-yellow-700 uppercase">Krátký popis (pro náhledy)</label>
+                      <textarea required disabled={!isRegionActive} name="description" value={regionFormData.description} onChange={handleRegionChange} rows={2} className={inputClass} />
+                    </div>
                     
-                    {/* NOVÁ SEKCE: POČASÍ */}
+                    {/* NOVÁ SEKCE: Detailní texty */}
+                    <div className="col-span-2 mt-4 pt-4 border-t border-yellow-200 grid grid-cols-2 gap-4">
+                      <h4 className="col-span-2 font-bold text-yellow-800 text-xs uppercase tracking-wider">📝 Detailní texty</h4>
+                      
+                      <div className="col-span-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Obecně o regionu</label>
+                        <textarea disabled={!isRegionActive} name="general_info" value={regionFormData.general_info || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Výlety a příroda</label>
+                        <textarea disabled={!isRegionActive} name="nature_and_landscapes" value={regionFormData.nature_and_landscapes || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Gastronomie a atmosféra</label>
+                        <textarea disabled={!isRegionActive} name="history_and_culture" value={regionFormData.history_and_culture || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
+                      </div>
+                      <div className="col-span-2">
+                        <label className="text-xs font-bold text-gray-500 uppercase">Pro koho to je a děti</label>
+                        <textarea disabled={!isRegionActive} name="transport_and_life" value={regionFormData.transport_and_life || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
+                      </div>
+                    </div>
+
+                    {/* SEKCE: POČASÍ */}
                     <div className="col-span-2 mt-4 pt-4 border-t border-yellow-200">
                       <h4 className="font-bold text-yellow-800 mb-4 text-xs uppercase tracking-wider">🌡️ Průměrné teploty (°C)</h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">

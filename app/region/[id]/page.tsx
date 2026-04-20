@@ -9,23 +9,26 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+// Definice pro Místo, aby byl TypeScript spokojený
+type Place = {
+  id: string;
+  name: string;
+  description: string;
+  image_url: string;
+};
+
 export default async function RegionPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = await params;
   const regionId = resolvedParams.id;
 
-  // 1. Stáhneme data o regionu a rovnou si připojíme i ID a název země (kvůli tlačítku Zpět)
   const { data: region } = await supabase
     .from('regions')
-    .select(`
-      *,
-      countries ( id, name )
-    `)
+    .select(`*, countries ( id, name )`)
     .eq('id', regionId)
     .single();
 
   if (!region) notFound();
 
-  // 2. Stáhneme místa v tomto regionu
   const { data: places } = await supabase
     .from('places')
     .select('*')
@@ -42,14 +45,14 @@ export default async function RegionPage({ params }: { params: Promise<{ id: str
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
       
-      {/* Tlačítko Zpět na zemi */}
+      {/* Tlačítko Zpět */}
       <div className="absolute top-6 left-4 md:left-auto md:max-w-5xl md:mx-auto w-full z-30 px-4">
         <Link href={`/cs/${region.countries.id}`} className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-blue-900 font-bold hover:bg-white shadow-sm transition-colors">
           &larr; Zpět na {region.countries.name}
         </Link>
       </div>
 
-      {/* Hlavička s fotkou */}
+      {/* Hlavička */}
       <header className="relative py-32 px-4 text-center overflow-hidden border-b-4 border-yellow-400 min-h-[40vh] flex flex-col justify-center">
         {region.image_url ? (
           <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url('${region.image_url}')` }} />
@@ -68,21 +71,54 @@ export default async function RegionPage({ params }: { params: Promise<{ id: str
             {region.name}
           </h1>
           
-          {/* NÁŠ NOVÝ ŽIVÝ WIDGET */}
           <WeatherWidget locationName={region.name} />
         </div>
       </header>
 
       <section className="max-w-5xl mx-auto py-12 px-4 space-y-16">
         
-        {/* Průměrné teploty a popis */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
-            <h2 className="text-2xl font-bold mb-6 text-blue-900">O regionu</h2>
-            <ReactMarkdown components={markdownComponents}>{region.description}</ReactMarkdown>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+          
+          {/* NOVÉ: Detailní texty o regionu rozdělené do krásných bloků */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Pokud staré políčko 'description' stále existuje a nemáme nové, zobrazíme ho jako fallback */}
+            {!region.general_info && region.description && (
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <ReactMarkdown components={markdownComponents}>{region.description}</ReactMarkdown>
+              </div>
+            )}
+
+            {region.general_info && (
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <h2 className="text-2xl font-bold mb-6 text-blue-900 flex items-center gap-2"><span>📍</span> O regionu</h2>
+                <ReactMarkdown components={markdownComponents}>{region.general_info}</ReactMarkdown>
+              </div>
+            )}
+
+            {region.nature_and_landscapes && (
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <h2 className="text-2xl font-bold mb-6 text-blue-900 flex items-center gap-2"><span>🌲</span> Výlety a příroda</h2>
+                <ReactMarkdown components={markdownComponents}>{region.nature_and_landscapes}</ReactMarkdown>
+              </div>
+            )}
+
+            {region.history_and_culture && (
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <h2 className="text-2xl font-bold mb-6 text-blue-900 flex items-center gap-2"><span>🍷</span> Gastronomie a atmosféra</h2>
+                <ReactMarkdown components={markdownComponents}>{region.history_and_culture}</ReactMarkdown>
+              </div>
+            )}
+
+            {region.transport_and_life && (
+              <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100">
+                <h2 className="text-2xl font-bold mb-6 text-blue-900 flex items-center gap-2"><span>👨‍👩‍👧‍👦</span> Pro koho to je a děti</h2>
+                <ReactMarkdown components={markdownComponents}>{region.transport_and_life}</ReactMarkdown>
+              </div>
+            )}
           </div>
 
-          <div className="lg:col-span-1 bg-white rounded-3xl p-8 shadow-sm border border-gray-100 h-fit">
+          {/* Pravý sloupec s teplotami (zůstává stejný) */}
+          <div className="lg:col-span-1 bg-white rounded-3xl p-8 shadow-sm border border-gray-100 sticky top-8">
             <h2 className="text-xl font-bold mb-6 text-blue-900 flex items-center gap-2">
               <span>🌡️</span> Průměrné teploty
             </h2>
@@ -98,23 +134,25 @@ export default async function RegionPage({ params }: { params: Promise<{ id: str
                     {season.icon} {season.label}
                   </span>
                   <div className="text-right text-sm">
-                    {season.air && <div className="text-orange-600 font-bold" title="Vzduch">{season.air} °C <span className="text-xs text-gray-400 font-normal ml-1">vzduch</span></div>}
-                    {season.sea && <div className="text-blue-600 font-bold" title="Moře">{season.sea} °C <span className="text-xs text-gray-400 font-normal ml-1">moře</span></div>}
+                    {season.air && season.air !== 'N/A' && <div className="text-orange-600 font-bold" title="Vzduch">{season.air} °C <span className="text-xs text-gray-400 font-normal ml-1">vzduch</span></div>}
+                    {season.sea && season.sea !== 'N/A' && <div className="text-blue-600 font-bold" title="Moře">{season.sea} °C <span className="text-xs text-gray-400 font-normal ml-1">moře</span></div>}
                   </div>
                 </div>
               ))}
             </div>
           </div>
+
         </div>
 
-        {/* Sekce s Místy */}
+        {/* Sekce s Místy (Památky a města) */}
         {places && places.length > 0 && (
           <div>
             <h2 className="text-3xl font-extrabold text-blue-900 mb-8 flex items-center gap-3">
               <span className="text-green-600">📍</span> Místa, která musíte vidět
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-{places.map((place: { id: string; name: string; description: string; image_url: string }) => (                <div key={place.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col">
+              {places.map((place: Place) => (
+                <div key={place.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col">
                   {place.image_url && (
                     <div className="h-48 overflow-hidden shrink-0">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
