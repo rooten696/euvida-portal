@@ -1,8 +1,5 @@
-'use client';
-
-import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
 
 // Připojení k databázi
 const supabase = createClient(
@@ -10,140 +7,114 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Co přesně o zemi potřebujeme pro hlavní stránku vědět
-type Country = {
-  id: string;
-  name: string;
-  flag: string;
-  description: string;
-  image_url: string;
-};
+// Řekneme Next.js, aby si tuto stránku pamatoval v mezipaměti (rychlejší načítání)
+export const revalidate = 3600; 
 
-export default function HomePage() {
-  const [countries, setCountries] = useState<Country[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // Při načtení stránky stáhneme všech 33 zemí
-  useEffect(() => {
-    const fetchCountries = async () => {
-      const { data } = await supabase
-        .from('countries')
-        .select('id, name, flag, description, image_url')
-        .order('name');
-      
-      if (data) setCountries(data);
-      setLoading(false);
-    };
-    fetchCountries();
-  }, []);
-
-  // Tahle magie okamžitě filtruje země podle toho, co napíšeš do hledání
-  // Hledá to jak v názvu (např. "Španělsko"), tak v popisku (např. "moře")
-  const filteredCountries = countries.filter(country => 
-    country.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    country.description.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  // Zobrazíme kolečko, dokud se data nestáhnou
-  if (loading) {
-    return (
-      <main className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-900"></div>
-      </main>
-    );
-  }
+export default async function HomePage() {
+  // Stáhneme všechny země seřazené podle abecedy
+  const { data: countries } = await supabase
+    .from('countries')
+    .select('id, name, flag, description, image_url')
+    .order('name');
 
   return (
-    <main className="min-h-screen bg-gray-50 font-sans pb-20">
+    <main className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
       
-      {/* 1. Uvítací hlavička (Hero Section) */}
-      <section className="bg-blue-900 text-white py-24 px-4 text-center relative overflow-hidden">
-        {/* Jemná cestovatelská fotka na pozadí */}
-        <div className="absolute inset-0 opacity-20 bg-[url('https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop')] bg-cover bg-center" />
-        
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-6 tracking-tight">
-            Objevte Evropu <br className="hidden md:block" />
-            <span className="text-yellow-400">bez hranic.</span>
+      {/* 1. HERO SEKCE (Hlavní poutač) */}
+      <section className="relative h-[75vh] flex items-center justify-center overflow-hidden">
+        {/* Pozadí s fotkou a přechody */}
+        <div className="absolute inset-0 z-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop"
+            alt="Krásy Evropy"
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-blue-900/40 mix-blend-multiply" />
+          <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-transparent to-transparent" />
+        </div>
+
+        {/* Texty přes fotku */}
+        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 drop-shadow-xl tracking-tight">
+            Objevte to <span className="text-yellow-400">nejlepší</span> z Evropy.
           </h1>
-          <p className="text-xl md:text-2xl text-blue-100 mb-10 font-medium">
-            Tvůj průvodce cestováním, prací a životem ve 33 zemích.
+          <p className="text-xl md:text-2xl text-white/95 mb-10 font-medium drop-shadow-lg max-w-2xl mx-auto">
+            Váš ultimátní průvodce pro cestování, stěhování a plnohodnotný život v těch nejkrásnějších destinacích.
           </p>
-          
-          {/* Vyhledávací pole */}
-          <div className="relative max-w-2xl mx-auto">
-            <span className="absolute left-5 top-4 text-2xl">🔍</span>
-            <input 
-              type="text" 
-              placeholder="Kam to bude? (např. Itálie, hory, pivo...)"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full py-5 pl-14 pr-6 rounded-full text-gray-900 text-lg shadow-2xl focus:outline-none focus:ring-4 focus:ring-yellow-400 transition-all font-medium border-0"
-            />
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="#destinace" className="bg-yellow-400 text-yellow-900 px-8 py-4 rounded-full font-extrabold text-lg hover:bg-yellow-300 transition-all shadow-lg hover:shadow-2xl hover:-translate-y-1">
+              Začít objevovat
+            </a>
           </div>
         </div>
       </section>
 
-      {/* 2. Mřížka se zeměmi */}
-      <section className="max-w-7xl mx-auto px-4 mt-16">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-10 gap-4">
-          <h2 className="text-3xl font-extrabold text-blue-900">
-            {searchQuery ? 'Výsledky vyhledávání' : 'Všechny destinace'}
-          </h2>
-          <span className="text-blue-900 font-bold bg-blue-100 px-4 py-2 rounded-full text-sm">
-            Nalezeno: {filteredCountries.length}
-          </span>
+      {/* 2. PROČ EUVIDA (Vystouplé informační karty) */}
+      <section className="max-w-6xl mx-auto px-4 py-8 -mt-24 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
+            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">✈️</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Cestování bez chyb</h3>
+            <p className="text-gray-600 leading-relaxed">Autentické tipy na místa, která musíte vidět, a praktické rady pro dokonalou dovolenou bez stresu.</p>
+          </div>
+          <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300 delay-100">
+            <div className="w-16 h-16 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">💼</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Život a práce</h3>
+            <p className="text-gray-600 leading-relaxed">Láká vás stěhování? Zjistěte vše o kultuře, bydlení a pracovních příležitostech v cizině.</p>
+          </div>
+          <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300 delay-200">
+            <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">🍷</div>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">Kultura a chuť</h3>
+            <p className="text-gray-600 leading-relaxed">Od španělských tapas po belgické pralinky. Ponořte se naplno do lokální gastronomie a zvyků.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* 3. VÝPIS ZEMÍ Z DATABÁZE */}
+      <section id="destinace" className="max-w-6xl mx-auto px-4 py-20 scroll-mt-24">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4">Kam to bude dnes?</h2>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">Vyberte si zemi a prozkoumejte její unikátní regiony, památky a aktuální počasí.</p>
         </div>
 
-        {/* Pokud nic nenajdeme */}
-        {filteredCountries.length === 0 ? (
-           <div className="text-center py-20 bg-white rounded-3xl shadow-sm border border-gray-100">
-             <div className="text-6xl mb-4">🙈</div>
-             <h3 className="text-2xl font-bold text-gray-800">Tady nic není</h3>
-             <p className="text-gray-500 mt-2">Zkus hledat něco jiného (třeba &quot;Francie&quot;).</p>
-             <button onClick={() => setSearchQuery('')} className="mt-6 text-blue-600 font-bold hover:underline">
-               Zrušit hledání
-             </button>
-           </div>
-        ) : (
-          /* Výpis karet */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredCountries.map(country => (
-              <Link 
-                key={country.id} 
-                href={`/cs/${country.id}`} 
-                className="group bg-white rounded-3xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 border border-gray-100 flex flex-col h-full hover:-translate-y-2"
-              >
-                {/* Obrázek s vlajkou */}
-                <div className="h-48 relative overflow-hidden bg-blue-900">
-                  {country.image_url && (
-                    <div 
-                      className="absolute inset-0 bg-cover bg-center group-hover:scale-110 transition-transform duration-700"
-                      style={{ backgroundImage: `url('${country.image_url}')` }}
-                    />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 to-transparent" />
-                  <div className="absolute bottom-4 left-4 text-5xl drop-shadow-lg">{country.flag}</div>
-                </div>
-
-                {/* Texty na kartě */}
-                <div className="p-6 flex-grow flex flex-col">
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                    {country.name}
-                  </h3>
-                  <p className="text-gray-600 text-sm line-clamp-3 mb-6 flex-grow leading-relaxed">
-                    {country.description}
-                  </p>
-                  <div className="text-blue-600 font-bold text-sm bg-blue-50 py-3 px-4 rounded-xl text-center group-hover:bg-blue-600 group-hover:text-white transition-colors mt-auto">
-                    Prozkoumat průvodce
+        {countries && countries.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {countries.map(country => (
+              <Link href={`/cs/${country.id}`} key={country.id} className="group rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 border border-gray-100 transition-all duration-300 hover:-translate-y-2 flex flex-col">
+                
+                {/* Fotka s přechodem a jménem */}
+                <div className="h-64 relative overflow-hidden shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={country.image_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop'}
+                    alt={country.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent" />
+                  <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
+                    <h3 className="text-3xl font-extrabold text-white drop-shadow-md">{country.name}</h3>
+                    <span className="text-4xl drop-shadow-xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300 origin-bottom-right">{country.flag}</span>
                   </div>
                 </div>
+                
+                {/* Textový obsah */}
+                <div className="p-6 flex-grow flex flex-col">
+                  <p className="text-gray-600 line-clamp-3 mb-6 flex-grow leading-relaxed">{country.description}</p>
+                  <div className="pt-4 border-t border-gray-50 text-blue-600 font-bold flex items-center justify-between group-hover:text-blue-800 transition-colors uppercase tracking-wider text-sm">
+                    <span>Prozkoumat zemi</span> 
+                    <span className="text-xl group-hover:translate-x-2 transition-transform">&rarr;</span>
+                  </div>
+                </div>
+
               </Link>
             ))}
           </div>
+        ) : (
+          <p className="text-center text-gray-400 italic py-12 bg-white rounded-3xl border border-gray-100 shadow-sm">Zatím tu nejsou žádné země. Přidejte je v administraci!</p>
         )}
       </section>
+
     </main>
   );
 }
