@@ -1,7 +1,18 @@
-import type { NextConfig } from "next";
-
+import createNextIntlPlugin from 'next-intl/plugin';
+import type { NextConfig } from 'next';
+ 
+// TADY JE TA OPRAVA: Ukázali jsme mu přesnou cestu k našemu souboru
+const withNextIntl = createNextIntlPlugin('./i18n.ts');
+ 
 const nextConfig: NextConfig = {
-  /* config options here */
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+  },
 };
-
-export default nextConfig;
+ 
+export default withNextIntl(nextConfig);

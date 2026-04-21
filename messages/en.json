@@ -1,0 +1,15 @@
+{
+  "Navigation": {
+    "home": "Home",
+    "destinations": "Destinations",
+    "favorites": "Favorites",
+    "login": "Log in",
+    "logout": "Log out"
+  },
+  "HomePage": {
+    "title": "Discover the best of Europe.",
+    "subtitle": "Your ultimate guide to traveling, moving, and living a fulfilling life in the most beautiful destinations.",
+    "cta": "Start exploring",
+    "where_to": "Where to today?"
+  }
+}

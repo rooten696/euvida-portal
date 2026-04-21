@@ -1,0 +1,15 @@
+{
+  "Navigation": {
+    "home": "Domů",
+    "destinations": "Destinace",
+    "favorites": "Oblíbené",
+    "login": "Přihlásit",
+    "logout": "Odhlásit"
+  },
+  "HomePage": {
+    "title": "Objevte to nejlepší z Evropy.",
+    "subtitle": "Váš ultimátní průvodce pro cestování, stěhování a plnohodnotný život v těch nejkrásnějších destinacích.",
+    "cta": "Začít objevovat",
+    "where_to": "Kam to bude dnes?"
+  }
+}

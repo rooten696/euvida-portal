@@ -1,17 +1,24 @@
 import Link from 'next/link';
 import { createClient } from '@supabase/supabase-js';
+import { getTranslations } from 'next-intl/server';
 
-// Připojení k databázi
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-// Řekneme Next.js, aby si tuto stránku pamatoval v mezipaměti (rychlejší načítání)
 export const revalidate = 3600; 
 
-export default async function HomePage() {
-  // Stáhneme všechny země seřazené podle abecedy
+export default async function HomePage({
+  params
+}: {
+  params: Promise<{ locale: string }>
+}) {
+  const resolvedParams = await params;
+  const locale = resolvedParams.locale;
+
+  const t = await getTranslations('HomePage');
+
   const { data: countries } = await supabase
     .from('countries')
     .select('id, name, flag, description, image_url')
@@ -20,9 +27,8 @@ export default async function HomePage() {
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
       
-      {/* 1. HERO SEKCE (Hlavní poutač) */}
+      {/* 1. HERO SEKCE */}
       <section className="relative h-[75vh] flex items-center justify-center overflow-hidden">
-        {/* Pozadí s fotkou a přechody */}
         <div className="absolute inset-0 z-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -34,23 +40,22 @@ export default async function HomePage() {
           <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-transparent to-transparent" />
         </div>
 
-        {/* Texty přes fotku */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
           <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 drop-shadow-xl tracking-tight">
-            Objevte to <span className="text-yellow-400">nejlepší</span> z Evropy.
+            {t('title')}
           </h1>
           <p className="text-xl md:text-2xl text-white/95 mb-10 font-medium drop-shadow-lg max-w-2xl mx-auto">
-            Váš ultimátní průvodce pro cestování, stěhování a plnohodnotný život v těch nejkrásnějších destinacích.
+            {t('subtitle')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a href="#destinace" className="bg-yellow-400 text-yellow-900 px-8 py-4 rounded-full font-extrabold text-lg hover:bg-yellow-300 transition-all shadow-lg hover:shadow-2xl hover:-translate-y-1">
-              Začít objevovat
+              {t('cta')}
             </a>
           </div>
         </div>
       </section>
 
-      {/* 2. PROČ EUVIDA (Vystouplé informační karty) */}
+      {/* 2. PROČ EUVIDA */}
       <section className="max-w-6xl mx-auto px-4 py-8 -mt-24 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
@@ -71,19 +76,18 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 3. VÝPIS ZEMÍ Z DATABÁZE */}
+      {/* 3. VÝPIS ZEMÍ */}
       <section id="destinace" className="max-w-6xl mx-auto px-4 py-20 scroll-mt-24">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4">Kam to bude dnes?</h2>
+          <h2 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4">{t('where_to')}</h2>
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">Vyberte si zemi a prozkoumejte její unikátní regiony, památky a aktuální počasí.</p>
         </div>
 
         {countries && countries.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Odkazy nyní bezpečně generují URL podle jazyka: /cs/country/ESP nebo /en/country/ESP */}
             {countries.map(country => (
-              <Link href={`/cs/${country.id}`} key={country.id} className="group rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 border border-gray-100 transition-all duration-300 hover:-translate-y-2 flex flex-col">
-                
-                {/* Fotka s přechodem a jménem */}
+              <Link href={`/${locale}/country/${country.id}`} key={country.id} className="group rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 border border-gray-100 transition-all duration-300 hover:-translate-y-2 flex flex-col">
                 <div className="h-64 relative overflow-hidden shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -97,21 +101,14 @@ export default async function HomePage() {
                     <span className="text-4xl drop-shadow-xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300 origin-bottom-right">{country.flag}</span>
                   </div>
                 </div>
-                
-                {/* Textový obsah */}
                 <div className="p-6 flex-grow flex flex-col">
                   <p className="text-gray-600 line-clamp-3 mb-6 flex-grow leading-relaxed">{country.description}</p>
-                  <div className="pt-4 border-t border-gray-50 text-blue-600 font-bold flex items-center justify-between group-hover:text-blue-800 transition-colors uppercase tracking-wider text-sm">
-                    <span>Prozkoumat zemi</span> 
-                    <span className="text-xl group-hover:translate-x-2 transition-transform">&rarr;</span>
-                  </div>
                 </div>
-
               </Link>
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-400 italic py-12 bg-white rounded-3xl border border-gray-100 shadow-sm">Zatím tu nejsou žádné země. Přidejte je v administraci!</p>
+          <p className="text-center text-gray-400 italic py-12 bg-white rounded-3xl border border-gray-100 shadow-sm">Zatím tu nejsou žádné země.</p>
         )}
       </section>
 
