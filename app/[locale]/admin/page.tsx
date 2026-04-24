@@ -1,10 +1,9 @@
 'use client';
-import { translateCountryData, translateRegionData } from '../../actions/translate';
+
 import { useState, useEffect, useCallback } from 'react';
 import { createClient, Session } from '@supabase/supabase-js';
-// Přidán import našeho překladače
+import { translateCountryData, translateRegionData } from '../../actions/translate';
 
-// Přidáno translations do typu
 type CountryData = {
   id: string;
   name: string;
@@ -37,6 +36,7 @@ type RegionData = {
   temp_summer_sea?: string;
   temp_autumn_sea?: string;
   temp_winter_sea?: string;
+  translations?: Record<string, Record<string, string>>;
 };
 
 type PlaceData = {
@@ -64,6 +64,9 @@ export default function AdminPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  
+  // Přepínač zdrojového jazyka
+  const [sourceLang, setSourceLang] = useState<'cs' | 'en'>('cs');
   
   const [countries, setCountries] = useState<CountryData[]>([]);
   const [formData, setFormData] = useState<CountryData>({
@@ -156,32 +159,36 @@ export default function AdminPage() {
     setStatus('');
   };
 
-  // KOUZLO SE DĚJE TADY!
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('🤖 DeepL překládá texty, vydrž...');
+    setStatus('🤖 DeepL překládá texty...');
     
     try {
-      // 1. Získáme překlady z našeho serverového robota
-      const translatedTexts = await translateCountryData({
+      const allTexts = await translateCountryData({
         name: formData.name,
         description: formData.description,
         general_info: formData.general_info,
         travel_tourism: formData.travel_tourism,
         life_work: formData.life_work,
         culture_food: formData.culture_food
-      });
+      }, sourceLang);
 
-      // 2. Přibalíme je k odesílaným datům
+      // Dynamicky rozdělíme češtinu a ostatní jazyky
+      const { cs, ...translations } = allTexts;
+
       const dataToSave = {
         ...formData,
-        translations: translatedTexts
+        name: cs.name,
+        description: cs.description,
+        general_info: cs.general_info,
+        travel_tourism: cs.travel_tourism,
+        life_work: cs.life_work,
+        culture_food: cs.culture_food,
+        translations: translations
       };
 
-      // 3. Pošleme to celé rovnou do Supabase
       setStatus('Ukládám do databáze...');
       const { error } = await supabase.from('countries').upsert([dataToSave]);
-      
       if (error) throw error;
       
       setStatus('✅ Země přeložena a uložena!');
@@ -189,11 +196,8 @@ export default function AdminPage() {
       fetchCountries();
       
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setStatus('❌ Chyba: ' + err.message);
-      } else {
-        setStatus('❌ Neočekávaná chyba při překladu nebo ukládání.');
-      }
+      if (err instanceof Error) setStatus('❌ Chyba: ' + err.message);
+      else setStatus('❌ Neočekávaná chyba při překladu nebo ukládání.');
     }
   };
 
@@ -233,28 +237,36 @@ export default function AdminPage() {
     setPlaces([]);
   };
 
- const handleRegionSubmit = async (e: React.FormEvent) => {
+  const handleRegionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setStatus('🤖 DeepL překládá region...');
     
     try {
-      const translatedTexts = await translateRegionData({
+      const allTexts = await translateRegionData({
         name: regionFormData.name,
         description: regionFormData.description,
         general_info: regionFormData.general_info || '',
         nature_and_landscapes: regionFormData.nature_and_landscapes || '',
         history_and_culture: regionFormData.history_and_culture || '',
         transport_and_life: regionFormData.transport_and_life || ''
-      });
+      }, sourceLang);
+
+      // Dynamicky rozdělíme češtinu a ostatní jazyky
+      const { cs, ...translations } = allTexts;
 
       const dataToSave = {
         ...regionFormData,
-        translations: translatedTexts
+        name: cs.name,
+        description: cs.description,
+        general_info: cs.general_info,
+        nature_and_landscapes: cs.nature_and_landscapes,
+        history_and_culture: cs.history_and_culture,
+        transport_and_life: cs.transport_and_life,
+        translations: translations
       };
 
       setStatus('Ukládám region...');
       const { error } = await supabase.from('regions').upsert([dataToSave]);
-      
       if (error) throw error;
       
       setStatus('✅ Region přeložen a uložen!');
@@ -262,11 +274,8 @@ export default function AdminPage() {
       setIsRegionActive(false);
 
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setStatus('❌ Chyba: ' + err.message);
-      } else {
-        setStatus('❌ Neočekávaná chyba.');
-      }
+      if (err instanceof Error) setStatus('❌ Chyba: ' + err.message);
+      else setStatus('❌ Neočekávaná chyba.');
     }
   };
 
@@ -359,6 +368,25 @@ export default function AdminPage() {
         {/* PRAVÝ PANEL: Formuláře */}
         <div className="lg:col-span-3 space-y-8">
           
+          {/* PŘEPÍNAČ JAZYKA */}
+          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="font-bold text-blue-900">V jakém jazyce vkládáš texty?</div>
+            <div className="flex bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
+              <button
+                onClick={() => setSourceLang('cs')}
+                className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-colors ${sourceLang === 'cs' ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+              >
+                🇨🇿 Čeština
+              </button>
+              <button
+                onClick={() => setSourceLang('en')}
+                className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-colors ${sourceLang === 'en' ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+              >
+                🇬🇧 Angličtina
+              </button>
+            </div>
+          </div>
+
           {/* FORMULÁŘ ZEMĚ */}
           <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
             <div className="flex justify-between items-center border-b pb-4">
@@ -410,9 +438,9 @@ export default function AdminPage() {
                 <button type="submit" className="flex-grow bg-blue-900 text-white font-bold py-4 rounded-xl hover:bg-blue-800">Uložit úpravy a přeložit</button>
                 {isEditing && (
                   !countryToDelete ? (
-                    <button type="button" onClick={() => setCountryToDelete(true)} className="bg-gray-100 text-gray-600 px-6 rounded-xl font-bold hover:bg-gray-200">Smazat zemi</button>
+                    <button type="button" onClick={() => setCountryToDelete(true)} className="bg-gray-100 text-gray-600 px-6 rounded-xl font-bold hover:bg-gray-200">Smazat</button>
                   ) : (
-                    <button type="button" onClick={() => deleteCountry(formData.id)} className="bg-red-500 text-white px-6 rounded-xl font-bold hover:bg-red-600 animate-pulse">Opravdu smazat?</button>
+                    <button type="button" onClick={() => deleteCountry(formData.id)} className="bg-red-500 text-white px-6 rounded-xl font-bold hover:bg-red-600 animate-pulse">Opravdu?</button>
                   )
                 )}
               </div>
@@ -466,11 +494,10 @@ export default function AdminPage() {
                       <input disabled={!isRegionActive} name="image_url" value={regionFormData.image_url} onChange={handleRegionChange} className={inputClass} />
                     </div>
                     <div className="col-span-2">
-                      <label className="text-xs font-bold text-yellow-700 uppercase">Krátký popis (pro náhledy)</label>
+                      <label className="text-xs font-bold text-yellow-700 uppercase">Krátký popis</label>
                       <textarea required disabled={!isRegionActive} name="description" value={regionFormData.description} onChange={handleRegionChange} rows={2} className={inputClass} />
                     </div>
                     
-                    {/* Detailní texty */}
                     <div className="col-span-2 mt-4 pt-4 border-t border-yellow-200 grid grid-cols-2 gap-4">
                       <h4 className="col-span-2 font-bold text-yellow-800 text-xs uppercase tracking-wider">📝 Detailní texty</h4>
                       
@@ -492,7 +519,6 @@ export default function AdminPage() {
                       </div>
                     </div>
 
-                    {/* SEKCE: POČASÍ */}
                     <div className="col-span-2 mt-4 pt-4 border-t border-yellow-200">
                       <h4 className="font-bold text-yellow-800 mb-4 text-xs uppercase tracking-wider">🌡️ Průměrné teploty (°C)</h4>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -522,7 +548,7 @@ export default function AdminPage() {
                   
                   {isRegionActive && (
                     <div className="flex gap-3 mt-4">
-                      <button type="submit" className="flex-grow bg-yellow-500 text-white font-bold py-3 rounded-lg hover:bg-yellow-600">Uložit region</button>
+                      <button type="submit" className="flex-grow bg-yellow-500 text-white font-bold py-3 rounded-lg hover:bg-yellow-600">Uložit a přeložit</button>
                       <button type="button" onClick={() => { setIsRegionActive(false); if (!isEditingRegion) handleNewRegion(); }} className="bg-gray-200 text-gray-700 px-4 rounded-lg font-bold hover:bg-gray-300">Zrušit</button>
                     </div>
                   )}
@@ -568,7 +594,7 @@ export default function AdminPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <input required disabled={!isPlaceActive} placeholder="Název (např. Sevilla)" name="name" value={placeFormData.name} onChange={handlePlaceChange} className={`col-span-2 md:col-span-1 ${inputClass}`} />
                     <input disabled={!isPlaceActive} placeholder="Foto URL" name="image_url" value={placeFormData.image_url} onChange={handlePlaceChange} className={`col-span-2 md:col-span-1 ${inputClass}`} />
-                    <textarea required disabled={!isPlaceActive} placeholder="Popis místa (podporuje Markdown)..." name="description" value={placeFormData.description} onChange={handlePlaceChange} rows={3} className={`col-span-2 ${inputClass}`} />
+                    <textarea required disabled={!isPlaceActive} placeholder="Popis místa..." name="description" value={placeFormData.description} onChange={handlePlaceChange} rows={3} className={`col-span-2 ${inputClass}`} />
                   </div>
                   
                   {isPlaceActive && (
