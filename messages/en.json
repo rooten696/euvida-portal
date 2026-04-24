@@ -11,5 +11,29 @@
     "subtitle": "Your ultimate guide to traveling, moving, and living a fulfilling life in the most beautiful destinations.",
     "cta": "Start exploring",
     "where_to": "Where to today?"
+  },
+  "CountryDetail": {
+    "back_button": "Back to overview",
+    "general_info": "General Information",
+    "travel_tourism": "Travel & Tourism",
+    "life_work": "Life & Work",
+    "culture_food": "Culture & Food",
+    "regions_title": "Regions and areas",
+    "explore_region": "Explore region"
+  },
+  "RegionDetail": {
+    "back_button": "Back to country",
+    "general_info": "General Information",
+    "nature": "Nature & Trips",
+    "history": "Gastronomy & Atmosphere",
+    "transport": "For Whom & Kids",
+    "weather_title": "Current Weather",
+    "temp_title": "Average Temperatures",
+    "spring": "Spring",
+    "summer": "Summer",
+    "autumn": "Autumn",
+    "winter": "Winter",
+    "air": "Air",
+    "sea": "Sea"
   }
 }

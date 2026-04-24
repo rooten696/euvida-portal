@@ -11,5 +11,29 @@
     "subtitle": "Váš ultimátní průvodce pro cestování, stěhování a plnohodnotný život v těch nejkrásnějších destinacích.",
     "cta": "Začít objevovat",
     "where_to": "Kam to bude dnes?"
+  },
+  "CountryDetail": {
+    "back_button": "Zpět na přehled",
+    "general_info": "Obecné informace",
+    "travel_tourism": "Cestování",
+    "life_work": "Život a práce",
+    "culture_food": "Kultura a jídlo",
+    "regions_title": "Regiony a oblasti",
+    "explore_region": "Prozkoumat region"
+  },
+  "RegionDetail": {
+    "back_button": "Zpět na zemi",
+    "general_info": "Obecně o regionu",
+    "nature": "Výlety a příroda",
+    "history": "Gastronomie a atmosféra",
+    "transport": "Pro koho to je a děti",
+    "weather_title": "Aktuální počasí",
+    "temp_title": "Průměrné teploty",
+    "spring": "Jaro",
+    "summer": "Léto",
+    "autumn": "Podzim",
+    "winter": "Zima",
+    "air": "Vzduch",
+    "sea": "Moře"
   }
 }

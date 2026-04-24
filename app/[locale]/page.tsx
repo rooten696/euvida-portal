@@ -19,10 +19,27 @@ export default async function HomePage({
 
   const t = await getTranslations('HomePage');
 
+  // 1. ČISTÝ DOTAZ NA SUPABASE (stáhne vše včetně JSONu translations)
   const { data: countries } = await supabase
     .from('countries')
-    .select('id, name, flag, description, image_url')
+    .select('id, name, flag, description, image_url, translations')
     .order('name');
+
+  // 2. KOUZLO S PŘEKLADY (přepíše texty, pokud existují v JSONu)
+  const translatedCountries = countries?.map((country) => {
+    // Striktní typování pro TypeScript, abychom nepoužívali 'any'
+    type TranslationData = Record<string, { name: string; description: string }>;
+    
+    // Bezpečné načtení dat z JSONu
+    const allTranslations = country.translations as TranslationData | null;
+    const translation = allTranslations?.[locale];
+
+    return {
+      ...country,
+      name: translation?.name || country.name,
+      description: translation?.description || country.description
+    };
+  });
 
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
@@ -83,10 +100,10 @@ export default async function HomePage({
           <p className="text-lg text-gray-500 max-w-2xl mx-auto">Vyberte si zemi a prozkoumejte její unikátní regiony, památky a aktuální počasí.</p>
         </div>
 
-        {countries && countries.length > 0 ? (
+        {/* POZOR ZMĚNA: Tady už nevykreslujeme 'countries', ale naše nové 'translatedCountries' */}
+        {translatedCountries && translatedCountries.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {/* Odkazy nyní bezpečně generují URL podle jazyka: /cs/country/ESP nebo /en/country/ESP */}
-            {countries.map(country => (
+            {translatedCountries.map((country) => (
               <Link href={`/${locale}/country/${country.id}`} key={country.id} className="group rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 border border-gray-100 transition-all duration-300 hover:-translate-y-2 flex flex-col">
                 <div className="h-64 relative overflow-hidden shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
