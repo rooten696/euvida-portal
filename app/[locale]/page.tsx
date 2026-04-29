@@ -116,16 +116,21 @@ export default async function HomePage({
                   <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
                     <h3 className="text-3xl font-extrabold text-white drop-shadow-md">{country.name}</h3>
                     
-                    {/* PŘIDÁNO: SVG vlajka místo textového {country.flag} */}
-                    <div className="origin-bottom-right group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
-                      <Image 
-                        src={`/flags/${country.id.toLowerCase()}.svg`} 
-                        alt={country.name} 
-                        width={48} 
-                        height={32} 
-                        className="rounded border-2 border-white/20 object-cover shadow-lg w-12 h-8"
-                      />
-                    </div>
+                    {/* MOBIL: Nativní emoji vlajka (na větších displejích se schová) */}
+<span className="md:hidden text-4xl drop-shadow-xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300 origin-bottom-right">
+  {country.flag}
+</span>
+
+{/* DESKTOP: SVG vlajka pro jistotu kvůli Windows (na mobilech se schová) */}
+<div className="hidden md:block origin-bottom-right group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
+  <Image 
+    src={`/flags/${country.id.toLowerCase()}.svg`} 
+    alt={country.name} 
+    width={48} 
+    height={32} 
+    className="rounded border-2 border-white/20 object-cover shadow-lg w-12 h-8"
+  />
+</div>
 
                   </div>
                 </div>

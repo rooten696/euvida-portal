@@ -15,15 +15,17 @@ const supabase = createClient(
 type Country = {
   id: string;
   name: string;
+  flag: string; // Tady držíme emoji z databáze pro mobily
   translations?: Record<string, { name: string }>;
 };
 
+// PŘIDÁNO ZPĚT EMOJI: Pro mobilní zobrazení
 const languages = [
-  { code: 'cs', label: 'Čeština' },
-  { code: 'en', label: 'English' },
-  { code: 'de', label: 'Deutsch' },
-  { code: 'es', label: 'Español' },
-  { code: 'fr', label: 'Français' }
+  { code: 'cs', label: 'Čeština', flag: '🇨🇿' },
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'de', label: 'Deutsch', flag: '🇩🇪' },
+  { code: 'es', label: 'Español', flag: '🇪🇸' },
+  { code: 'fr', label: 'Français', flag: '🇫🇷' }
 ];
 
 export default function Navbar() {
@@ -38,15 +40,13 @@ export default function Navbar() {
   const t = useTranslations('Navigation');
   const locale = useLocale();
 
-  // NOVINKA: Zamknutí scrollování pozadí při otevřeném mobilním menu
+  // Zámek scrollování pro mobilní menu
   useEffect(() => {
     if (isMenuOpen) {
       document.body.style.overflow = 'hidden';
     } else {
       document.body.style.overflow = 'unset';
     }
-    
-    // Úklid, když z komponenty odejdeme
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -67,7 +67,8 @@ export default function Navbar() {
 
   useEffect(() => {
     const fetchCountries = async () => {
-      const { data } = await supabase.from('countries').select('id, name, translations');
+      // Stahujeme 'id' (pro SVG) i 'flag' (pro emoji na mobilu)
+      const { data } = await supabase.from('countries').select('id, name, flag, translations');
       
       if (data) {
         const translatedData = data.map((country) => {
@@ -80,6 +81,7 @@ export default function Navbar() {
           };
         });
 
+        // Abecední řazení podle aktuálního jazyka
         translatedData.sort((a, b) => a.name.localeCompare(b.name, locale));
         setCountries(translatedData);
       }
@@ -119,8 +121,8 @@ export default function Navbar() {
               {t('destinations')} <span className="text-xs text-gray-400">▼</span>
             </button>
 
+            {/* DESKTOPOVÉ MENU ZEMÍ (Používá SVG obrázky podle ID) */}
             {isDropdownOpen && (
-              /* OPRAVA DESKTOPU: max-h-[70vh], overflow-y-auto a overscroll-contain */
               <div className="absolute top-[calc(100%-1rem)] left-0 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 overflow-y-auto max-h-[70vh] overscroll-contain animate-in fade-in slide-in-from-top-2 custom-scrollbar">
                 {countries.map(country => (
                   <Link 
@@ -147,8 +149,8 @@ export default function Navbar() {
         {/* PRAVÁ ČÁST: Přihlášení, tlačítka a přepínač jazyka */}
         <div className="flex items-center gap-4 md:gap-6">
           
-          {/* DESKTOPOVÝ PŘEPÍNAČ JAZYKŮ */}
-          <div className="hidden sm:flex items-center gap-2 bg-gray-50/80 p-1 rounded-full border border-gray-100">
+          {/* DESKTOPOVÝ PŘEPÍNAČ JAZYKŮ (Používá SVG obrázky podle kódu jazyka) */}
+          <div className="hidden md:flex items-center gap-2 bg-gray-50/80 p-1 rounded-full border border-gray-100">
             {languages.map(lang => (
               <Link
                 key={lang.code}
@@ -200,11 +202,11 @@ export default function Navbar() {
         
       </div>
 
-      {/* MOBILNÍ ROZBALOVACÍ MENU */}
+      {/* MOBILNÍ ROZBALOVACÍ MENU (Ukazuje krásné emoji) */}
       {isMenuOpen && (
         <div className="md:hidden bg-white border-t border-gray-100 px-4 pt-4 pb-6 shadow-xl absolute w-full left-0 top-full h-screen flex flex-col">
           
-          {/* MOBILNÍ PŘEPÍNAČ JAZYKŮ */}
+          {/* MOBILNÍ PŘEPÍNAČ JAZYKŮ (Emoji) */}
           <div className="flex justify-center gap-4 mb-4 pb-4 border-b border-gray-50 shrink-0">
             {languages.map(lang => (
               <Link
@@ -212,18 +214,12 @@ export default function Navbar() {
                 href={switchLanguage(lang.code)}
                 onClick={() => setIsMenuOpen(false)}
                 title={lang.label}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all overflow-hidden border-2
+                className={`w-12 h-12 flex items-center justify-center rounded-full transition-all text-3xl
                   ${locale === lang.code 
-                    ? 'border-blue-500 shadow-inner grayscale-0 scale-110' 
-                    : 'border-transparent grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}
+                    ? 'bg-blue-50 shadow-inner scale-110 grayscale-0' 
+                    : 'grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}
               >
-                <Image 
-                  src={`/flags/${lang.code}.svg`} 
-                  alt={lang.label} 
-                  width={40} 
-                  height={40} 
-                  className="w-full h-full object-cover shrink-0"
-                />
+                {lang.flag}
               </Link>
             ))}
           </div>
@@ -232,7 +228,7 @@ export default function Navbar() {
             {t('destinations')}
           </div>
           
-          {/* OPRAVA MOBILU: overscroll-contain a protažení výšky */}
+          {/* MOBILNÍ MENU ZEMÍ (Emoji) */}
           <div className="space-y-1 overflow-y-auto overscroll-contain flex-grow pb-32">
             {countries.map(country => (
               <Link 
@@ -241,13 +237,7 @@ export default function Navbar() {
                 onClick={() => setIsMenuOpen(false)}
                 className="flex items-center gap-3 px-4 py-3 text-base font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-900 rounded-xl transition-colors"
               >
-                <Image 
-                  src={`/flags/${country.id.toLowerCase()}.svg`} 
-                  alt={country.name} 
-                  width={24} 
-                  height={18} 
-                  className="rounded-sm border border-gray-200 object-cover shadow-sm w-6 h-[18px] shrink-0"
-                />
+                <span className="text-2xl drop-shadow-sm shrink-0 w-8 text-center">{country.flag}</span>
                 <span>{country.name}</span>
               </Link>
             ))}
