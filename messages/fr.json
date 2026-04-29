@@ -1,7 +1,28 @@
 {
+  "Navigation": {
+    "home": "Accueil",
+    "destinations": "Destinations",
+    "favorites": "Favoris",
+    "login": "Connexion",
+    "logout": "Déconnexion"
+  },
+  "HomePage": {
+    "title": "Découvrez le meilleur de l'Europe.",
+    "subtitle": "Votre guide ultime pour voyager, déménager et vivre une vie épanouie dans les plus belles destinations.",
+    "cta": "Commencer à explorer.🌍",
+    "feature1_title": "Voyage sans faille",
+    "feature1_desc": "Des conseils authentiques sur les lieux incontournables et des conseils pratiques pour des vacances parfaites et sans stress.",
+    "feature2_title": "Vie et Travail",
+    "feature2_desc": "Tenté par un déménagement ? Découvrez tout sur la culture, le logement et les opportunités d'emploi à l'étranger.",
+    "feature3_title": "Culture et Saveur",
+    "feature3_desc": "Des tapas espagnoles aux pralines belges. Plongez pleinement dans la gastronomie et les coutumes locales.",
+    "where_to": "Où allez-vous ?",
+    "where_to_desc": "Choisissez un pays et explorez ses régions uniques, ses sites touristiques et la météo actuelle.",
+    "no_countries": "Aucun pays disponible pour le moment."
+  },
   "CountryDetail": {
     "back_button": "Retour à l'aperçu",
-    "general_info": "Informations Générales",
+    "general_info": "Informations générales",
     "travel_tourism": "Voyage et Tourisme",
     "life_work": "Vie et Travail",
     "culture_food": "Culture et Gastronomie",
@@ -10,10 +31,10 @@
   },
   "RegionDetail": {
     "back_button": "Retour au pays",
-    "general_info": "Informations sur la région",
-    "nature": "Nature et Voyages",
+    "general_info": "Généralités sur la région",
+    "nature": "Excursions et Nature",
     "history": "Gastronomie et Atmosphère",
-    "transport": "Pour qui et Enfants",
+    "transport": "Pour qui c'est et enfants",
     "weather_title": "Météo actuelle",
     "temp_title": "Températures moyennes",
     "spring": "Printemps",

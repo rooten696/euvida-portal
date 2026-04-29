@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { createClient, User } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
@@ -14,20 +15,18 @@ const supabase = createClient(
 type Country = {
   id: string;
   name: string;
-  flag: string;
+  translations?: Record<string, { name: string }>;
 };
 
-// Seznam našich 5 jazyků pro rychlé vykreslení
 const languages = [
-  { code: 'cs', flag: '🇨🇿', label: 'Čeština' },
-  { code: 'en', flag: '🇬🇧', label: 'English' },
-  { code: 'de', flag: '🇩🇪', label: 'Deutsch' },
-  { code: 'es', flag: '🇪🇸', label: 'Español' },
-  { code: 'fr', flag: '🇫🇷', label: 'Français' }
+  { code: 'cs', label: 'Čeština' },
+  { code: 'en', label: 'English' },
+  { code: 'de', label: 'Deutsch' },
+  { code: 'es', label: 'Español' },
+  { code: 'fr', label: 'Français' }
 ];
 
 export default function Navbar() {
-  // Správně typovaný uživatel bez "any"
   const [user, setUser] = useState<User | null>(null);
   const [countries, setCountries] = useState<Country[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -38,6 +37,20 @@ export default function Navbar() {
 
   const t = useTranslations('Navigation');
   const locale = useLocale();
+
+  // NOVINKA: Zamknutí scrollování pozadí při otevřeném mobilním menu
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    
+    // Úklid, když z komponenty odejdeme
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isMenuOpen]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -54,11 +67,25 @@ export default function Navbar() {
 
   useEffect(() => {
     const fetchCountries = async () => {
-      const { data } = await supabase.from('countries').select('id, name, flag').order('name');
-      if (data) setCountries(data);
+      const { data } = await supabase.from('countries').select('id, name, translations');
+      
+      if (data) {
+        const translatedData = data.map((country) => {
+          const allTranslations = country.translations as Record<string, { name: string }> | null;
+          const translation = allTranslations?.[locale];
+          
+          return {
+            ...country,
+            name: translation?.name || country.name
+          };
+        });
+
+        translatedData.sort((a, b) => a.name.localeCompare(b.name, locale));
+        setCountries(translatedData);
+      }
     };
     fetchCountries();
-  }, []);
+  }, [locale]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -93,15 +120,23 @@ export default function Navbar() {
             </button>
 
             {isDropdownOpen && (
-              <div className="absolute top-[calc(100%-1rem)] left-0 w-56 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 overflow-hidden animate-in fade-in slide-in-from-top-2">
+              /* OPRAVA DESKTOPU: max-h-[70vh], overflow-y-auto a overscroll-contain */
+              <div className="absolute top-[calc(100%-1rem)] left-0 w-64 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 overflow-y-auto max-h-[70vh] overscroll-contain animate-in fade-in slide-in-from-top-2 custom-scrollbar">
                 {countries.map(country => (
                   <Link 
                     key={country.id} 
                     href={`/${locale}/country/${country.id}`}
-                    className="block px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 font-bold transition-colors"
+                    className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-900 font-bold transition-colors"
                     onClick={() => setIsDropdownOpen(false)}
                   >
-                    <span className="mr-3 text-lg">{country.flag}</span> {country.name}
+                    <Image 
+                      src={`/flags/${country.id.toLowerCase()}.svg`} 
+                      alt={country.name} 
+                      width={24} 
+                      height={18} 
+                      className="rounded-sm border border-gray-200 object-cover shadow-sm w-6 h-[18px] shrink-0"
+                    />
+                    <span>{country.name}</span>
                   </Link>
                 ))}
               </div>
@@ -112,19 +147,25 @@ export default function Navbar() {
         {/* PRAVÁ ČÁST: Přihlášení, tlačítka a přepínač jazyka */}
         <div className="flex items-center gap-4 md:gap-6">
           
-          {/* NOVÝ PĚTIJAZYČNÝ PŘEPÍNAČ PRO DESKTOP */}
-          <div className="hidden sm:flex items-center gap-1 bg-gray-50/80 p-1 rounded-full border border-gray-100">
+          {/* DESKTOPOVÝ PŘEPÍNAČ JAZYKŮ */}
+          <div className="hidden sm:flex items-center gap-2 bg-gray-50/80 p-1 rounded-full border border-gray-100">
             {languages.map(lang => (
               <Link
                 key={lang.code}
                 href={switchLanguage(lang.code)}
                 title={lang.label}
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all text-lg
+                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all overflow-hidden border-2
                   ${locale === lang.code 
-                    ? 'bg-white shadow-sm scale-110 grayscale-0' 
-                    : 'hover:bg-white/60 hover:scale-105 grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}
+                    ? 'border-blue-500 shadow-sm scale-110 grayscale-0' 
+                    : 'border-transparent hover:border-blue-200 hover:scale-105 grayscale-[0.6] hover:opacity-100 hover:grayscale-0'}`}
               >
-                {lang.flag}
+                <Image 
+                  src={`/flags/${lang.code}.svg`} 
+                  alt={lang.label} 
+                  width={32} 
+                  height={32} 
+                  className="w-full h-full object-cover shrink-0"
+                />
               </Link>
             ))}
           </div>
@@ -161,38 +202,53 @@ export default function Navbar() {
 
       {/* MOBILNÍ ROZBALOVACÍ MENU */}
       {isMenuOpen && (
-        <div className="md:hidden bg-white border-t border-gray-100 px-4 pt-4 pb-6 shadow-xl absolute w-full left-0 top-full">
+        <div className="md:hidden bg-white border-t border-gray-100 px-4 pt-4 pb-6 shadow-xl absolute w-full left-0 top-full h-screen flex flex-col">
           
           {/* MOBILNÍ PŘEPÍNAČ JAZYKŮ */}
-          <div className="flex justify-center gap-3 mb-4 pb-4 border-b border-gray-50">
+          <div className="flex justify-center gap-4 mb-4 pb-4 border-b border-gray-50 shrink-0">
             {languages.map(lang => (
               <Link
                 key={lang.code}
                 href={switchLanguage(lang.code)}
                 onClick={() => setIsMenuOpen(false)}
                 title={lang.label}
-                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all text-2xl
+                className={`w-10 h-10 flex items-center justify-center rounded-full transition-all overflow-hidden border-2
                   ${locale === lang.code 
-                    ? 'bg-blue-50 shadow-inner grayscale-0 scale-110' 
-                    : 'grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}
+                    ? 'border-blue-500 shadow-inner grayscale-0 scale-110' 
+                    : 'border-transparent grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}
               >
-                {lang.flag}
+                <Image 
+                  src={`/flags/${lang.code}.svg`} 
+                  alt={lang.label} 
+                  width={40} 
+                  height={40} 
+                  className="w-full h-full object-cover shrink-0"
+                />
               </Link>
             ))}
           </div>
 
-          <div className="px-2 pb-2 text-xs font-bold text-gray-400 uppercase tracking-wider">
+          <div className="px-2 pb-2 text-xs font-bold text-gray-400 uppercase tracking-wider shrink-0">
             {t('destinations')}
           </div>
-          <div className="space-y-1 max-h-[60vh] overflow-y-auto">
+          
+          {/* OPRAVA MOBILU: overscroll-contain a protažení výšky */}
+          <div className="space-y-1 overflow-y-auto overscroll-contain flex-grow pb-32">
             {countries.map(country => (
               <Link 
                 key={country.id} 
                 href={`/${locale}/country/${country.id}`}
                 onClick={() => setIsMenuOpen(false)}
-                className="block px-4 py-3 text-base font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-900 rounded-xl transition-colors"
+                className="flex items-center gap-3 px-4 py-3 text-base font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-900 rounded-xl transition-colors"
               >
-                <span className="mr-3">{country.flag}</span> {country.name}
+                <Image 
+                  src={`/flags/${country.id.toLowerCase()}.svg`} 
+                  alt={country.name} 
+                  width={24} 
+                  height={18} 
+                  className="rounded-sm border border-gray-200 object-cover shadow-sm w-6 h-[18px] shrink-0"
+                />
+                <span>{country.name}</span>
               </Link>
             ))}
           </div>

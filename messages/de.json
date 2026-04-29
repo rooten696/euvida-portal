@@ -1,19 +1,40 @@
 {
+  "Navigation": {
+    "home": "Startseite",
+    "destinations": "Reiseziele",
+    "favorites": "Favoriten",
+    "login": "Anmelden",
+    "logout": "Abmelden"
+  },
+  "HomePage": {
+    "title": "Entdecke das Beste von Europa.",
+    "subtitle": "Dein ultimativer Begleiter für Reisen, Umzug und ein erfülltes Leben in den schönsten Reisezielen.",
+    "cta": "Jetzt entdecken.🌍",
+    "feature1_title": "Fehlerfreies Reisen",
+    "feature1_desc": "Authentische Tipps für Sehenswürdigkeiten und praktische Ratschläge für einen perfekten, stressfreien Urlaub.",
+    "feature2_title": "Leben und Arbeiten",
+    "feature2_desc": "Lust auf einen Umzug? Erfahre alles über Kultur, Wohnen und Jobmöglichkeiten im Ausland.",
+    "feature3_title": "Kultur und Geschmack",
+    "feature3_desc": "Von spanischen Tapas bis zu belgischen Pralinen. Tauche voll und ganz in die lokale Gastronomie und Bräuche ein.",
+    "where_to": "Wohin geht die Reise?",
+    "where_to_desc": "Wähle ein Land und entdecke seine einzigartigen Regionen, Sehenswürdigkeiten und das aktuelle Wetter.",
+    "no_countries": "Noch keine Länder verfügbar."
+  },
   "CountryDetail": {
     "back_button": "Zurück zur Übersicht",
     "general_info": "Allgemeine Informationen",
-    "travel_tourism": "Reise & Tourismus",
+    "travel_tourism": "Reisen & Tourismus",
     "life_work": "Leben & Arbeiten",
-    "culture_food": "Kultur & Gastronomie",
+    "culture_food": "Kultur & Essen",
     "regions_title": "Regionen und Gebiete",
     "explore_region": "Region erkunden"
   },
   "RegionDetail": {
     "back_button": "Zurück zum Land",
     "general_info": "Allgemeines über die Region",
-    "nature": "Ausflüge & Natur",
-    "history": "Gastronomie & Atmosphäre",
-    "transport": "Für wen & Kinder",
+    "nature": "Ausflüge und Natur",
+    "history": "Gastronomie und Atmosphäre",
+    "transport": "Für wen es ist und Kinder",
     "weather_title": "Aktuelles Wetter",
     "temp_title": "Durchschnittstemperaturen",
     "spring": "Frühling",

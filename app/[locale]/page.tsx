@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image'; // PŘIDÁNO: Import pro vykreslování SVG vlajek
 import { createClient } from '@supabase/supabase-js';
 import { getTranslations } from 'next-intl/server';
 
@@ -77,18 +78,18 @@ export default async function HomePage({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
             <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">✈️</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Cestování bez chyb</h3>
-            <p className="text-gray-600 leading-relaxed">Autentické tipy na místa, která musíte vidět, a praktické rady pro dokonalou dovolenou bez stresu.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature1_title')}</h3>
+            <p className="text-gray-600 leading-relaxed">{t('feature1_desc')}</p>
           </div>
           <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300 delay-100">
             <div className="w-16 h-16 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">💼</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Život a práce</h3>
-            <p className="text-gray-600 leading-relaxed">Láká vás stěhování? Zjistěte vše o kultuře, bydlení a pracovních příležitostech v cizině.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature2_title')}</h3>
+            <p className="text-gray-600 leading-relaxed">{t('feature2_desc')}</p>
           </div>
           <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300 delay-200">
             <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">🍷</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">Kultura a chuť</h3>
-            <p className="text-gray-600 leading-relaxed">Od španělských tapas po belgické pralinky. Ponořte se naplno do lokální gastronomie a zvyků.</p>
+            <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature3_title')}</h3>
+            <p className="text-gray-600 leading-relaxed">{t('feature3_desc')}</p>
           </div>
         </div>
       </section>
@@ -97,10 +98,9 @@ export default async function HomePage({
       <section id="destinace" className="max-w-6xl mx-auto px-4 py-20 scroll-mt-24">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4">{t('where_to')}</h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">Vyberte si zemi a prozkoumejte její unikátní regiony, památky a aktuální počasí.</p>
+          <p className="text-lg text-gray-500 max-w-2xl mx-auto">{t('where_to_desc')}</p>
         </div>
 
-        {/* POZOR ZMĚNA: Tady už nevykreslujeme 'countries', ale naše nové 'translatedCountries' */}
         {translatedCountries && translatedCountries.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {translatedCountries.map((country) => (
@@ -115,7 +115,18 @@ export default async function HomePage({
                   <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent" />
                   <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
                     <h3 className="text-3xl font-extrabold text-white drop-shadow-md">{country.name}</h3>
-                    <span className="text-4xl drop-shadow-xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300 origin-bottom-right">{country.flag}</span>
+                    
+                    {/* PŘIDÁNO: SVG vlajka místo textového {country.flag} */}
+                    <div className="origin-bottom-right group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
+                      <Image 
+                        src={`/flags/${country.id.toLowerCase()}.svg`} 
+                        alt={country.name} 
+                        width={48} 
+                        height={32} 
+                        className="rounded border-2 border-white/20 object-cover shadow-lg w-12 h-8"
+                      />
+                    </div>
+
                   </div>
                 </div>
                 <div className="p-6 flex-grow flex flex-col">
@@ -125,7 +136,7 @@ export default async function HomePage({
             ))}
           </div>
         ) : (
-          <p className="text-center text-gray-400 italic py-12 bg-white rounded-3xl border border-gray-100 shadow-sm">Zatím tu nejsou žádné země.</p>
+          <p className="text-center text-gray-400 italic py-12 bg-white rounded-3xl border border-gray-100 shadow-sm">{t('no_countries')}</p>
         )}
       </section>
 

@@ -3,14 +3,22 @@
     "home": "Home",
     "destinations": "Destinations",
     "favorites": "Favorites",
-    "login": "Log in",
-    "logout": "Log out"
+    "login": "Login",
+    "logout": "Logout"
   },
   "HomePage": {
     "title": "Discover the best of Europe.",
     "subtitle": "Your ultimate guide to traveling, moving, and living a fulfilling life in the most beautiful destinations.",
-    "cta": "Start exploring",
-    "where_to": "Where to today?"
+    "cta": "Start exploring.🌍",
+    "feature1_title": "Flawless Travel",
+    "feature1_desc": "Authentic tips on must-see places and practical advice for a perfect, stress-free vacation.",
+    "feature2_title": "Life and Work",
+    "feature2_desc": "Tempted to move? Find out everything about culture, housing, and job opportunities abroad.",
+    "feature3_title": "Culture and Taste",
+    "feature3_desc": "From Spanish tapas to Belgian pralines. Dive fully into local gastronomy and customs.",
+    "where_to": "Where are you heading?",
+    "where_to_desc": "Choose a country and explore its unique regions, sights, and current weather.",
+    "no_countries": "No countries available yet."
   },
   "CountryDetail": {
     "back_button": "Back to overview",
@@ -23,12 +31,12 @@
   },
   "RegionDetail": {
     "back_button": "Back to country",
-    "general_info": "General Information",
-    "nature": "Nature & Trips",
-    "history": "Gastronomy & Atmosphere",
-    "transport": "For Whom & Kids",
-    "weather_title": "Current Weather",
-    "temp_title": "Average Temperatures",
+    "general_info": "General about the region",
+    "nature": "Trips and Nature",
+    "history": "Gastronomy and Atmosphere",
+    "transport": "For whom it is and children",
+    "weather_title": "Current weather",
+    "temp_title": "Average temperatures",
     "spring": "Spring",
     "summer": "Summer",
     "autumn": "Autumn",

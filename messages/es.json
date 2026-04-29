@@ -1,19 +1,40 @@
 {
+  "Navigation": {
+    "home": "Inicio",
+    "destinations": "Destinos",
+    "favorites": "Favoritos",
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión"
+  },
+  "HomePage": {
+    "title": "Descubre lo mejor de Europa.",
+    "subtitle": "Tu guía definitiva para viajar, mudarte y vivir una vida plena en los destinos más hermosos.",
+    "cta": "Empezar a explorar.🌍",
+    "feature1_title": "Viajes sin errores",
+    "feature1_desc": "Consejos auténticos sobre lugares imprescindibles y consejos prácticos para unas vacaciones perfectas y sin estrés.",
+    "feature2_title": "Vida y Trabajo",
+    "feature2_desc": "¿Te tienta mudarte? Descubre todo sobre la cultura, la vivienda y las oportunidades laborales en el extranjero.",
+    "feature3_title": "Cultura y Sabor",
+    "feature3_desc": "Desde tapas españolas hasta pralinés belgas. Sumérgete de lleno en la gastronomía y las costumbres locales.",
+    "where_to": "¿A dónde te diriges?",
+    "where_to_desc": "Elige un país y explora sus regiones únicas, lugares de interés y el clima actual.",
+    "no_countries": "Aún no hay países disponibles."
+  },
   "CountryDetail": {
-    "back_button": "Volver a la vista general",
-    "general_info": "Información General",
+    "back_button": "Volver al resumen",
+    "general_info": "Información general",
     "travel_tourism": "Viajes y Turismo",
     "life_work": "Vida y Trabajo",
     "culture_food": "Cultura y Comida",
-    "regions_title": "Regiones y áreas",
+    "regions_title": "Regiones y zonas",
     "explore_region": "Explorar región"
   },
   "RegionDetail": {
     "back_button": "Volver al país",
-    "general_info": "Información del región",
-    "nature": "Naturaleza y Viajes",
+    "general_info": "General sobre la región",
+    "nature": "Excursiones y Naturaleza",
     "history": "Gastronomía y Atmósfera",
-    "transport": "Para quién es y Niños",
+    "transport": "Para quién es y niños",
     "weather_title": "Clima actual",
     "temp_title": "Temperaturas medias",
     "spring": "Primavera",

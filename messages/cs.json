@@ -9,8 +9,16 @@
   "HomePage": {
     "title": "Objevte to nejlepší z Evropy.",
     "subtitle": "Váš ultimátní průvodce pro cestování, stěhování a plnohodnotný život v těch nejkrásnějších destinacích.",
-    "cta": "Začít objevovat",
-    "where_to": "Kam to bude dnes?"
+    "cta": "Začít objevovat.🌍",
+    "feature1_title": "Cestování bez chyb",
+    "feature1_desc": "Autentické tipy na místa, která musíte vidět, a praktické rady pro dokonalou dovolenou bez stresu.",
+    "feature2_title": "Život a práce",
+    "feature2_desc": "Láká vás stěhování? Zjistěte vše o kultuře, bydlení a pracovních příležitostech v cizině.",
+    "feature3_title": "Kultura a chuť",
+    "feature3_desc": "Od španělských tapas po belgické pralinky. Ponořte se naplno do lokální gastronomie a zvyků.",
+    "where_to": "Kam se chystáte?",
+    "where_to_desc": "Vyberte si zemi a prozkoumejte její unikátní regiony, památky a aktuální počasí.",
+    "no_countries": "Zatím tu nejsou žádné země."
   },
   "CountryDetail": {
     "back_button": "Zpět na přehled",
@@ -36,4 +44,4 @@
     "air": "Vzduch",
     "sea": "Moře"
   }
-}
+   }
