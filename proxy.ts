@@ -1,14 +1,22 @@
 import createMiddleware from 'next-intl/middleware';
 
-// Vytvoříme proxy místo middleware
-const proxy = createMiddleware({
-  locales: ['cs', 'en'],
-  defaultLocale: 'cs'
+export default createMiddleware({
+  // Všech 5 jazyků, které podporujeme
+  locales: ['cs', 'en', 'de', 'es', 'fr'],
+  
+  // Výchozí jazyk
+  defaultLocale: 'cs',
+  
+  // Vždy zobrazovat kód jazyka v URL (např. /cs/...)
+  localePrefix: 'always'
 });
 
-export default proxy;
-
 export const config = {
-  // Tento radar chytne úplně všechny cesty na webu (kromě systémových souborů)
-  matcher: ['/((?!api|_next|_vercel|.*\\..*).*)']
+  // Tento matcher říká, které cesty má tento "překladač" hlídat
+  matcher: [
+    '/', 
+    '/(cs|en|de|es|fr)/:path*',
+    // Ignorujeme systémové věci a obrázky
+    '/((?!api|_next|_vercel|.*\\..*).*)'
+  ]
 };

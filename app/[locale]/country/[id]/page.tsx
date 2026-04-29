@@ -3,7 +3,9 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import FavoriteButton from '@/app/components/FavoriteButton';
-import { getTranslations } from 'next-intl/server'; // IMPORT PŘEKLADAČE
+import { getTranslations } from 'next-intl/server';
+// IMPORT NAŠEHO PŘEPÍNAČE
+import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,7 +18,7 @@ type Region = {
   language: string;
   description: string;
   image_url: string;
-  translations?: Record<string, Record<string, string>>; // PŘIDÁNO
+  translations?: Record<string, Record<string, string>>;
 };
 
 type TranslationData = Record<string, Record<string, string>>;
@@ -53,7 +55,6 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
   const resolvedParams = await params;
   const { locale, id } = resolvedParams;
 
-  // 1. Načteme slovník pro statické nadpisy
   const t = await getTranslations('CountryDetail');
 
   const { data: country } = await supabase
@@ -100,10 +101,15 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
   return (
     <main className="min-h-screen bg-gray-50 text-gray-900 font-sans">
       
-      <div className="absolute top-6 left-4 md:left-auto md:max-w-5xl md:mx-auto w-full z-30 px-4">
-        <Link href={`/${locale}`} className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-blue-900 font-bold hover:bg-white shadow-sm transition-colors">
-          &larr; {t('back_button')}
-        </Link>
+      {/* OPRAVENÁ HORNÍ NAVIGACE (Tlačítko zpět + Přepínač jazyků) */}
+      <div className="absolute top-6 left-0 right-0 z-30 px-4">
+        <div className="max-w-5xl mx-auto flex items-center justify-between">
+          <Link href={`/${locale}`} className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-blue-900 font-bold hover:bg-white shadow-sm transition-colors">
+            &larr; {t('back_button')}
+          </Link>
+          
+          <LanguageSwitcher currentLocale={locale} />
+        </div>
       </div>
 
       <header className="relative py-32 px-4 text-center overflow-hidden border-b-4 border-yellow-400 min-h-[50vh] flex flex-col justify-center">
@@ -129,7 +135,6 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
           {displayData.general_info && (
             <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              {/* ZDE JSOU APLIKOVÁNY STATICKÉ PŘEKLADY Z JSONu */}
               <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>📍</span> {t('general_info')}</h2>
               <ReactMarkdown components={markdownComponents}>{displayData.general_info}</ReactMarkdown>
             </div>
@@ -162,11 +167,9 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {regions.map((region: Region) => {
                 
-                // MAGIE PŘEKLADU PRO REGIONY
                 const regionTranslations = region.translations as TranslationData | null;
                 const rLang = regionTranslations?.[locale];
                 
-                // Přepíšeme názvy a popisy
                 const rName = rLang?.name || region.name;
                 const rDesc = rLang?.description || region.description;
 

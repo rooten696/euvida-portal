@@ -1,0 +1,26 @@
+{
+  "CountryDetail": {
+    "back_button": "Volver a la vista general",
+    "general_info": "Información General",
+    "travel_tourism": "Viajes y Turismo",
+    "life_work": "Vida y Trabajo",
+    "culture_food": "Cultura y Comida",
+    "regions_title": "Regiones y áreas",
+    "explore_region": "Explorar región"
+  },
+  "RegionDetail": {
+    "back_button": "Volver al país",
+    "general_info": "Información del región",
+    "nature": "Naturaleza y Viajes",
+    "history": "Gastronomía y Atmósfera",
+    "transport": "Para quién es y Niños",
+    "weather_title": "Clima actual",
+    "temp_title": "Temperaturas medias",
+    "spring": "Primavera",
+    "summer": "Verano",
+    "autumn": "Otoño",
+    "winter": "Invierno",
+    "air": "Aire",
+    "sea": "Mar"
+  }
+}
