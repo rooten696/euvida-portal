@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient, Session } from '@supabase/supabase-js';
-import { translateCountryData, translateRegionData } from '../../actions/translate';
+// ODEBRÁNO: translateCountryData (už ho nepoužíváme, jedeme po částech)
+import { translateRegionData, translateSingleText } from '../../actions/translate';
 
 type CountryData = {
   id: string;
@@ -65,8 +66,8 @@ export default function AdminPage() {
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
   
-  // Přepínač zdrojového jazyka
-  const [sourceLang, setSourceLang] = useState<'cs' | 'en'>('cs');
+  // ZMĚNA: Výchozí jazyk je nyní angličtina
+  const [sourceLang, setSourceLang] = useState<'cs' | 'en'>('en');
   
   const [countries, setCountries] = useState<CountryData[]>([]);
   const [formData, setFormData] = useState<CountryData>({
@@ -75,6 +76,9 @@ export default function AdminPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isCountryActive, setIsCountryActive] = useState(true);
   const [countryToDelete, setCountryToDelete] = useState(false);
+
+  // STAV PRO PŘEKLAD KONKRÉTNÍHO POLE
+  const [translatingField, setTranslatingField] = useState<string | null>(null);
 
   const [regions, setRegions] = useState<RegionData[]>([]);
   const [regionFormData, setRegionFormData] = useState<RegionData>(emptyRegion);
@@ -159,45 +163,63 @@ export default function AdminPage() {
     setStatus('');
   };
 
+  // ULOŽENÍ ZEMĚ (Bez masivního překladu, jen ukládáme base data)
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('🤖 DeepL překládá texty...');
-    
+    setStatus('Ukládám do databáze...');
     try {
-      const allTexts = await translateCountryData({
-        name: formData.name,
-        description: formData.description,
-        general_info: formData.general_info,
-        travel_tourism: formData.travel_tourism,
-        life_work: formData.life_work,
-        culture_food: formData.culture_food
-      }, sourceLang);
-
-      // Dynamicky rozdělíme češtinu a ostatní jazyky
-      const { cs, ...translations } = allTexts;
-
-      const dataToSave = {
-        ...formData,
-        name: cs.name,
-        description: cs.description,
-        general_info: cs.general_info,
-        travel_tourism: cs.travel_tourism,
-        life_work: cs.life_work,
-        culture_food: cs.culture_food,
-        translations: translations
-      };
-
-      setStatus('Ukládám do databáze...');
-      const { error } = await supabase.from('countries').upsert([dataToSave]);
+      const { error } = await supabase.from('countries').upsert([formData]);
       if (error) throw error;
       
-      setStatus('✅ Země přeložena a uložena!');
+      setStatus('✅ Země uložena!');
       setIsCountryActive(false);
       fetchCountries();
-      
     } catch (err: unknown) {
       if (err instanceof Error) setStatus('❌ Chyba: ' + err.message);
-      else setStatus('❌ Neočekávaná chyba při překladu nebo ukládání.');
+      else setStatus('❌ Neočekávaná chyba při ukládání.');
+    }
+  };
+
+  // FUNKCE PRO PŘEKLAD KONKRÉTNÍHO POLE
+  const handleTranslateSingle = async (field: keyof CountryData) => {
+    if (!formData.id) {
+      setStatus('❌ Nejdřív musíš zemi uložit do databáze!');
+      return;
+    }
+    
+    setTranslatingField(field);
+    setStatus(`🤖 Překládám pole: ${field}...`);
+
+    try {
+      const textToTranslate = formData[field] as string;
+      const newTranslations = await translateSingleText(textToTranslate, sourceLang);
+
+      const updatedTranslations = { ...(formData.translations || {}) };
+      
+      // Sloučení nových překladů s těmi stávajícími v JSONu
+      Object.entries(newTranslations).forEach(([lang, translatedText]) => {
+        if (!updatedTranslations[lang]) updatedTranslations[lang] = {};
+        updatedTranslations[lang][field] = translatedText;
+      });
+
+      // Uložení rovnou do databáze (updatujeme jen JSON)
+      const { error } = await supabase
+        .from('countries')
+        .update({ translations: updatedTranslations })
+        .eq('id', formData.id);
+
+      if (error) throw error;
+
+      // Aktualizace lokálního stavu (aby se hned vybarvily vlaječky)
+      setFormData(prev => ({ ...prev, translations: updatedTranslations }));
+      setStatus(`✅ Pole bylo úspěšně přeloženo a uloženo!`);
+      
+      // Aktualizovat i seznam zemí vlevo
+      fetchCountries();
+    } catch (err: unknown) {
+      if (err instanceof Error) setStatus('❌ Chyba překladu: ' + err.message);
+    } finally {
+      setTranslatingField(null);
     }
   };
 
@@ -208,6 +230,29 @@ export default function AdminPage() {
       fetchCountries();
       setStatus('🗑️ Země byla kompletně smazána.');
     }
+  };
+
+  // NÁPOVĚDNÉ VLAJEČKY PRO JEDNOTLIVÁ POLE
+  const renderFlags = (field: keyof CountryData) => {
+    const targets = sourceLang === 'en' ? ['cs', 'de', 'es', 'fr'] : ['en', 'de', 'es', 'fr'];
+    const flags: Record<string, string> = { cs: '🇨🇿', en: '🇬🇧', de: '🇩🇪', es: '🇪🇸', fr: '🇫🇷' };
+    
+    return (
+      <div className="flex gap-1 mr-3">
+        {targets.map(lang => {
+          const isTranslated = !!formData.translations?.[lang]?.[field];
+          return (
+            <span 
+              key={lang} 
+              className={`text-sm transition-all ${isTranslated ? 'opacity-100 grayscale-0' : 'opacity-30 grayscale'}`} 
+              title={isTranslated ? `Přeloženo do ${lang.toUpperCase()}` : `Chybí překlad do ${lang.toUpperCase()}`}
+            >
+              {flags[lang]}
+            </span>
+          );
+        })}
+      </div>
+    );
   };
 
   const handleRegionChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -251,7 +296,6 @@ export default function AdminPage() {
         transport_and_life: regionFormData.transport_and_life || ''
       }, sourceLang);
 
-      // Dynamicky rozdělíme češtinu a ostatní jazyky
       const { cs, ...translations } = allTexts;
 
       const dataToSave = {
@@ -373,16 +417,16 @@ export default function AdminPage() {
             <div className="font-bold text-blue-900">V jakém jazyce vkládáš texty?</div>
             <div className="flex bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
               <button
-                onClick={() => setSourceLang('cs')}
-                className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-colors ${sourceLang === 'cs' ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-              >
-                🇨🇿 Čeština
-              </button>
-              <button
                 onClick={() => setSourceLang('en')}
                 className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-colors ${sourceLang === 'en' ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
               >
                 🇬🇧 Angličtina
+              </button>
+              <button
+                onClick={() => setSourceLang('cs')}
+                className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-colors ${sourceLang === 'cs' ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+              >
+                🇨🇿 Čeština
               </button>
             </div>
           </div>
@@ -406,7 +450,17 @@ export default function AdminPage() {
                 <input required disabled={isEditing} name="id" value={formData.id} onChange={handleChange} className={inputClass} />
               </div>
               <div className="col-span-2 lg:col-span-1">
-                <label className="text-xs font-bold text-gray-400 uppercase">Název</label>
+                <div className="flex justify-between items-end mb-1">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Název</label>
+                  {isEditing && (
+                    <div className="flex items-center">
+                      {renderFlags('name')}
+                      <button type="button" onClick={() => handleTranslateSingle('name')} disabled={translatingField === 'name'} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">
+                        {translatingField === 'name' ? '...' : '🤖'}
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <input required disabled={!isCountryActive} name="name" value={formData.name} onChange={handleChange} className={inputClass} />
               </div>
               <div className="col-span-2 lg:col-span-1">
@@ -414,20 +468,47 @@ export default function AdminPage() {
                 <input required disabled={!isCountryActive} name="flag" value={formData.flag} onChange={handleChange} className={inputClass} />
               </div>
               <div className="col-span-2 lg:col-span-1">
-                <label className="text-xs font-bold text-gray-400 uppercase">Popis</label>
-                <input required disabled={!isCountryActive} name="description" value={formData.description} onChange={handleChange} className={inputClass} />
-              </div>
-              <div className="col-span-2 lg:col-span-4">
                 <label className="text-xs font-bold text-gray-400 uppercase">URL Hlavní fotky</label>
                 <input disabled={!isCountryActive} name="image_url" value={formData.image_url} onChange={handleChange} className={inputClass} />
+              </div>
+              
+              <div className="col-span-2 lg:col-span-4">
+                <div className="flex justify-between items-end mb-1">
+                  <label className="text-xs font-bold text-gray-400 uppercase">Popis</label>
+                  {isEditing && (
+                    <div className="flex items-center">
+                      {renderFlags('description')}
+                      <button type="button" onClick={() => handleTranslateSingle('description')} disabled={translatingField === 'description' || !formData.description} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 disabled:opacity-50">
+                        {translatingField === 'description' ? 'Překládám...' : '🤖 Přeložit'}
+                      </button>
+                    </div>
+                  )}
+                </div>
+                <input required disabled={!isCountryActive} name="description" value={formData.description} onChange={handleChange} className={inputClass} />
               </div>
 
               {['general_info', 'travel_tourism', 'life_work', 'culture_food'].map(field => {
                 const key = field as keyof CountryData;
                 return (
-                  <div key={field} className="col-span-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase">{field.replace('_', ' ')}</label>
-                    <textarea disabled={!isCountryActive} name={field} value={formData[key] as string} onChange={handleChange} rows={5} className={inputClass} />
+                  <div key={field} className="col-span-2 lg:col-span-2 mt-4 border-t border-gray-100 pt-4">
+                    <div className="flex justify-between items-end mb-2">
+                      <label className="text-xs font-bold text-gray-400 uppercase">{field.replace('_', ' ')}</label>
+                      {/* ZDE JE KOUZLO: Vlaječky a nezávislé tlačítko přeložit */}
+                      {isEditing && (
+                        <div className="flex items-center">
+                          {renderFlags(key)}
+                          <button 
+                            type="button" 
+                            onClick={() => handleTranslateSingle(key)} 
+                            disabled={translatingField === key || !formData[key]} 
+                            className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 disabled:opacity-50 font-bold"
+                          >
+                            {translatingField === key ? 'Překládám...' : '🤖 Přeložit'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <textarea disabled={!isCountryActive} name={field} value={formData[key] as string} onChange={handleChange} rows={6} className={inputClass} />
                   </div>
                 );
               })}
@@ -435,7 +516,7 @@ export default function AdminPage() {
             
             {isCountryActive && (
               <div className="flex gap-4 pt-4">
-                <button type="submit" className="flex-grow bg-blue-900 text-white font-bold py-4 rounded-xl hover:bg-blue-800">Uložit úpravy a přeložit</button>
+                <button type="submit" className="flex-grow bg-blue-900 text-white font-bold py-4 rounded-xl hover:bg-blue-800">Uložit základní texty</button>
                 {isEditing && (
                   !countryToDelete ? (
                     <button type="button" onClick={() => setCountryToDelete(true)} className="bg-gray-100 text-gray-600 px-6 rounded-xl font-bold hover:bg-gray-200">Smazat</button>

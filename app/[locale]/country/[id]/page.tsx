@@ -1,10 +1,10 @@
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image'; // PŘIDÁNO: Import pro SVG vlajky
 import ReactMarkdown from 'react-markdown';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import { getTranslations } from 'next-intl/server';
-// IMPORT NAŠEHO PŘEPÍNAČE
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 
 const supabase = createClient(
@@ -121,7 +121,25 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
         <div className="absolute inset-0 bg-slate-900/60 z-10" />
 
         <div className="relative z-20">
-          <div className="text-6xl mb-4 drop-shadow-md">{displayData.flag}</div>
+          {/* ZDE JE OPRAVA: Kombo pro zobrazení vlajky */}
+          <div className="flex justify-center mb-6">
+            {/* MOBIL: Emoji vlajka */}
+            <span className="md:hidden text-7xl drop-shadow-md">
+              {displayData.flag}
+            </span>
+
+            {/* DESKTOP: SVG vlajka */}
+            <div className="hidden md:block">
+              <Image 
+                src={`/flags/${displayData.id.toLowerCase()}.svg`} 
+                alt={displayData.name} 
+                width={96} 
+                height={64} 
+                className="rounded-xl border-4 border-white/20 object-cover shadow-2xl w-24 h-16"
+              />
+            </div>
+          </div>
+          
           <h1 className="text-6xl font-extrabold mb-4 text-white drop-shadow-lg tracking-tight">{displayData.name}</h1>
           <p className="text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-md font-medium leading-relaxed mb-8">{displayData.description}</p>
           

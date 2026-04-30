@@ -22,23 +22,49 @@ type RegionTextFields = {
   transport_and_life: string;
 };
 
-// 🛡️ NAŠE NOVÁ POJISTKA: Bezpečný překlad, který ignoruje prázdná políčka
+// 🛡️ NAŠE POJISTKA: Bezpečný překlad, který ignoruje prázdná políčka
 async function safeTranslate(translator: deepl.Translator, text: string, source: deepl.SourceLanguageCode, target: deepl.TargetLanguageCode) {
   if (!text || text.trim() === '') return ''; // Pokud je pole prázdné, vůbec nevoláme API
   const result = await translator.translateText(text, source, target);
   return result.text;
 }
 
-export async function translateCountryData(data: CountryTextFields, sourceLang: 'cs' | 'en') {
+// 🤖 OSTRÁ FUNKCE PRO PŘEKLAD JEDNOHO POLE (Už žádné [CS] závorky!)
+export async function translateSingleText(text: string, sourceLang: 'cs' | 'en') {
   if (!authKey) throw new Error('Chybí DEEPL_API_KEY v .env.local');
 
   const translator = new deepl.Translator(authKey);
   
   // Našich 5 hlavních jazyků
   const languages: deepl.TargetLanguageCode[] = ['en-GB', 'de', 'es', 'fr', 'cs'];
-  // Odfiltrujeme zdrojový jazyk, abychom ho nepřekládali zbytečně na ten samý
+  // Odfiltrujeme zdrojový jazyk
   const targetLanguages = languages.filter(l => l.split('-')[0] !== sourceLang);
+  const sourceDeepL: deepl.SourceLanguageCode = sourceLang === 'cs' ? 'cs' : 'en';
+
+  const results: Record<string, string> = {};
+
+  try {
+    for (const target of targetLanguages) {
+      const shortLang = target.split('-')[0];
+      // Tady už voláme naostro tvou safeTranslate funkci
+      results[shortLang] = await safeTranslate(translator, text, sourceDeepL, target);
+    }
+    return results;
+} catch (error: any) { // Změněno na error: any, abychom mohli vytáhnout zprávu
+    console.error("Chyba DeepL (Single Text):", error);
+    // TADY JE TA ZMĚNA - posíláme skutečnou chybu z DeepL ven
+    throw new Error(`Překlad selhal: ${error.message || 'Neznámá chyba DeepL API'}`);
+  }
+}
+
+// 🌍 HROMADNÝ PŘEKLAD CELÉ ZEMĚ
+export async function translateCountryData(data: CountryTextFields, sourceLang: 'cs' | 'en') {
+  if (!authKey) throw new Error('Chybí DEEPL_API_KEY v .env.local');
+
+  const translator = new deepl.Translator(authKey);
   
+  const languages: deepl.TargetLanguageCode[] = ['en-GB', 'de', 'es', 'fr', 'cs'];
+  const targetLanguages = languages.filter(l => l.split('-')[0] !== sourceLang);
   const sourceDeepL: deepl.SourceLanguageCode = sourceLang === 'cs' ? 'cs' : 'en';
 
   const results: Record<string, CountryTextFields> = {
@@ -65,15 +91,14 @@ export async function translateCountryData(data: CountryTextFields, sourceLang: 
   }
 }
 
+// 🗺️ HROMADNÝ PŘEKLAD CELÉHO REGIONU
 export async function translateRegionData(data: RegionTextFields, sourceLang: 'cs' | 'en') {
   if (!authKey) throw new Error('Chybí DEEPL_API_KEY');
 
   const translator = new deepl.Translator(authKey);
   
-  // Našich 5 hlavních jazyků pro regiony
   const languages: deepl.TargetLanguageCode[] = ['en-GB', 'de', 'es', 'fr', 'cs'];
   const targetLanguages = languages.filter(l => l.split('-')[0] !== sourceLang);
-  
   const sourceDeepL: deepl.SourceLanguageCode = sourceLang === 'cs' ? 'cs' : 'en';
 
   const results: Record<string, RegionTextFields> = {
