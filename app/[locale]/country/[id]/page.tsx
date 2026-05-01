@@ -76,6 +76,7 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
     travel_tourism: translation?.travel_tourism || country.travel_tourism,
     life_work: translation?.life_work || country.life_work,
     culture_food: translation?.culture_food || country.culture_food,
+    practical_cautions: translation?.practical_cautions || country.practical_cautions,
   };
 
   const { data: regions } = await supabase
@@ -173,6 +174,16 @@ export default async function CountryPage({ params }: { params: Promise<{ locale
             <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
               <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>🍷</span> {t('culture_food')}</h2>
               <ReactMarkdown components={markdownComponents}>{displayData.culture_food}</ReactMarkdown>
+            </div>
+          )}
+          {displayData.practical_cautions && (
+            <div className="bg-orange-50/50 rounded-2xl shadow-sm p-8 border border-orange-100 md:col-span-2">
+              <h2 className="text-2xl font-bold mb-4 text-orange-900 flex items-center gap-2">
+                <span>⚠️</span> {t('practical_cautions')}
+              </h2>
+              <ReactMarkdown components={markdownComponents}>
+                {displayData.practical_cautions}
+              </ReactMarkdown>
             </div>
           )}
         </div>
