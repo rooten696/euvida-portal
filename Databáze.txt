@@ -1,0 +1,76 @@
+ -- 1. Vytvoøení tabulky èlánkù pøesnì podle tvé databáze
+CREATE TABLE public.articles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  image_url TEXT,
+  country_id TEXT REFERENCES public.countries(id) ON DELETE CASCADE,  -- ZDE JE TEXT (odkaz na countries)
+  region_id UUID REFERENCES public.regions(id) ON DELETE CASCADE,     -- ZDE JE UUID (odkaz na regions)
+  category TEXT,
+  title TEXT NOT NULL,
+  content TEXT NOT NULL,
+  translations JSONB DEFAULT '{}'::jsonb
+);
+
+-- 2. Vytvoøení indexù (pro bleskové naèítání na frontendu)
+CREATE INDEX idx_articles_country_id ON public.articles(country_id);
+CREATE INDEX idx_articles_region_id ON public.articles(region_id);
+CREATE INDEX idx_articles_category ON public.articles(category);
+
+-- 3. Zabezpeèení (Row Level Security - jen ètení pro web)
+ALTER TABLE public.articles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Enable read access for all users" 
+ON public.articles FOR SELECT 
+USING (true);
+
+
+
+
+
+           {
+  "en": {
+    "title": "Sagrada Familia Guide",
+    "content": "Full English text here..."
+  },
+  "de": {
+    "title": "Sagrada Familia Reiseführer",
+    "content": "Deutscher Text..."
+  }
+}
+a další
+
+
+
+| table_name | column_name           | data_type                |
+| ---------- | --------------------- | ------------------------ |
+| countries  | id                    | text                     |
+| countries  | name                  | text                     |
+| countries  | description           | text                     |
+| countries  | flag                  | text                     |
+| countries  | general_info          | text                     |
+| countries  | travel_tourism        | text                     |
+| countries  | life_work             | text                     |
+| countries  | culture_food          | text                     |
+| countries  | image_url             | text                     |
+| countries  | translations          | json                     |
+| regions    | id                    | uuid                     |
+| regions    | country_id            | text                     |
+| regions    | name                  | text                     |
+| regions    | language              | text                     |
+| regions    | description           | text                     |
+| regions    | image_url             | text                     |
+| regions    | created_at            | timestamp with time zone |
+| regions    | temp_spring_air       | text                     |
+| regions    | temp_summer_air       | text                     |
+| regions    | temp_autumn_air       | text                     |
+| regions    | temp_winter_air       | text                     |
+| regions    | temp_spring_sea       | text                     |
+| regions    | temp_summer_sea       | text                     |
+| regions    | temp_autumn_sea       | text                     |
+| regions    | temp_winter_sea       | text                     |
+| regions    | general_info          | text                     |
+| regions    | nature_and_landscapes | text                     |
+| regions    | history_and_culture   | text                     |
+| regions    | transport_and_life    | text                     |
+| regions    | translations          | jsonb                    |

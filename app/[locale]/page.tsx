@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import ArticleList from '@/app/components/ArticleList';
 import Image from 'next/image'; // PŘIDÁNO: Import pro vykreslování SVG vlajek
 import { createClient } from '@supabase/supabase-js';
 import { getTranslations } from 'next-intl/server';
@@ -75,6 +76,7 @@ export default async function HomePage({
 
       {/* 2. PROČ EUVIDA */}
       <section className="max-w-6xl mx-auto px-4 py-8 -mt-24 relative z-20">
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
             <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">✈️</div>
@@ -91,6 +93,14 @@ export default async function HomePage({
             <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature3_title')}</h3>
             <p className="text-gray-600 leading-relaxed">{t('feature3_desc')}</p>
           </div>
+        </div>
+
+        <div className="mt-16 mb-8">
+          <h2 className="text-3xl font-extrabold text-blue-900 mb-8 flex items-center gap-3">
+            <span className="text-yellow-500">📰</span> Články a průvodce
+          </h2>
+          {/* Použijeme rovnou proměnnou 'id', kterou už máme nahoře z params */}
+          <ArticleList locale={locale} limit={6} />
         </div>
       </section>
 

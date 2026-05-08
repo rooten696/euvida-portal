@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import ArticleList from '@/app/components/ArticleList';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
@@ -149,6 +150,16 @@ export default async function RegionPage({ params }: { params: Promise<{ locale:
               ))}
             </div>
           </div>
+        </div>
+
+
+
+<div className="mt-16 mb-8">
+          <h2 className="text-3xl font-extrabold text-blue-900 mb-8 flex items-center gap-3">
+            <span className="text-yellow-500">📰</span> Články a průvodce
+          </h2>
+          {/* Použijeme rovnou proměnnou 'id', kterou už máme nahoře z params */}
+          <ArticleList locale={locale} regionId={id} />
         </div>
 
         {/* DETAILNÍ TEXTY */}
