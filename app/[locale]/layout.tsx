@@ -3,8 +3,10 @@ import { Inter } from 'next/font/google';
 import '../globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import banneru
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -39,7 +41,15 @@ export default async function LocaleLayout({
             {children}
           </div>
           <Footer />
+          
+          {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
+          <CookieBanner />
         </NextIntlClientProvider>
+
+        {/* 🚀 GOOGLE ANALYTICS (přesunuto dovnitř body pro validní HTML) */}
+        {process.env.NEXT_PUBLIC_GA_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+        )}
       </body>
     </html>
   );
