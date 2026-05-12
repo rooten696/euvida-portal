@@ -1,9 +1,8 @@
 import createNextIntlPlugin from 'next-intl/plugin';
 import type { NextConfig } from 'next';
- 
-// TADY JE TA OPRAVA: Ukázali jsme mu přesnou cestu k našemu souboru
+
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
- 
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -11,8 +10,13 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'images.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'commons.wikimedia.org',
+        pathname: '/wiki/Special:FilePath/**',
+      },
     ],
   },
 };
- 
+
 export default withNextIntl(nextConfig);
