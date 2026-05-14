@@ -50,10 +50,10 @@ export async function translateSingleText(text: string, sourceLang: 'cs' | 'en')
       results[shortLang] = await safeTranslate(translator, text, sourceDeepL, target);
     }
     return results;
-} catch (error: any) { // Změněno na error: any, abychom mohli vytáhnout zprávu
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Neznámá chyba DeepL API';
     console.error("Chyba DeepL (Single Text):", error);
-    // TADY JE TA ZMĚNA - posíláme skutečnou chybu z DeepL ven
-    throw new Error(`Překlad selhal: ${error.message || 'Neznámá chyba DeepL API'}`);
+    throw new Error(`Překlad selhal: ${message}`);
   }
 }
 
