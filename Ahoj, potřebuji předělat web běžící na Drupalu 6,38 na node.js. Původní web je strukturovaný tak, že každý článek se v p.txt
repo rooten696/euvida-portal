@@ -1,0 +1,3 @@
+Ahoj, potøebuji pøedìlat web bìžící na Drupalu 6,38 na node.js. Pùvodní web je strukturovaný tak, že každý èlánek se v podstatì skládá pouze z názvu vagonu a pod ním uživatelé píší provedené opravy. 
+Jedná se o interní data, takže pøístub mohou mít jen pøihlášení a ovìøení uživatelé. Administrace je nutná pro správu komentáøù, uživatelù a pøidávání dalších vozù. Na každý "èlánek" (vùz) vede odkaz z levého rozbalovacího menu, 
+kde je typ vozu a po kliklutí na nìj se rozbalí menu s jednotlivými vozy (viz pøíloha). Databázi bych rád zachoval celou, ale je od roku 2009 a má 160MB, tak nevím, jestli to nebude problém.  

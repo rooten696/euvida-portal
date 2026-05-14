@@ -1,0 +1,85 @@
+1. Nadpis se zobrazuje dvakrát
+
+Na stránce je hlavní nadpis nahoøe a potom znovu stejný # Plitvická jezera... uvnitø obsahu.
+
+To je tím, že content obsahuje Markdown H1. Programátor má dvì možnosti:
+
+lepší varianta:
+pøi renderování contentu odstranit první H1 z markdownu
+
+alternativa:
+do contentu už H1 vùbec nevkládat
+
+Za mì lepší: na stránce renderovat H1 z article.title a z Markdown contentu první # ... automaticky odøíznout.
+
+2. Praktický box je moc slouèený pod „Na co si dát pozor“
+
+Teï jsou tam pod nadpisem „Na co si dát pozor“ namíchané rùzné vìci: vytíženost, rezervace, nejlepší èas, doprava, koupání, délka návštìvy, bezbariérovost i ceny v okolí.
+
+Lepší by bylo zobrazit je jako samostatné øádky podle labelù:
+
+Nejlepší èas návštìvy
+Kolik èasu si vyhradit
+Vstupenky a rezervace
+Vytíženost
+Dostupnost
+Ceny v okolí
+Na co si dát pozor
+Bezbariérovost
+
+Tedy ne jeden spoleèný seznam pod „Na co si dát pozor“.
+
+3. Dvojité odrážky
+
+V praktickém boxu vidím položky jako:
+
+* •V létì velmi vysoká návštìvnost...
+
+To znamená, že frontend pøidává <li> a zároveò text nebo CSS pøidává vlastní •. Staèí nechat jen jednu odrážku, ideálnì klasické <li> bez ruènì vložené teèky.
+
+4. Formát cen bych poèeštil
+
+Teï se ceny zobrazují napøíklad:
+
+10 EUR
+1.5–2 EUR
+
+Pro èeský web bych radši:
+
+10 €
+1,50–2,00 €/h
+
+Tohle by mìl øešit univerzální formatPriceItem() podle locale. Pro cs, de, fr, es bych zobrazoval symbol €; u èeštiny desetinnou èárku.
+
+5. „Doporuèený èas prohlídky“ má špatné mezery
+
+Teï je tam:
+
+Doporuèený èas prohlídky:180 - 300 minut
+
+Lepší:
+
+Doporuèený èas prohlídky: 3–5 hodin
+
+Nebo pokud chceš držet minuty:
+
+Doporuèený èas prohlídky: 180–300 minut
+6. Zdroje zatím na stránce nevidím
+
+Vidím kredit fotky, což je super. Ale nevidím samostatnou sekci se zdroji typu oficiální ceník / doprava / ovìøeno. Pokud tam není schovaná vizuálnì, doplnil bych dole malý box:
+
+Zdroje a ovìøení
+Informace ovìøeny k: 12. 5. 2026
+Oficiální ceník Plitvických jezer
+Oficiální informace o dopravì
+7. Rychlý pøehled bych vytáhl výš
+
+Doporuèený èas a typ návštìvy bych nedával až skoro dolù za dopravu. Uživatel chce hned nahoøe vìdìt:
+
+Typ místa: pøíroda / národní park
+Doporuèený èas: 3–5 hodin
+Vytíženost: velmi vysoká v sezonì
+Rezervace: doporuèená
+Doprava: auto / autobus / organizovaný výlet
+
+Ideálnì jako box hned po perexu nebo vedle èlánku.

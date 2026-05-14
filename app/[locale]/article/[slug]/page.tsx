@@ -1,6 +1,6 @@
+import BackButton from '@/app/components/BackButton';
 import { createClient } from '@supabase/supabase-js';
 import { notFound } from 'next/navigation';
-import Link from 'next/link';
 import Image from 'next/image';
 import ReactMarkdown from 'react-markdown';
 
@@ -10,6 +10,8 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 // --- BEZPEČNÉ TYPOVÁNÍ ---
+type Locale = 'cs' | 'en' | 'de' | 'fr' | 'es';
+
 type TranslationData = Record<string, { title?: string; content?: string; excerpt?: string }>;
 type LocalizedText = Record<string, string>;
 
@@ -55,11 +57,16 @@ type AccessInfo = {
 };
 
 type VisitInfo = {
+  place_type?: string;
   recommended_time_minutes_min?: number;
   recommended_time_minutes_max?: number;
+  transport?: {
+    bus?: string[];
+    metro?: string[];
+    metro_stop?: string;
+  };
 };
 
-// Nové typování pro zdroje obrázků
 type ImageSource = {
   author_name?: string;
   license_name?: string;
@@ -69,7 +76,81 @@ type SourceInfo = {
   images?: ImageSource[];
 };
 
-// Pomocné funkce
+// --- MAPA LABELŮ PRO ČAS NÁVŠTĚVY ---
+const durationLabels = {
+  cs: {
+    default: 'Kolik času si vyhradit',
+    landmark: 'Doporučený čas návštěvy',
+    museum: 'Doporučený čas návštěvy',
+    castle: 'Doporučený čas návštěvy',
+    palace: 'Doporučený čas návštěvy',
+    nature: 'Doporučený čas v lokalitě',
+    natural_swimming: 'Doporučená délka pobytu',
+    swimming_pool: 'Doporučená délka pobytu',
+    beach: 'Doporučená délka pobytu',
+    trail: 'Čas na trase',
+    cycling_route: 'Čas na trase',
+    ski_area: 'Doporučený čas na místě'
+  },
+  en: {
+    default: 'Time needed',
+    landmark: 'Recommended visit time',
+    museum: 'Recommended visit time',
+    castle: 'Recommended visit time',
+    palace: 'Recommended visit time',
+    nature: 'Recommended time on site',
+    natural_swimming: 'Recommended stay',
+    swimming_pool: 'Recommended stay',
+    beach: 'Recommended stay',
+    trail: 'Time on trail',
+    cycling_route: 'Time on route',
+    ski_area: 'Recommended time on site'
+  },
+  de: {
+    default: 'Benötigte Zeit',
+    landmark: 'Empfohlene Besuchszeit',
+    museum: 'Empfohlene Besuchszeit',
+    castle: 'Empfohlene Besuchszeit',
+    palace: 'Empfohlene Besuchszeit',
+    nature: 'Empfohlene Zeit vor Ort',
+    natural_swimming: 'Empfohlene Aufenthaltsdauer',
+    swimming_pool: 'Empfohlene Aufenthaltsdauer',
+    beach: 'Empfohlene Aufenthaltsdauer',
+    trail: 'Zeit auf der Route',
+    cycling_route: 'Zeit auf der Route',
+    ski_area: 'Empfohlene Zeit vor Ort'
+  },
+  fr: {
+    default: 'Temps à prévoir',
+    landmark: 'Temps de visite conseillé',
+    museum: 'Temps de visite conseillé',
+    castle: 'Temps de visite conseillé',
+    palace: 'Temps de visite conseillé',
+    nature: 'Temps conseillé sur place',
+    natural_swimming: 'Durée de séjour conseillée',
+    swimming_pool: 'Durée de séjour conseillée',
+    beach: 'Durée de séjour conseillée',
+    trail: 'Temps sur l’itinéraire',
+    cycling_route: 'Temps sur l’itinéraire',
+    ski_area: 'Temps conseillé sur place'
+  },
+  es: {
+    default: 'Tiempo necesario',
+    landmark: 'Tiempo recomendado de visita',
+    museum: 'Tiempo recomendado de visita',
+    castle: 'Tiempo recomendado de visita',
+    palace: 'Tiempo recomendado de visita',
+    nature: 'Tiempo recomendado en el lugar',
+    natural_swimming: 'Duración recomendada de estancia',
+    swimming_pool: 'Duración recomendada de estancia',
+    beach: 'Duración recomendada de estancia',
+    trail: 'Tiempo en la ruta',
+    cycling_route: 'Tiempo en la ruta',
+    ski_area: 'Tiempo recomendado en el lugar'
+  }
+} as const;
+
+// --- POMOCNÉ FUNKCE ---
 const formatDate = (dateString?: string | null, locale = 'cs') => {
   if (!dateString) return null;
   return new Date(dateString).toLocaleDateString(locale === 'cs' ? 'cs-CZ' : locale, {
@@ -92,6 +173,43 @@ function formatPriceItem(item: PriceItem, locale: string) {
   return null;
 }
 
+// Výběr správného štítku pro čas podle typu místa
+function getDurationLabel(locale: Locale, placeType?: string | null) {
+  const langLabels = durationLabels[locale] ?? durationLabels.cs;
+  const key = placeType ?? 'default';
+
+  return (
+    langLabels[key as keyof typeof langLabels] ??
+    langLabels.default ??
+    durationLabels.cs.default
+  );
+}
+
+// Převod minut na formátované hodiny (pokud je to žádoucí)
+function formatDurationRange(min: number, max: number, locale: Locale) {
+  const useHours = min >= 60 || max >= 120;
+
+  if (!useHours) {
+    return `${min}–${max} min`;
+  }
+
+  const formatter = new Intl.NumberFormat(locale === 'cs' ? 'cs-CZ' : locale, {
+    maximumFractionDigits: 1
+  });
+
+  const minHours = min / 60;
+  const maxHours = max / 60;
+
+  const unit =
+    locale === 'cs' ? 'hodin' :
+    locale === 'de' ? 'Std.' :
+    locale === 'fr' ? 'h' :
+    locale === 'es' ? 'h' :
+    'hours';
+
+  return `${formatter.format(minHours)}–${formatter.format(maxHours)} ${unit}`;
+}
+
 // 🚀 1. Generování SEO Metadat
 export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const resolvedParams = await params;
@@ -99,7 +217,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   
   const { data: article } = await supabase
     .from('articles')
-    .select('title, content, excerpt, image_url, image_alt, translations') // Přidáno image_alt
+    .select('title, content, excerpt, image_url, image_alt, translations')
     .eq('slug', slug)
     .single();
 
@@ -111,7 +229,6 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
   const localizedExcerpt = isDefaultLocale ? article.excerpt : allTranslations?.[locale]?.excerpt || article.excerpt;
   const rawContent = isDefaultLocale ? article.content : allTranslations?.[locale]?.content || article.content;
   
-  // Alt text pro OpenGraph obrázek (pokud ho platformy podporují)
   const imageAltData = article.image_alt as LocalizedText | null;
   const imageAlt = imageAltData?.[locale] ?? imageAltData?.cs ?? localizedTitle;
   
@@ -136,7 +253,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
 // 📖 2. Samotná stránka článku
 export default async function ArticlePage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
   const resolvedParams = await params;
-  const { locale, slug } = resolvedParams;
+  const locale = resolvedParams.locale as Locale; // Typujeme locale, aby fungovalo s našimi mapami
+  const { slug } = resolvedParams;
 
   const { data: article, error } = await supabase
     .from('articles')
@@ -180,8 +298,13 @@ export default async function ArticlePage({ params }: { params: Promise<{ locale
   const accessItems = [...(accessData?.items ?? [])].sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0));
   const accessBoxTitle = locale === 'cs' ? 'Jak se tam dostat' : 'How to get there';
 
-  // Ostatní
+  // Ostatní (VisitInfo) - nyní i s novou logikou doporučeného času
   const visitData = article.visit_info as VisitInfo | null;
+  const placeType = visitData?.place_type ?? 'default';
+  const durationLabel = getDurationLabel(locale, placeType);
+  const minTime = visitData?.recommended_time_minutes_min;
+  const maxTime = visitData?.recommended_time_minutes_max;
+
   const displayUpdatedDate = formatDate(article.last_checked_at || article.updated_at, locale);
 
   const markdownComponents = {
@@ -194,12 +317,10 @@ export default async function ArticlePage({ params }: { params: Promise<{ locale
   };
 
   return (
-    <main className="min-h-screen bg-white font-sans pb-24">
+    <main className="relative min-h-screen bg-white font-sans pb-24">
       <div className="absolute top-6 left-0 right-0 z-30 px-4">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link href={`/${locale}`} className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-5 py-2.5 rounded-full text-blue-900 font-bold hover:bg-white shadow-md hover:shadow-lg transition-all">
-            &larr; {locale === 'cs' ? 'Zpět' : 'Back'}
-          </Link>
+          <BackButton label={locale === 'cs' ? 'Zpět' : 'Back'} />
         </div>
       </div>
 
@@ -214,10 +335,8 @@ export default async function ArticlePage({ params }: { params: Promise<{ locale
                 className="object-cover" 
                 priority 
               />
-              {/* Tmavý gradient přehozený přes fotku pro lepší čitelnost textů */}
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
               
-              {/* Popisek zdroje fotky */}
               {firstImageSource && (
                 <figcaption className="absolute bottom-2 right-4 text-[10px] text-white/70 bg-black/40 px-2 py-1 rounded backdrop-blur-sm z-20">
                   {locale === 'cs' ? 'Foto:' : 'Photo:'} {firstImageSource.author_name}
@@ -271,7 +390,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ locale
             </ReactMarkdown>
           </div>
 
-          {(practicalTips || pricesItems.length > 0 || accessItems.length > 0) && (
+          {(practicalTips || pricesItems.length > 0 || accessItems.length > 0 || (minTime && maxTime)) && (
             <div className="mt-20 pt-12 border-t-2 border-gray-100">
               <h2 className="text-3xl font-extrabold text-blue-900 mb-8 text-center">
                 {locale === 'cs' ? 'Hodí se vědět před cestou' : 'Good to know before you go'}
@@ -341,7 +460,7 @@ export default async function ArticlePage({ params }: { params: Promise<{ locale
                 )}
 
                 {/* 3. DOPRAVA A NÁVŠTĚVA */}
-                {accessItems.length > 0 && (
+                {(accessItems.length > 0 || (minTime && maxTime)) && (
                   <div className="bg-yellow-50/50 rounded-2xl p-6 border border-yellow-100 shadow-sm flex flex-col">
                     <h3 className="text-lg font-bold text-yellow-900 mb-2 flex items-center gap-2">
                       <span className="text-2xl">🚇</span> {accessBoxTitle}
@@ -396,12 +515,13 @@ export default async function ArticlePage({ params }: { params: Promise<{ locale
                       })}
                     </ul>
 
-                    {visitData && (visitData.recommended_time_minutes_min || visitData.recommended_time_minutes_max) && (
+                    {/* NOVĚ: Formátovaný čas návštěvy dynamicky podle place_type */}
+                    {minTime && maxTime && (
                       <div className="mt-4 pt-4 border-t border-yellow-200/60 text-sm text-gray-700">
                         <span className="font-bold block mb-1">
-                          {locale === 'cs' ? 'Doporučený čas prohlídky:' : 'Recommended visit time:'}
+                          {durationLabel}:
                         </span>
-                        {visitData.recommended_time_minutes_min} - {visitData.recommended_time_minutes_max} {locale === 'cs' ? 'minut' : 'minutes'}
+                        {formatDurationRange(minTime, maxTime, locale)}
                       </div>
                     )}
 
