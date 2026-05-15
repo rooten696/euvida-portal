@@ -7,6 +7,7 @@ import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import b
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -50,6 +51,9 @@ export default async function LocaleLayout({
         {process.env.NEXT_PUBLIC_GA_ID && (
           <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
+        
+        {/* 📊 VERCEL SPEED INSIGHTS */}
+        <SpeedInsights />
       </body>
     </html>
   );
