@@ -1,196 +1,572 @@
+import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
+import LanguageSwitcher from '@/app/components/LanguageSwitcher';
+import RegionArticleExplorer from '@/app/components/region/RegionArticleExplorer';
+import {
+  getArticleCategoryLabel,
+  toArticleCardData,
+  type ArticleCardData,
+} from '@/lib/articleCards';
+import { normalizeLocale } from '@/lib/articleLocalization';
+import type { Article, SupportedLocale } from '@/lib/articleTypes';
+import { supportedLocales } from '@/lib/articleTypes';
+import { getDestinationLabel } from '@/lib/destinationLabels';
+import {
+  type CountryDestination,
+  type RegionDestination,
+  type WeatherData,
+  getCountryDisplay,
+  getRegionDisplay,
+  hasTemperature,
+} from '@/lib/destinationTypes';
 import { createClient } from '@supabase/supabase-js';
-import ArticleList from '@/app/components/ArticleList';
-import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
+import Image from 'next/image';
 import Link from 'next/link';
-import ReactMarkdown from 'react-markdown';
-import { getTranslations } from 'next-intl/server';
+import { notFound } from 'next/navigation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-type TranslationData = Record<string, Record<string, string>>;
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
+const articleSelect =
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes, visit_info, prices_info, access_info';
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const resolvedParams = await params;
-  const { locale, id } = resolvedParams;
+type RegionPageParams = {
+  params: Promise<{ locale: string; id: string }>;
+};
 
+type FilterOption = {
+  value: string;
+  label: string;
+};
+
+type MarkdownSection = {
+  title: string;
+  content?: string | null;
+  tone: 'blue' | 'green' | 'orange' | 'slate';
+};
+
+type SeasonTemperature = {
+  label: string;
+  air?: string | null;
+  sea?: string | null;
+  featured?: boolean;
+};
+
+const regionMetadata: Record<
+  SupportedLocale,
+  {
+    title: (regionName: string, countryName?: string | null) => string;
+    description: (regionName: string, countryName?: string | null) => string;
+    notFound: string;
+  }
+> = {
+  cs: {
+    title: (regionName, countryName) =>
+      countryName
+        ? `${regionName}, ${countryName} – cestovní průvodce | Euvida`
+        : `${regionName} – cestovní průvodce | Euvida`,
+    description: (regionName, countryName) =>
+      countryName
+        ? `Praktický průvodce regionem ${regionName} v zemi ${countryName}: články, témata a tipy na výlety.`
+        : `Praktický průvodce regionem ${regionName}: články, témata a tipy na výlety.`,
+    notFound: 'Region nenalezen | Euvida',
+  },
+  en: {
+    title: (regionName, countryName) =>
+      countryName
+        ? `${regionName}, ${countryName} – travel guide | Euvida`
+        : `${regionName} – travel guide | Euvida`,
+    description: (regionName, countryName) =>
+      countryName
+        ? `A practical guide to ${regionName} in ${countryName}: articles, topics, and trip ideas.`
+        : `A practical guide to ${regionName}: articles, topics, and trip ideas.`,
+    notFound: 'Region not found | Euvida',
+  },
+  de: {
+    title: (regionName, countryName) =>
+      countryName
+        ? `${regionName}, ${countryName} – Reiseführer | Euvida`
+        : `${regionName} – Reiseführer | Euvida`,
+    description: (regionName, countryName) =>
+      countryName
+        ? `Praktischer Reiseführer für ${regionName} in ${countryName}: Artikel, Themen und Ausflugsideen.`
+        : `Praktischer Reiseführer für ${regionName}: Artikel, Themen und Ausflugsideen.`,
+    notFound: 'Region nicht gefunden | Euvida',
+  },
+  fr: {
+    title: (regionName, countryName) =>
+      countryName
+        ? `${regionName}, ${countryName} – guide de voyage | Euvida`
+        : `${regionName} – guide de voyage | Euvida`,
+    description: (regionName, countryName) =>
+      countryName
+        ? `Guide pratique de ${regionName} en ${countryName} : articles, thèmes et idées de sorties.`
+        : `Guide pratique de ${regionName} : articles, thèmes et idées de sorties.`,
+    notFound: 'Région introuvable | Euvida',
+  },
+  es: {
+    title: (regionName, countryName) =>
+      countryName
+        ? `${regionName}, ${countryName} – guía de viaje | Euvida`
+        : `${regionName} – guía de viaje | Euvida`,
+    description: (regionName, countryName) =>
+      countryName
+        ? `Guía práctica de ${regionName} en ${countryName}: artículos, temas e ideas para viajar.`
+        : `Guía práctica de ${regionName}: artículos, temas e ideas para viajar.`,
+    notFound: 'Región no encontrada | Euvida',
+  },
+};
+
+export const revalidate = 1800;
+
+function hasSeasonData(seasons: SeasonTemperature[]): boolean {
+  return seasons.some((season) => hasTemperature(season.air) || hasTemperature(season.sea));
+}
+
+function incrementCount(map: Map<string, number>, key: string | null | undefined) {
+  if (!key) {
+    return;
+  }
+
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+function countBy<T>(
+  items: T[],
+  getKey: (item: T) => string | null | undefined
+): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const item of items) {
+    incrementCount(counts, getKey(item));
+  }
+
+  return counts;
+}
+
+function toTimestamp(value: string | null | undefined): number {
+  if (!value) {
+    return 0;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function sortArticles(articles: Article[]): Article[] {
+  return [...articles].sort((left, right) => {
+    const featuredOrder = Number(Boolean(right.featured)) - Number(Boolean(left.featured));
+
+    if (featuredOrder !== 0) {
+      return featuredOrder;
+    }
+
+    return toTimestamp(right.created_at) - toTimestamp(left.created_at);
+  });
+}
+
+function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
+  const counts = countBy(articles, (article) => article.category);
+
+  return [...counts.entries()]
+    .map(([category, count]) => ({
+      value: category,
+      label: `${getArticleCategoryLabel(category, locale) ?? category} (${count})`,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label, locale));
+}
+
+async function getWeatherData(
+  locationName: string,
+  locale: string
+): Promise<WeatherData | null> {
+  const weatherApiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
+
+  if (!weatherApiKey || !locationName) {
+    return null;
+  }
+
+  try {
+    const weatherRes = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
+        locationName
+      )}&appid=${weatherApiKey}&units=metric&lang=${locale}`,
+      { next: { revalidate: 1800 } }
+    );
+
+    if (!weatherRes.ok) {
+      return null;
+    }
+
+    return (await weatherRes.json()) as WeatherData;
+  } catch (error) {
+    console.error('Chyba při načítání počasí:', error);
+    return null;
+  }
+}
+
+async function getRegionAndCountry(id: string, locale: SupportedLocale) {
   const { data: region } = await supabase
     .from('regions')
-    .select('name, description, image_url, translations')
+    .select('*')
     .eq('id', id)
     .single();
 
-  if (!region) return { title: 'Region nenalezen | Euvida' };
-
-  const allTranslations = region.translations as TranslationData | null;
-  const rLang = allTranslations?.[locale];
-  const displayName = rLang?.name || region.name;
-
-  return { title: `${displayName} | Euvida` };
-}
-
-// Pomocná funkce pro filtraci teploty
-const hasTemp = (temp?: string) => temp && temp.trim() !== '' && temp !== 'N/A';
-
-export default async function RegionPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const resolvedParams = await params;
-  const { locale, id } = resolvedParams;
-
-  const t = await getTranslations('RegionDetail');
-
-  const { data: region } = await supabase.from('regions').select('*').eq('id', id).single();
-  if (!region) notFound();
-
-  const allTranslations = region.translations as TranslationData | null;
-  const rLang = allTranslations?.[locale];
-
-  const displayData = {
-    ...region,
-    name: rLang?.name || region.name,
-    description: rLang?.description || region.description,
-    general_info: rLang?.general_info || region.general_info,
-    nature_and_landscapes: rLang?.nature_and_landscapes || region.nature_and_landscapes,
-    history_and_culture: rLang?.history_and_culture || region.history_and_culture,
-    transport_and_life: rLang?.transport_and_life || region.transport_and_life,
-  };
-
-  // --- POČASÍ API ---
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let weatherData: any = null;
-  const weatherApiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY; 
-
-  if (weatherApiKey) {
-    try {
-      const weatherRes = await fetch(
-        `https://api.openweathermap.org/data/2.5/weather?q=${displayData.name}&appid=${weatherApiKey}&units=metric&lang=${locale}`,
-        { next: { revalidate: 1800 } } // Aktualizace každou půlhodinu
-      );
-      
-      if (weatherRes.ok) {
-        weatherData = await weatherRes.json();
-      }
-    } catch (e) {
-      console.error("Chyba při stahování počasí:", e);
-    }
+  if (!region) {
+    return { region: null, country: null };
   }
 
-  // Přísně typované komponenty bez použití 'any'
-  const markdownComponents = {
-    p: (props: React.ComponentPropsWithoutRef<'p'>) => <p className="text-gray-700 leading-relaxed mb-4" {...props} />,
-    strong: (props: React.ComponentPropsWithoutRef<'strong'>) => <strong className="font-bold text-blue-900" {...props} />,
-    ul: (props: React.ComponentPropsWithoutRef<'ul'>) => <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-1" {...props} />,
-    li: (props: React.ComponentPropsWithoutRef<'li'>) => <li {...props} />
+  const displayRegion = getRegionDisplay(region as RegionDestination, locale);
+  const { data: country } = await supabase
+    .from('countries')
+    .select('id, name, flag, translations')
+    .eq('id', displayRegion.country_id)
+    .single();
+
+  return {
+    region: displayRegion,
+    country: country ? getCountryDisplay(country as CountryDestination, locale) : null,
   };
+}
+
+export async function generateMetadata({
+  params,
+}: RegionPageParams): Promise<Metadata> {
+  const { locale: rawLocale, id } = await params;
+  const locale = normalizeLocale(rawLocale);
+  const copy = regionMetadata[locale];
+  const { region, country } = await getRegionAndCountry(id, locale);
+
+  if (!region) {
+    return { title: copy.notFound };
+  }
+
+  const title = copy.title(region.name, country?.name);
+  const description = region.description || copy.description(region.name, country?.name);
+  const canonical = `/${locale}/region/${region.id}`;
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: Object.fromEntries(
+        supportedLocales.map((supportedLocale) => [
+          supportedLocale,
+          `/${supportedLocale}/region/${region.id}`,
+        ])
+      ),
+    },
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      images: region.image_url ? [{ url: region.image_url }] : undefined,
+    },
+  };
+}
+
+export default async function RegionPage({ params }: RegionPageParams) {
+  const { locale: rawLocale, id } = await params;
+  const locale = normalizeLocale(rawLocale);
+  const { region: displayRegion, country: displayCountry } = await getRegionAndCountry(
+    id,
+    locale
+  );
+
+  if (!displayRegion) {
+    notFound();
+  }
+
+  const { data: articleRows, error: articlesError } = await supabase
+    .from('articles')
+    .select(articleSelect)
+    .eq('published', true)
+    .eq('region_id', id);
+
+  if (articlesError) {
+    console.error('Chyba při načítání článků:', articlesError);
+  }
+
+  const articles = sortArticles((articleRows ?? []) as Article[]);
+  const articleCards: ArticleCardData[] = articles.map((article) =>
+    toArticleCardData(article, locale, {
+      countryName: displayCountry?.name,
+      regionName: displayRegion.name,
+    })
+  );
+  const categories = categoryOptions(articles, locale);
+  const countryHref = `/${locale}/country/${displayRegion.country_id}`;
+
+  const weatherData = await getWeatherData(displayRegion.name, locale);
+  const weather = weatherData?.weather?.[0];
+  const temperature =
+    typeof weatherData?.main?.temp === 'number' ? weatherData.main.temp : null;
+  const temperatureFormatter = new Intl.NumberFormat(locale, {
+    maximumFractionDigits: 0,
+  });
+
+  const seasons: SeasonTemperature[] = [
+    {
+      label: getDestinationLabel(locale, 'spring'),
+      air: displayRegion.temp_spring_air,
+      sea: displayRegion.temp_spring_sea,
+    },
+    {
+      label: getDestinationLabel(locale, 'summer'),
+      air: displayRegion.temp_summer_air,
+      sea: displayRegion.temp_summer_sea,
+      featured: true,
+    },
+    {
+      label: getDestinationLabel(locale, 'autumn'),
+      air: displayRegion.temp_autumn_air,
+      sea: displayRegion.temp_autumn_sea,
+    },
+    {
+      label: getDestinationLabel(locale, 'winter'),
+      air: displayRegion.temp_winter_air,
+      sea: displayRegion.temp_winter_sea,
+    },
+  ];
+
+  const sections: MarkdownSection[] = [
+    {
+      title: getDestinationLabel(locale, 'generalInfo'),
+      content: displayRegion.general_info,
+      tone: 'slate',
+    },
+    {
+      title: getDestinationLabel(locale, 'natureAndTrips'),
+      content: displayRegion.nature_and_landscapes,
+      tone: 'green',
+    },
+    {
+      title: getDestinationLabel(locale, 'historyAtmosphere'),
+      content: displayRegion.history_and_culture,
+      tone: 'orange',
+    },
+    {
+      title: getDestinationLabel(locale, 'transportAndLife'),
+      content: displayRegion.transport_and_life,
+      tone: 'blue',
+    },
+  ];
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
-      
-      <div className="absolute top-6 left-4 md:left-auto md:max-w-5xl md:mx-auto w-full z-30 px-4">
-        <Link href={`/${locale}/country/${region.country_id}`} className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-blue-900 font-bold hover:bg-white shadow-sm transition-colors">
-          &larr; {t('back_button')}
-        </Link>
-      </div>
-
-      <header className="relative py-32 px-4 text-center overflow-hidden border-b-4 border-yellow-400 min-h-[40vh] flex flex-col justify-center">
-        {displayData.image_url && (
-          <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url('${displayData.image_url}')` }} />
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <section className="relative overflow-hidden bg-slate-950">
+        {displayRegion.image_url ? (
+          <Image
+            src={displayRegion.image_url}
+            alt={displayRegion.name}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-75"
+          />
+        ) : (
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-slate-900 to-blue-950" />
         )}
-        <div className="absolute inset-0 bg-slate-900/60 z-10" />
-        <div className="relative z-20 max-w-4xl mx-auto">
-          <h1 className="text-5xl md:text-7xl font-extrabold mb-4 text-white drop-shadow-lg tracking-tight">{displayData.name}</h1>
-          <p className="text-xl text-gray-100 drop-shadow-md font-medium leading-relaxed">{displayData.description}</p>
-        </div>
-      </header>
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-950/50 to-slate-950/20" />
 
-      <section className="max-w-5xl mx-auto py-12 px-4">
-        
-        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-8 mb-12">
-          <h2 className="text-2xl font-bold mb-6 text-blue-900 flex items-center gap-2">
-            <span>🌡️</span> {t('temp_title')} & {t('weather_title')}
-          </h2>
-          
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
-            
-            {/* Sekce počasí (zobrazí se jen když máme data z API) */}
-            {weatherData && (
-              <div className="lg:col-span-1 flex flex-col justify-center">
-                <div className="bg-blue-50/50 rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-blue-100 h-full">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={`https://openweathermap.org/img/wn/${weatherData.weather[0].icon}@2x.png`} alt="Ikona počasí" className="w-20 h-20 -mb-2" />
-                  <div className="text-4xl font-extrabold text-blue-900 mb-1">{Math.round(weatherData.main.temp)}°C</div>
-                  <div className="text-sm font-bold text-blue-600 capitalize">{weatherData.weather[0].description}</div>
-                </div>
-              </div>
+        <div className="relative mx-auto flex min-h-[58vh] max-w-6xl flex-col px-4 pb-12 pt-8 md:px-6 md:pb-16">
+          <div className="flex items-start justify-between gap-4">
+            <nav
+              aria-label="Breadcrumb"
+              className="flex flex-wrap items-center gap-2 text-sm font-bold text-white/80"
+            >
+              <Link href={`/${locale}`} className="transition hover:text-white">
+                {getDestinationLabel(locale, 'home')}
+              </Link>
+              <span aria-hidden="true">/</span>
+              <Link href={`/${locale}#countries`} className="transition hover:text-white">
+                {getDestinationLabel(locale, 'countries')}
+              </Link>
+              {displayCountry && (
+                <>
+                  <span aria-hidden="true">/</span>
+                  <Link href={countryHref} className="transition hover:text-white">
+                    {displayCountry.name}
+                  </Link>
+                </>
+              )}
+              <span aria-hidden="true">/</span>
+              <span className="text-white">{displayRegion.name}</span>
+            </nav>
+
+            <LanguageSwitcher currentLocale={locale} />
+          </div>
+
+          <div className="mt-auto max-w-4xl pt-20 text-white">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <p className="inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-yellow-950">
+                {getDestinationLabel(locale, 'regionGuide')}
+              </p>
+              {displayCountry?.flag && (
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xl shadow-sm backdrop-blur">
+                  {displayCountry.flag}
+                </span>
+              )}
+            </div>
+            <h1 className="break-words text-4xl font-black leading-tight tracking-tight md:text-6xl">
+              {displayRegion.name}
+            </h1>
+            {displayCountry && (
+              <Link
+                href={countryHref}
+                className="mt-4 inline-flex rounded-full bg-white/90 px-4 py-2 text-sm font-extrabold text-blue-950 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
+              >
+                {getDestinationLabel(locale, 'backToCountry')}: {displayCountry.name}
+              </Link>
+            )}
+            {displayRegion.description && (
+              <p className="mt-6 max-w-3xl break-words text-lg font-medium leading-relaxed text-white/90 md:text-xl">
+                {displayRegion.description}
+              </p>
             )}
 
-            {/* Průměrné teploty - Roztáhnou se na celou šířku, pokud počasí není */}
-            <div className={`${weatherData ? 'lg:col-span-4' : 'lg:col-span-5'} grid grid-cols-2 md:grid-cols-4 gap-4`}>
-              {[
-                { label: t('spring'), icon: '🌸', air: displayData.temp_spring_air, sea: displayData.temp_spring_sea, bg: 'bg-gray-50' },
-                { label: t('summer'), icon: '☀️', air: displayData.temp_summer_air, sea: displayData.temp_summer_sea, bg: 'bg-yellow-50 border border-yellow-100' },
-                { label: t('autumn'), icon: '🍂', air: displayData.temp_autumn_air, sea: displayData.temp_autumn_sea, bg: 'bg-gray-50' },
-                { label: t('winter'), icon: '❄️', air: displayData.temp_winter_air, sea: displayData.temp_winter_sea, bg: 'bg-gray-50' }
-              ].map((season, idx) => (
-                <div key={idx} className={`${season.bg} rounded-xl p-4 text-center shadow-sm`}>
-                  <div className="text-gray-500 font-bold mb-2 flex items-center justify-center gap-1">{season.icon} {season.label}</div>
-                  <div className="text-sm space-y-1">
-                    {hasTemp(season.air) && (
-                      <div><span className="text-gray-400">{t('air')}:</span> <span className="font-bold">{season.air}°C</span></div>
-                    )}
-                    {hasTemp(season.sea) && (
-                      <div><span className="text-gray-400">{t('sea')}:</span> <span className="font-bold text-blue-600">{season.sea}°C</span></div>
-                    )}
-                    {!hasTemp(season.air) && !hasTemp(season.sea) && (
-                      <div className="text-gray-300 italic text-xs">Bez dat</div>
-                    )}
-                  </div>
+            <dl className="mt-8 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                  {getDestinationLabel(locale, 'articlesCount')}
+                </dt>
+                <dd className="mt-1 text-3xl font-black">{articleCards.length}</dd>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                  {getDestinationLabel(locale, 'articleCategories')}
+                </dt>
+                <dd className="mt-1 text-3xl font-black">{categories.length}</dd>
+              </div>
+              {displayCountry && (
+                <div className="col-span-2 rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur sm:col-span-1">
+                  <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                    {getDestinationLabel(locale, 'countries')}
+                  </dt>
+                  <dd className="mt-1 text-xl font-black">{displayCountry.name}</dd>
                 </div>
-              ))}
-            </div>
+              )}
+            </dl>
           </div>
         </div>
-
-
-
-<div className="mt-16 mb-8">
-          <h2 className="text-3xl font-extrabold text-blue-900 mb-8 flex items-center gap-3">
-            <span className="text-yellow-500">📰</span> Články a průvodce
-          </h2>
-          {/* Použijeme rovnou proměnnou 'id', kterou už máme nahoře z params */}
-          <ArticleList locale={locale} regionId={id} />
-        </div>
-
-        {/* DETAILNÍ TEXTY */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          {displayData.general_info && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>📍</span> {t('general_info')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.general_info}</ReactMarkdown>
-            </div>
-          )}
-          {displayData.nature_and_landscapes && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>🌲</span> {t('nature')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.nature_and_landscapes}</ReactMarkdown>
-            </div>
-          )}
-          {displayData.history_and_culture && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>🍷</span> {t('history')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.history_and_culture}</ReactMarkdown>
-            </div>
-          )}
-          {displayData.transport_and_life && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>👨‍👩‍👧‍👦</span> {t('transport')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.transport_and_life}</ReactMarkdown>
-            </div>
-          )}
-        </div>
-
       </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
+        <section id="articles" className="mb-16">
+          <div className="mb-6">
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              {getDestinationLabel(locale, 'latestGuides')}
+            </p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {getDestinationLabel(locale, 'regionArticles')}
+            </h2>
+          </div>
+
+          <RegionArticleExplorer
+            locale={locale}
+            articles={articleCards}
+            categories={categories}
+            countryHref={countryHref}
+            countryName={displayCountry?.name}
+          />
+        </section>
+
+        {(weather || hasSeasonData(seasons)) && (
+          <section className="mb-12 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+            <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+                  {getDestinationLabel(locale, 'currentWeather')}
+                </p>
+                <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
+                  {getDestinationLabel(locale, 'averageTemperatures')}
+                </h2>
+              </div>
+              {displayRegion.language && (
+                <span className="w-fit rounded-full bg-slate-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-600">
+                  {getDestinationLabel(locale, 'language')}: {displayRegion.language}
+                </span>
+              )}
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+              {weather && (
+                <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 text-center">
+                  {weather.icon && (
+                    <Image
+                      src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`}
+                      alt={weather.description || getDestinationLabel(locale, 'currentWeather')}
+                      width={96}
+                      height={96}
+                      className="mx-auto -mb-2 h-24 w-24"
+                    />
+                  )}
+                  {temperature !== null && (
+                    <div className="text-4xl font-black text-blue-950">
+                      {temperatureFormatter.format(temperature)} °C
+                    </div>
+                  )}
+                  {weather.description && (
+                    <div className="mt-2 text-sm font-bold capitalize text-blue-700">
+                      {weather.description}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {seasons.map((season) => (
+                  <div
+                    key={season.label}
+                    className={`rounded-2xl border p-4 ${
+                      season.featured
+                        ? 'border-yellow-100 bg-yellow-50'
+                        : 'border-slate-200 bg-slate-50'
+                    }`}
+                  >
+                    <h3 className="font-extrabold text-slate-950">{season.label}</h3>
+                    <div className="mt-3 space-y-2 text-sm text-slate-600">
+                      {hasTemperature(season.air) && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span>{getDestinationLabel(locale, 'air')}</span>
+                          <strong className="text-slate-950">{season.air} °C</strong>
+                        </div>
+                      )}
+                      {hasTemperature(season.sea) && (
+                        <div className="flex items-center justify-between gap-3">
+                          <span>{getDestinationLabel(locale, 'sea')}</span>
+                          <strong className="text-blue-800">{season.sea} °C</strong>
+                        </div>
+                      )}
+                      {!hasTemperature(season.air) && !hasTemperature(season.sea) && (
+                        <div className="text-xs font-medium text-slate-400">
+                          {getDestinationLabel(locale, 'noData')}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          {sections.map((section) => (
+            <DestinationMarkdownSection
+              key={section.title}
+              title={section.title}
+              content={section.content}
+              tone={section.tone}
+            />
+          ))}
+        </section>
+      </div>
     </main>
   );
 }

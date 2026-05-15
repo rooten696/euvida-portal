@@ -19,9 +19,13 @@ export const articleUiLabels: LabelMap = {
     access: 'Jak se tam dostat',
     sources: 'Zdroje a ověření',
     photo: 'Foto',
+    noImage: 'Obrázek není k dispozici',
     infoChecked: 'Informace ověřeny k',
     seasonNote: 'Sezónní poznámka',
     note: 'Poznámka',
+    official: 'oficiální',
+    indicative: 'orientační',
+    usedFor: 'Použito pro',
     lines: 'Linky',
     stop: 'Zastávka',
     walk: 'Pěšky',
@@ -33,6 +37,8 @@ export const articleUiLabels: LabelMap = {
     onlineOnly: 'Vstupenky pouze online',
     bookingRecommended: 'Rezervace doporučena',
     officialHours: 'Otevírací doba',
+    openingHoursFallback: 'Ověř před cestou podle aktuální sezony a provozovatele.',
+    nudistBeach: 'Nudistická pláž',
     waterQuality: 'Kvalita vody',
     bestTime: 'Nejlepší čas',
     avoidIfPossible: 'Kdy se raději vyhnout',
@@ -56,9 +62,13 @@ export const articleUiLabels: LabelMap = {
     access: 'How to get there',
     sources: 'Sources and verification',
     photo: 'Photo',
+    noImage: 'Image not available',
     infoChecked: 'Information verified on',
     seasonNote: 'Season note',
     note: 'Note',
+    official: 'official',
+    indicative: 'indicative',
+    usedFor: 'Used for',
     lines: 'Lines',
     stop: 'Stop',
     walk: 'Walk',
@@ -70,6 +80,8 @@ export const articleUiLabels: LabelMap = {
     onlineOnly: 'Tickets online only',
     bookingRecommended: 'Booking recommended',
     officialHours: 'Opening hours',
+    openingHoursFallback: 'Check before visiting according to the current season and operator.',
+    nudistBeach: 'Nudist beach',
     waterQuality: 'Water quality',
     bestTime: 'Best time',
     avoidIfPossible: 'Avoid if possible',
@@ -93,9 +105,13 @@ export const articleUiLabels: LabelMap = {
     access: 'Anreise',
     sources: 'Quellen und Prüfung',
     photo: 'Foto',
+    noImage: 'Bild nicht verfügbar',
     infoChecked: 'Informationen geprüft am',
     seasonNote: 'Saisonhinweis',
     note: 'Hinweis',
+    official: 'offiziell',
+    indicative: 'orientierend',
+    usedFor: 'Verwendet für',
     lines: 'Linien',
     stop: 'Haltestelle',
     walk: 'Fußweg',
@@ -107,6 +123,8 @@ export const articleUiLabels: LabelMap = {
     onlineOnly: 'Tickets nur online',
     bookingRecommended: 'Reservierung empfohlen',
     officialHours: 'Öffnungszeiten',
+    openingHoursFallback: 'Vor dem Besuch je nach Saison und Betreiber prüfen.',
+    nudistBeach: 'FKK-Strand',
     waterQuality: 'Wasserqualität',
     bestTime: 'Beste Zeit',
     avoidIfPossible: 'Möglichst vermeiden',
@@ -130,9 +148,13 @@ export const articleUiLabels: LabelMap = {
     access: 'Comment s’y rendre',
     sources: 'Sources et vérification',
     photo: 'Photo',
+    noImage: 'Image non disponible',
     infoChecked: 'Informations vérifiées le',
     seasonNote: 'Note saisonnière',
     note: 'Note',
+    official: 'officiel',
+    indicative: 'indicatif',
+    usedFor: 'Utilisé pour',
     lines: 'Lignes',
     stop: 'Arrêt',
     walk: 'Marche',
@@ -144,6 +166,8 @@ export const articleUiLabels: LabelMap = {
     onlineOnly: 'Billets uniquement en ligne',
     bookingRecommended: 'Réservation conseillée',
     officialHours: 'Horaires',
+    openingHoursFallback: 'Vérifie avant la visite selon la saison et l’exploitant.',
+    nudistBeach: 'Plage naturiste',
     waterQuality: 'Qualité de l’eau',
     bestTime: 'Meilleur moment',
     avoidIfPossible: 'À éviter si possible',
@@ -167,9 +191,13 @@ export const articleUiLabels: LabelMap = {
     access: 'Cómo llegar',
     sources: 'Fuentes y verificación',
     photo: 'Foto',
+    noImage: 'Imagen no disponible',
     infoChecked: 'Información verificada el',
     seasonNote: 'Nota de temporada',
     note: 'Nota',
+    official: 'oficial',
+    indicative: 'orientativo',
+    usedFor: 'Usado para',
     lines: 'Líneas',
     stop: 'Parada',
     walk: 'A pie',
@@ -181,6 +209,8 @@ export const articleUiLabels: LabelMap = {
     onlineOnly: 'Entradas solo online',
     bookingRecommended: 'Reserva recomendada',
     officialHours: 'Horario',
+    openingHoursFallback: 'Revisa antes de ir según temporada y operador.',
+    nudistBeach: 'Playa nudista',
     waterQuality: 'Calidad del agua',
     bestTime: 'Mejor momento',
     avoidIfPossible: 'Evitar si es posible',
@@ -596,53 +626,83 @@ export const swimmingTypeLabels: LabelMap = {
 
 export const categoryLabels: LabelMap = {
   cs: {
+    landmark: 'Památky',
+    city: 'Města',
+    nature: 'Příroda',
     places: 'Místa',
     natural_swimming: 'Přírodní koupání',
     trail: 'Trasa',
+    cycling: 'Cyklostezka',
     cycling_route: 'Cyklostezka',
     castle: 'Hrad',
     chateau: 'Zámek',
+    ski: 'Lyžařský areál',
     ski_area: 'Lyžařský areál',
+    beach: 'Pláže',
     city_tip: 'Tip do města',
   },
   en: {
+    landmark: 'Landmarks',
+    city: 'Cities',
+    nature: 'Nature',
     places: 'Places',
     natural_swimming: 'Natural swimming',
     trail: 'Trail',
+    cycling: 'Cycling route',
     cycling_route: 'Cycling route',
     castle: 'Castle',
     chateau: 'Chateau',
+    ski: 'Ski area',
     ski_area: 'Ski area',
+    beach: 'Beaches',
     city_tip: 'City tip',
   },
   de: {
+    landmark: 'Sehenswürdigkeiten',
+    city: 'Städte',
+    nature: 'Natur',
     places: 'Orte',
-    natural_swimming: 'Naturbad',
+    natural_swimming: 'Naturbaden',
     trail: 'Route',
+    cycling: 'Radroute',
     cycling_route: 'Radroute',
     castle: 'Burg',
     chateau: 'Schloss',
+    ski: 'Skigebiet',
     ski_area: 'Skigebiet',
+    beach: 'Strände',
     city_tip: 'Stadttipp',
   },
   fr: {
+    landmark: 'Monuments',
+    city: 'Villes',
+    nature: 'Nature',
     places: 'Lieux',
     natural_swimming: 'Baignade naturelle',
     trail: 'Itinéraire',
+    cycling: 'Itinéraire cyclable',
     cycling_route: 'Itinéraire cyclable',
     castle: 'Château fort',
     chateau: 'Château',
+    ski: 'Domaine skiable',
     ski_area: 'Domaine skiable',
+    beach: 'Plages',
     city_tip: 'Idée en ville',
   },
   es: {
+    landmark: 'Monumentos',
+    city: 'Ciudades',
+    nature: 'Naturaleza',
     places: 'Lugares',
     natural_swimming: 'Baño natural',
     trail: 'Ruta',
+    cycling: 'Ruta ciclista',
     cycling_route: 'Ruta ciclista',
     castle: 'Castillo',
     chateau: 'Palacio',
+    ski: 'Estación de esquí',
     ski_area: 'Estación de esquí',
+    beach: 'Playas',
     city_tip: 'Plan urbano',
   },
 };
@@ -677,6 +737,64 @@ export const sourceTypeLabels: LabelMap = {
     tourism_board: 'oficina de turismo',
     municipality: 'municipio',
     practical_directory: 'directorio práctico',
+  },
+};
+
+export const priceCategoryLabels: LabelMap = {
+  cs: {
+    ticket: 'Vstupenky',
+    beach_access: 'Vstup k vodě',
+    parking: 'Parkování',
+    rental: 'Půjčovné',
+    activity: 'Aktivity',
+    service: 'Služby',
+    food_drink: 'Jídlo a pití',
+    accommodation: 'Ubytování',
+    rules: 'Pravidla',
+  },
+  en: {
+    ticket: 'Tickets',
+    beach_access: 'Beach access',
+    parking: 'Parking',
+    rental: 'Rentals',
+    activity: 'Activities',
+    service: 'Services',
+    food_drink: 'Food and drink',
+    accommodation: 'Accommodation',
+    rules: 'Rules',
+  },
+  de: {
+    ticket: 'Tickets',
+    beach_access: 'Zugang zum Wasser',
+    parking: 'Parken',
+    rental: 'Verleih',
+    activity: 'Aktivitäten',
+    service: 'Services',
+    food_drink: 'Essen und Trinken',
+    accommodation: 'Unterkunft',
+    rules: 'Regeln',
+  },
+  fr: {
+    ticket: 'Billets',
+    beach_access: 'Accès à la baignade',
+    parking: 'Stationnement',
+    rental: 'Location',
+    activity: 'Activités',
+    service: 'Services',
+    food_drink: 'Restauration',
+    accommodation: 'Hébergement',
+    rules: 'Règles',
+  },
+  es: {
+    ticket: 'Entradas',
+    beach_access: 'Acceso a la playa',
+    parking: 'Aparcamiento',
+    rental: 'Alquiler',
+    activity: 'Actividades',
+    service: 'Servicios',
+    food_drink: 'Comida y bebida',
+    accommodation: 'Alojamiento',
+    rules: 'Normas',
   },
 };
 
@@ -812,6 +930,48 @@ export function getMappedLabel(
 
   const currentLocale = normalizeLocale(locale);
   return labels[currentLocale][key] ?? labels.cs[key] ?? null;
+}
+
+function humanizeTechnicalValue(value: string | null | undefined): string | null {
+  if (!value) {
+    return null;
+  }
+
+  const humanized = value
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!humanized) {
+    return null;
+  }
+
+  return humanized.charAt(0).toUpperCase() + humanized.slice(1);
+}
+
+export function getCategoryLabel(
+  category: string | null | undefined,
+  locale: string
+): string | null {
+  return getMappedLabel(categoryLabels, locale, category) ?? humanizeTechnicalValue(category);
+}
+
+export function getModeLabel(
+  mode: string | null | undefined,
+  locale: string
+): string | null {
+  return getMappedLabel(accessModeLabels, locale, mode);
+}
+
+export function getBooleanLabel(
+  value: boolean | null | undefined,
+  locale: string
+): string | null {
+  if (typeof value !== 'boolean') {
+    return null;
+  }
+
+  return getArticleLabel(locale, value ? 'yes' : 'no');
 }
 
 export function getDurationLabel(locale: string, placeType?: string | null): string {

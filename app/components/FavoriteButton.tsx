@@ -1,32 +1,46 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { getDestinationLabel } from '@/lib/destinationLabels';
 import { createClient } from '@supabase/supabase-js';
 import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useState } from 'react';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export default function FavoriteButton({ countryId }: { countryId: string }) {
+type FavoriteButtonProps = {
+  countryId: string;
+  locale?: string;
+};
+
+export default function FavoriteButton({
+  countryId,
+  locale = 'cs',
+}: FavoriteButtonProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const router = useRouter();
 
-  // 1. Zjistíme, kdo je přihlášený a jestli už má tuto zemi v oblíbených
-  const checkFavorite = useCallback(async (uid: string) => {
-    const { data, error } = await supabase
-      .from('favorites')
-      .select('id')
-      .eq('user_id', uid)
-      .eq('country_id', countryId)
-      .single();
+  const checkFavorite = useCallback(
+    async (uid: string) => {
+      const { data, error } = await supabase
+        .from('favorites')
+        .select('id')
+        .eq('user_id', uid)
+        .eq('country_id', countryId)
+        .single();
 
-    if (data && !error) setIsFavorite(true);
-    setLoading(false);
-  }, [countryId]);
+      if (data && !error) {
+        setIsFavorite(true);
+      }
+
+      setLoading(false);
+    },
+    [countryId]
+  );
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -41,45 +55,50 @@ export default function FavoriteButton({ countryId }: { countryId: string }) {
 
   const toggleFavorite = async () => {
     if (!userId) {
-      // Pokud není přihlášený, pošleme ho na login
-      router.push('/login');
+      router.push(`/${locale}/login`);
       return;
     }
 
     if (isFavorite) {
-      // SMAZAT Z OBLÍBENÝCH
       const { error } = await supabase
         .from('favorites')
         .delete()
         .eq('user_id', userId)
         .eq('country_id', countryId);
 
-      if (!error) setIsFavorite(false);
+      if (!error) {
+        setIsFavorite(false);
+      }
     } else {
-      // PŘIDAT DO OBLÍBENÝCH
       const { error } = await supabase
         .from('favorites')
         .insert([{ user_id: userId, country_id: countryId }]);
 
-      if (!error) setIsFavorite(true);
+      if (!error) {
+        setIsFavorite(true);
+      }
     }
   };
 
-  if (loading) return <div className="w-10 h-10 animate-pulse bg-gray-200 rounded-full" />;
+  if (loading) {
+    return <div className="h-11 w-40 animate-pulse rounded-full bg-white/30" />;
+  }
 
   return (
     <button
       onClick={toggleFavorite}
-      className={`flex items-center gap-2 px-6 py-3 rounded-full font-bold transition-all shadow-md hover:shadow-lg ${
-        isFavorite 
-          ? 'bg-red-50 text-red-600 border-2 border-red-100' 
-          : 'bg-white text-gray-600 border-2 border-gray-100 hover:border-red-200'
+      className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-bold shadow-sm transition-all hover:shadow-md ${
+        isFavorite
+          ? 'border-red-100 bg-red-50 text-red-700'
+          : 'border-white/40 bg-white/95 text-slate-700 hover:border-red-200'
       }`}
     >
-      <span className={isFavorite ? 'text-red-500' : 'text-gray-300'}>
-        {isFavorite ? '❤️' : '🤍'}
+      <span className={isFavorite ? 'text-red-500' : 'text-slate-400'} aria-hidden>
+        {isFavorite ? '♥' : '+'}
       </span>
-      {isFavorite ? 'Uloženo v oblíbených' : 'Přidat do oblíbených'}
+      {isFavorite
+        ? getDestinationLabel(locale, 'savedFavorite')
+        : getDestinationLabel(locale, 'addFavorite')}
     </button>
   );
 }

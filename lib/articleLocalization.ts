@@ -23,8 +23,12 @@ function cleanText(value: unknown): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
 export function getLocalizedValue(
-  object: LocalizedField,
+  object: LocalizedField | Record<string, unknown>,
   locale: string,
   fallbackLocale = 'cs'
 ): string | null {
@@ -36,18 +40,26 @@ export function getLocalizedValue(
     return cleanText(object);
   }
 
+  if (!isRecord(object)) {
+    return null;
+  }
+
   const currentLocale = normalizeLocale(locale);
   const fallback = normalizeLocale(fallbackLocale);
-
-  return (
-    cleanText(object[currentLocale]) ??
-    cleanText(object[fallback]) ??
-    cleanText(Object.values(object).find((value) => cleanText(value)))
+  const firstAvailable = Object.values(object).find(
+    (value) => cleanText(value) !== null
   );
+
+  return cleanText(object[currentLocale]) ?? cleanText(object[fallback]) ?? cleanText(firstAvailable);
 }
 
 export function getArticleTitle(article: Article, locale: string): string {
   const currentLocale = normalizeLocale(locale);
+
+  if (currentLocale === 'cs') {
+    return cleanText(article.title) ?? '';
+  }
+
   const translated = article.translations?.[currentLocale]?.title;
 
   return cleanText(translated) ?? cleanText(article.title) ?? '';
@@ -55,6 +67,11 @@ export function getArticleTitle(article: Article, locale: string): string {
 
 export function getArticleExcerpt(article: Article, locale: string): string | null {
   const currentLocale = normalizeLocale(locale);
+
+  if (currentLocale === 'cs') {
+    return cleanText(article.excerpt);
+  }
+
   const translated = article.translations?.[currentLocale]?.excerpt;
 
   return cleanText(translated) ?? cleanText(article.excerpt);
@@ -62,9 +79,25 @@ export function getArticleExcerpt(article: Article, locale: string): string | nu
 
 export function getArticleContent(article: Article, locale: string): string {
   const currentLocale = normalizeLocale(locale);
+
+  if (currentLocale === 'cs') {
+    return cleanText(article.content) ?? '';
+  }
+
   const translated = article.translations?.[currentLocale]?.content;
 
   return cleanText(translated) ?? cleanText(article.content) ?? '';
+}
+
+export function getLocalizedArticle(article: Article, locale: string) {
+  const title = getArticleTitle(article, locale);
+
+  return {
+    title,
+    excerpt: getArticleExcerpt(article, locale),
+    content: getArticleContent(article, locale),
+    imageAlt: getLocalizedValue(article.image_alt, locale) ?? title,
+  };
 }
 
 export function getLocalizedPracticalInfo(
@@ -79,7 +112,12 @@ export function getLocalizedPracticalInfo(
   const currentLocale = normalizeLocale(locale);
   const fallback = normalizeLocale(fallbackLocale);
 
-  return practicalInfo[currentLocale] ?? practicalInfo[fallback] ?? null;
+  return (
+    practicalInfo[currentLocale] ??
+    practicalInfo[fallback] ??
+    Object.values(practicalInfo).find((value) => Boolean(value)) ??
+    null
+  );
 }
 
 export function stripFirstMarkdownH1(markdown: string): string {
