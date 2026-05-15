@@ -1,5 +1,15 @@
 import type { PriceItem, SupportedLocale } from './articleTypes';
-import { normalizeLocale } from './articleLocalization';
+import { getLocalizedValue, normalizeLocale } from './articleLocalization';
+import { getArticleLabel } from './articleLabels';
+
+export type FormattedPriceItem = {
+  label: string | null;
+  text: string | null;
+  note: string | null;
+  value: string | null;
+  official: boolean | null;
+  officialBadge: string | null;
+};
 
 const intlLocaleByCode: Record<SupportedLocale, string> = {
   cs: 'cs-CZ',
@@ -10,11 +20,11 @@ const intlLocaleByCode: Record<SupportedLocale, string> = {
 };
 
 const freeLabels: Record<SupportedLocale, string> = {
-  cs: 'zdarma',
-  en: 'free',
-  de: 'kostenlos',
-  fr: 'gratuit',
-  es: 'gratis',
+  cs: 'Zdarma',
+  en: 'Free',
+  de: 'Kostenlos',
+  fr: 'Gratuit',
+  es: 'Gratis',
 };
 
 const fromLabels: Record<SupportedLocale, string> = {
@@ -51,23 +61,63 @@ const hourUnits: Record<SupportedLocale, string> = {
 
 const unitSuffixes: Record<SupportedLocale, Record<string, string>> = {
   cs: {
+    person: '/ osoba',
+    car: '/ auto',
+    car_day: '/ auto / den',
+    motorcycle_day: '/ motorka / den',
+    day: '/ den',
     hour: '/ hod.',
+    night: '/ noc',
+    season: '/ sezona',
+    '10_minutes': '/ 10 min',
     family: '/ rodina',
   },
   en: {
+    person: '/ person',
+    car: '/ car',
+    car_day: '/ car / day',
+    motorcycle_day: '/ motorcycle / day',
+    day: '/ day',
     hour: '/ hour',
+    night: '/ night',
+    season: '/ season',
+    '10_minutes': '/ 10 min',
     family: '/ family',
   },
   de: {
+    person: '/ Person',
+    car: '/ Auto',
+    car_day: '/ Auto / Tag',
+    motorcycle_day: '/ Motorrad / Tag',
+    day: '/ Tag',
     hour: '/ Std.',
+    night: '/ Nacht',
+    season: '/ Saison',
+    '10_minutes': '/ 10 Min.',
     family: '/ Familie',
   },
   fr: {
+    person: '/ personne',
+    car: '/ voiture',
+    car_day: '/ voiture / jour',
+    motorcycle_day: '/ moto / jour',
+    day: '/ jour',
     hour: '/ h',
+    night: '/ nuit',
+    season: '/ saison',
+    '10_minutes': '/ 10 min',
     family: '/ famille',
   },
   es: {
+    person: '/ persona',
+    car: '/ coche',
+    car_day: '/ coche / día',
+    motorcycle_day: '/ moto / día',
+    day: '/ día',
     hour: '/ h',
+    night: '/ noche',
+    season: '/ temporada',
+    '10_minutes': '/ 10 min',
     family: '/ familia',
   },
 };
@@ -173,7 +223,7 @@ function formatMoneyRange(
 }
 
 function unitSuffix(unit: string | null | undefined, locale: string): string {
-  if (!unit || unit === 'person') {
+  if (!unit) {
     return '';
   }
 
@@ -183,7 +233,7 @@ function unitSuffix(unit: string | null | undefined, locale: string): string {
   return suffix ? ` ${suffix}` : '';
 }
 
-export function formatPriceItem(
+export function formatPriceValue(
   item: PriceItem,
   locale: string,
   fallbackCurrency?: string | null
@@ -231,6 +281,36 @@ export function formatPriceItem(
   }
 
   return null;
+}
+
+export function formatPriceItem(
+  item: PriceItem,
+  locale: string,
+  fallbackCurrency?: string | null
+): FormattedPriceItem | null {
+  const currentLocale = normalizeLocale(locale);
+  const value = formatPriceValue(item, currentLocale, fallbackCurrency);
+  const label = getLocalizedValue(item.label, currentLocale);
+  const text = getLocalizedValue(item.text, currentLocale);
+  const note = getLocalizedValue(item.note, currentLocale);
+  const official = typeof item.official === 'boolean' ? item.official : null;
+  const officialBadge =
+    official === null
+      ? null
+      : getArticleLabel(currentLocale, official ? 'official' : 'indicative');
+
+  if (!label && !text && !note && !value) {
+    return null;
+  }
+
+  return {
+    label,
+    text,
+    note,
+    value,
+    official,
+    officialBadge,
+  };
 }
 
 export function sortBySortOrder<T extends { sort_order?: number | string | null }>(items: T[]): T[] {
