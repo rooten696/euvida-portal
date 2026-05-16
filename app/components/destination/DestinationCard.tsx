@@ -32,7 +32,7 @@ export default function DestinationCard({
       className="group flex min-h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
-        {imageUrl && (
+        {imageUrl ? (
           <Image
             src={imageUrl}
             alt={imageAlt}
@@ -40,6 +40,11 @@ export default function DestinationCard({
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
+        ) : (
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,#dbeafe_0%,#e0f2fe_40%,#fef3c7_100%)]" />
+        )}
+        {!imageUrl && (
+          <div className="absolute inset-0 opacity-70 [background-image:linear-gradient(120deg,rgba(15,23,42,0.08)_0_1px,transparent_1px_18px)]" />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/15 to-transparent" />
         <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between gap-3">

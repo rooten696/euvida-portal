@@ -11,6 +11,7 @@ import { getBooleanLabel, getCategoryLabel } from './articleLabels';
 import type { Article, SupportedLocale } from './articleTypes';
 
 export type ArticleCardData = {
+  id?: string | null;
   slug: string;
   title: string;
   excerpt: string | null;
@@ -84,6 +85,18 @@ function isSwimmingArticle(article: Article): boolean {
   );
 }
 
+function isLandmarkOrPlaceArticle(article: Article): boolean {
+  const category = article.category;
+  const placeType = article.visit_info?.place_type;
+
+  return (
+    category === 'landmark' ||
+    category === 'place' ||
+    category === 'places' ||
+    placeType === 'landmark'
+  );
+}
+
 function getFirstPriceBadge(article: Article, locale: SupportedLocale): string | null {
   const items = article.prices_info?.items;
 
@@ -117,32 +130,63 @@ function getParkingBadge(article: Article, locale: SupportedLocale): string | nu
   return value ? `${getArticleLabel(locale, 'parking')}: ${value}` : null;
 }
 
-function getArticleCardBadges(article: Article, locale: SupportedLocale): string[] {
-  if (!isSwimmingArticle(article)) {
-    return [];
+function getReadingTimeBadge(article: Article, locale: SupportedLocale): string | null {
+  if (!article.reading_time_minutes) {
+    return null;
   }
 
+  return `${getArticleLabel(locale, 'readingTime')}: ${article.reading_time_minutes} min`;
+}
+
+function getBookingBadge(article: Article, locale: SupportedLocale): string | null {
+  const value = getBooleanLabel(article.visit_info?.booking_recommended, locale);
+
+  return value ? `${getArticleLabel(locale, 'bookingRecommended')}: ${value}` : null;
+}
+
+function getArticleCardBadges(article: Article, locale: SupportedLocale): string[] {
   const badges: string[] = [];
 
-  if (typeof article.visit_info?.nudist_beach === 'boolean') {
-    const value = getBooleanLabel(article.visit_info.nudist_beach, locale);
+  if (isSwimmingArticle(article)) {
+    if (typeof article.visit_info?.nudist_beach === 'boolean') {
+      const value = getBooleanLabel(article.visit_info.nudist_beach, locale);
 
-    badges.push(
-      `${getArticleLabel(locale, 'nudistBeach')}: ${value}`
-    );
+      badges.push(`${getArticleLabel(locale, 'nudistBeach')}: ${value}`);
+    }
+
+    const parkingBadge = getParkingBadge(article, locale);
+    if (parkingBadge) {
+      badges.push(parkingBadge);
+    }
+
+    const priceBadge = getFirstPriceBadge(article, locale);
+    if (priceBadge) {
+      badges.push(priceBadge);
+    }
+
+    return badges.slice(0, 3);
   }
 
-  const parkingBadge = getParkingBadge(article, locale);
-  if (parkingBadge) {
-    badges.push(parkingBadge);
+  if (isLandmarkOrPlaceArticle(article)) {
+    const readingTimeBadge = getReadingTimeBadge(article, locale);
+    if (readingTimeBadge) {
+      badges.push(readingTimeBadge);
+    }
+
+    const bookingBadge = getBookingBadge(article, locale);
+    if (bookingBadge) {
+      badges.push(bookingBadge);
+    }
+
+    const priceBadge = getFirstPriceBadge(article, locale);
+    if (priceBadge) {
+      badges.push(priceBadge);
+    }
+
+    return badges.slice(0, 3);
   }
 
-  const priceBadge = getFirstPriceBadge(article, locale);
-  if (priceBadge) {
-    badges.push(priceBadge);
-  }
-
-  return badges.slice(0, 2);
+  return badges;
 }
 
 export function toArticleCardData(
@@ -154,6 +198,7 @@ export function toArticleCardData(
   const localized = getLocalizedArticle(article, currentLocale);
 
   return {
+    id: article.id,
     slug: article.slug,
     title: localized.title,
     excerpt: localized.excerpt ?? plainArticleExcerpt(article, currentLocale),

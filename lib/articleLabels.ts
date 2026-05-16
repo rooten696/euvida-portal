@@ -629,7 +629,8 @@ export const categoryLabels: LabelMap = {
     landmark: 'Památky',
     city: 'Města',
     nature: 'Příroda',
-    places: 'Místa',
+    place: 'Zajímavá místa',
+    places: 'Zajímavá místa',
     natural_swimming: 'Přírodní koupání',
     trail: 'Trasa',
     cycling: 'Cyklostezka',
@@ -645,7 +646,8 @@ export const categoryLabels: LabelMap = {
     landmark: 'Landmarks',
     city: 'Cities',
     nature: 'Nature',
-    places: 'Places',
+    place: 'Places to visit',
+    places: 'Places to visit',
     natural_swimming: 'Natural swimming',
     trail: 'Trail',
     cycling: 'Cycling route',
@@ -661,7 +663,8 @@ export const categoryLabels: LabelMap = {
     landmark: 'Sehenswürdigkeiten',
     city: 'Städte',
     nature: 'Natur',
-    places: 'Orte',
+    place: 'Sehenswerte Orte',
+    places: 'Sehenswerte Orte',
     natural_swimming: 'Naturbaden',
     trail: 'Route',
     cycling: 'Radroute',
@@ -677,7 +680,8 @@ export const categoryLabels: LabelMap = {
     landmark: 'Monuments',
     city: 'Villes',
     nature: 'Nature',
-    places: 'Lieux',
+    place: 'Lieux à voir',
+    places: 'Lieux à voir',
     natural_swimming: 'Baignade naturelle',
     trail: 'Itinéraire',
     cycling: 'Itinéraire cyclable',
@@ -693,7 +697,8 @@ export const categoryLabels: LabelMap = {
     landmark: 'Monumentos',
     city: 'Ciudades',
     nature: 'Naturaleza',
-    places: 'Lugares',
+    place: 'Lugares que ver',
+    places: 'Lugares que ver',
     natural_swimming: 'Baño natural',
     trail: 'Ruta',
     cycling: 'Ruta ciclista',
@@ -953,7 +958,13 @@ export function getCategoryLabel(
   category: string | null | undefined,
   locale: string
 ): string | null {
-  return getMappedLabel(categoryLabels, locale, category) ?? humanizeTechnicalValue(category);
+  const normalizedCategory =
+    category?.trim().toLocaleLowerCase('cs-CZ') === 'místa' ? 'places' : category;
+
+  return (
+    getMappedLabel(categoryLabels, locale, normalizedCategory) ??
+    humanizeTechnicalValue(normalizedCategory)
+  );
 }
 
 export function getModeLabel(

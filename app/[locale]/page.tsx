@@ -1,6 +1,7 @@
 import ArticleCard from '@/app/components/article/ArticleCard';
 import DestinationCard from '@/app/components/destination/DestinationCard';
 import HomeArticleExplorer from '@/app/components/home/HomeArticleExplorer';
+import SmartSearch, { type SmartSearchItem } from '@/app/components/search/SmartSearch';
 import {
   getArticleCategoryLabel,
   toArticleCardData,
@@ -68,6 +69,14 @@ type FilterOption = {
   value: string;
   label: string;
 };
+
+function presentValues(values: Array<string | null | undefined>): string[] {
+  return values.filter((value): value is string => Boolean(value?.trim()));
+}
+
+function countMeta(value: number, label: string, locale: SupportedLocale): string {
+  return `${value} ${label.toLocaleLowerCase(locale)}`;
+}
 
 function incrementCount(map: CountMap, key: string | null | undefined) {
   if (!key) {
@@ -180,7 +189,19 @@ export default async function HomePage({ params }: PageProps) {
     })
   );
   const featuredArticles = articleCards.filter((article) => article.featured).slice(0, 6);
-  const latestArticles = articleCards.slice(0, 24);
+  const featuredArticleIds = new Set(
+    featuredArticles
+      .map((article) => article.id)
+      .filter((id): id is string => Boolean(id))
+  );
+  const featuredArticleSlugs = new Set(featuredArticles.map((article) => article.slug));
+  const latestArticles = articleCards
+    .filter(
+      (article) =>
+        !(article.id && featuredArticleIds.has(article.id)) &&
+        !featuredArticleSlugs.has(article.slug)
+    )
+    .slice(0, 12);
   const categories = categoryOptions(articles, locale);
   const countryFilterOptions = countries
     .filter((country) => (articleCountByCountry.get(country.id) ?? 0) > 0)
@@ -189,11 +210,38 @@ export default async function HomePage({ params }: PageProps) {
       label: country.name,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, locale));
-  const selectedRegions = regions
-    .map((region) => ({
-      ...region,
-      articleCount: articleCountByRegion.get(region.id) ?? 0,
-    }))
+  const countriesWithCounts = countries.map((country) => ({
+    ...country,
+    articleCount: articleCountByCountry.get(country.id) ?? 0,
+    regionCount: regionCountByCountry.get(country.id) ?? 0,
+  }));
+  const countriesWithArticles = countriesWithCounts
+    .filter((country) => country.articleCount > 0)
+    .sort((left, right) => {
+      if (right.articleCount !== left.articleCount) {
+        return right.articleCount - left.articleCount;
+      }
+
+      return left.name.localeCompare(right.name, locale);
+    });
+  const extraCountries = countriesWithCounts
+    .filter((country) => country.articleCount === 0)
+    .sort((left, right) => {
+      if (right.regionCount !== left.regionCount) {
+        return right.regionCount - left.regionCount;
+      }
+
+      return left.name.localeCompare(right.name, locale);
+    })
+    .slice(0, 6);
+  const homepageCountries = [...countriesWithArticles, ...extraCountries];
+  const regionsWithCounts = regions.map((region) => ({
+    ...region,
+    articleCount: articleCountByRegion.get(region.id) ?? 0,
+    countryName: countryNameById.get(region.country_id) ?? null,
+  }));
+  const selectedRegions = regionsWithCounts
+    .filter((region) => region.articleCount > 0)
     .sort((left, right) => {
       if (right.articleCount !== left.articleCount) {
         return right.articleCount - left.articleCount;
@@ -202,23 +250,55 @@ export default async function HomePage({ params }: PageProps) {
       return left.name.localeCompare(right.name, locale);
     })
     .slice(0, 8);
-
-  const features = [
-    {
-      eyebrow: '01',
-      title: t('feature1_title'),
-      description: t('feature1_desc'),
-    },
-    {
-      eyebrow: '02',
-      title: t('feature2_title'),
-      description: t('feature2_desc'),
-    },
-    {
-      eyebrow: '03',
-      title: t('feature3_title'),
-      description: t('feature3_desc'),
-    },
+  const articlesCountLabel = getDestinationLabel(locale, 'articlesCount');
+  const regionsCountLabel = getDestinationLabel(locale, 'regionsCount');
+  const searchItems: SmartSearchItem[] = [
+    ...articleCards.map((article) => ({
+      id: `article-${article.id ?? article.slug}`,
+      title: article.title,
+      href: `/${locale}/article/${article.slug}`,
+      typeLabel: article.categoryLabel ?? getDestinationLabel(locale, 'articlesAndGuides'),
+      description: article.excerpt,
+      meta: presentValues([
+        article.regionName,
+        article.countryName,
+        article.readingTimeMinutes ? `${article.readingTimeMinutes} min` : null,
+      ]).join(' · '),
+      keywords: presentValues([
+        article.category,
+        article.categoryLabel,
+        article.countryName,
+        article.regionName,
+        ...(article.badges ?? []),
+      ]),
+      priority: article.featured ? 8 : 5,
+    })),
+    ...countriesWithCounts.map((country) => ({
+      id: `country-${country.id}`,
+      title: country.name,
+      href: `/${locale}/country/${country.id}`,
+      typeLabel: getDestinationLabel(locale, 'countryGuide'),
+      description: country.description,
+      meta: presentValues([
+        countMeta(country.articleCount, articlesCountLabel, locale),
+        countMeta(country.regionCount, regionsCountLabel, locale),
+      ]).join(' · '),
+      keywords: presentValues([country.id, country.flag, country.name]),
+      priority: country.articleCount > 0 ? 7 : 2,
+    })),
+    ...regionsWithCounts.map((region) => ({
+      id: `region-${region.id}`,
+      title: region.name,
+      href: `/${locale}/region/${region.id}`,
+      typeLabel: getDestinationLabel(locale, 'regionGuide'),
+      description: region.description,
+      meta: presentValues([
+        region.countryName,
+        countMeta(region.articleCount, articlesCountLabel, locale),
+      ]).join(' · '),
+      keywords: presentValues([region.countryName, region.language, region.name]),
+      priority: region.articleCount > 0 ? 6 : 1,
+    })),
   ];
 
   return (
@@ -245,7 +325,10 @@ export default async function HomePage({ params }: PageProps) {
             <p className="mt-6 max-w-2xl break-words text-lg font-medium leading-relaxed text-white/90 md:text-xl">
               {t('subtitle')}
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-8">
+              <SmartSearch items={searchItems} locale={locale} />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
               <a
                 href="#featured"
                 className="inline-flex rounded-full bg-yellow-300 px-6 py-3 text-sm font-extrabold text-yellow-950 shadow-lg shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-yellow-200"
@@ -269,29 +352,8 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
-      <section className="relative z-10 mx-auto -mt-14 max-w-6xl px-4 md:px-6">
-        <div className="grid gap-5 md:grid-cols-3">
-          {features.map((feature) => (
-            <article
-              key={feature.eyebrow}
-              className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl shadow-blue-950/5"
-            >
-              <span className="text-xs font-black uppercase tracking-wide text-blue-700">
-                {feature.eyebrow}
-              </span>
-              <h2 className="mt-3 text-xl font-extrabold text-slate-950">
-                {feature.title}
-              </h2>
-              <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                {feature.description}
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
-
       {featuredArticles.length > 0 && (
-        <section id="featured" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-16 md:px-6">
+        <section id="featured" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 md:px-6">
           <div className="mb-8">
             <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
               {getDestinationLabel(locale, 'featuredArticles')}
@@ -313,22 +375,24 @@ export default async function HomePage({ params }: PageProps) {
         </section>
       )}
 
-      <section id="articles" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 md:px-6">
-        <div className="mb-8">
-          <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
-            {getDestinationLabel(locale, 'latestArticles')}
-          </p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-            {getDestinationLabel(locale, 'latestGuides')}
-          </h2>
-        </div>
-        <HomeArticleExplorer
-          locale={locale}
-          articles={latestArticles}
-          categories={categories}
-          countries={countryFilterOptions}
-        />
-      </section>
+      {latestArticles.length > 0 && (
+        <section id="articles" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 md:px-6">
+          <div className="mb-8">
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              {getDestinationLabel(locale, 'latestArticles')}
+            </p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {getDestinationLabel(locale, 'latestGuides')}
+            </h2>
+          </div>
+          <HomeArticleExplorer
+            locale={locale}
+            articles={latestArticles}
+            categories={categories}
+            countries={countryFilterOptions}
+          />
+        </section>
+      )}
 
       {categories.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-10 md:px-6">
@@ -375,33 +439,43 @@ export default async function HomePage({ params }: PageProps) {
           </p>
         </div>
 
-        {countries.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {countries.map((country) => (
-              <DestinationCard
-                key={country.id}
-                href={`/${locale}/country/${country.id}`}
-                title={country.name}
-                description={country.description}
-                imageUrl={country.image_url}
-                imageAlt={country.name}
-                badge={getDestinationLabel(locale, 'countryGuide')}
-                flag={country.flag}
-                flagSrc={`/flags/${country.id.toLowerCase()}.svg`}
-                stats={[
-                  {
-                    label: getDestinationLabel(locale, 'articlesCount'),
-                    value: articleCountByCountry.get(country.id) ?? 0,
-                  },
-                  {
-                    label: getDestinationLabel(locale, 'regionsCount'),
-                    value: regionCountByCountry.get(country.id) ?? 0,
-                  },
-                ]}
-                actionLabel={getDestinationLabel(locale, 'exploreCountry')}
-              />
-            ))}
-          </div>
+        {homepageCountries.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {homepageCountries.map((country) => (
+                <DestinationCard
+                  key={country.id}
+                  href={`/${locale}/country/${country.id}`}
+                  title={country.name}
+                  description={country.description}
+                  imageUrl={country.image_url}
+                  imageAlt={country.name}
+                  badge={getDestinationLabel(locale, 'countryGuide')}
+                  flag={country.flag}
+                  flagSrc={`/flags/${country.id.toLowerCase()}.svg`}
+                  stats={[
+                    {
+                      label: getDestinationLabel(locale, 'articlesCount'),
+                      value: country.articleCount,
+                    },
+                    {
+                      label: getDestinationLabel(locale, 'regionsCount'),
+                      value: country.regionCount,
+                    },
+                  ]}
+                  actionLabel={getDestinationLabel(locale, 'exploreCountry')}
+                />
+              ))}
+            </div>
+            <div className="mt-8 flex justify-center">
+              <a
+                href={`/${locale}/countries`}
+                className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+              >
+                {getDestinationLabel(locale, 'showAllCountries')}
+              </a>
+            </div>
+          </>
         ) : (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
             {t('no_countries')}
@@ -441,6 +515,14 @@ export default async function HomePage({ params }: PageProps) {
                 actionLabel={getDestinationLabel(locale, 'exploreRegion')}
               />
             ))}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <a
+              href={`/${locale}/regions`}
+              className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+            >
+              {getDestinationLabel(locale, 'allRegions')}
+            </a>
           </div>
         </section>
       )}
