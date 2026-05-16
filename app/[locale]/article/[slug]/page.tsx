@@ -211,6 +211,72 @@ const markdownComponents = {
   ),
 };
 
+function normalizeMarkdownTitle(value: string): string {
+  return value
+    .replace(/[#*_`~[\]()]/g, '')
+    .replace(/[^\w\s\u00C0-\u024F&+]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLocaleLowerCase('cs-CZ');
+}
+
+function stripStructuredArticleSections(markdown: string, locale: SupportedLocale): string {
+  const sectionTitles = new Set(
+    [
+      getArticleLabel(locale, 'quickInfo'),
+      getArticleLabel(locale, 'practicalInfo'),
+      getArticleLabel(locale, 'prices'),
+      getArticleLabel(locale, 'access'),
+      getArticleLabel(locale, 'sources'),
+      getArticleLabel('cs', 'quickInfo'),
+      getArticleLabel('cs', 'practicalInfo'),
+      getArticleLabel('cs', 'prices'),
+      getArticleLabel('cs', 'access'),
+      getArticleLabel('cs', 'sources'),
+      'Quick overview',
+      'Practical information',
+      'Prices and tickets',
+      'How to get there',
+      'Sources and verification',
+      'Zdroje',
+      'Použité zdroje',
+      'Zdroje a ověření informací',
+      'Hlavní traily',
+      'Main trails',
+      'Bezpečnost',
+      'Safety',
+    ].map(normalizeMarkdownTitle)
+  );
+  const lines = markdown.split(/\r?\n/);
+  const result: string[] = [];
+  let skippedHeadingLevel: number | null = null;
+
+  for (const line of lines) {
+    const heading = /^(#{2,6})\s+(.+?)\s*#*\s*$/.exec(line.trim());
+
+    if (heading) {
+      const headingLevel = heading[1].length;
+
+      if (skippedHeadingLevel !== null && headingLevel <= skippedHeadingLevel) {
+        skippedHeadingLevel = null;
+      }
+
+      if (sectionTitles.has(normalizeMarkdownTitle(heading[2]))) {
+        skippedHeadingLevel = headingLevel;
+        continue;
+      }
+    }
+
+    if (skippedHeadingLevel !== null) {
+      continue;
+    }
+
+    result.push(line);
+  }
+
+  return result.join('\n').trim();
+}
+
 export default async function ArticlePage({ params }: PageProps) {
   const { locale: routeLocale, slug } = await params;
   const locale = normalizeLocale(routeLocale);
@@ -223,7 +289,7 @@ export default async function ArticlePage({ params }: PageProps) {
   const { country, region } = await getLocationData(article);
   const localizedArticle = getLocalizedArticle(article, locale);
   const { title, excerpt, content: rawContent, imageAlt } = localizedArticle;
-  const markdownContent = stripFirstMarkdownH1(rawContent);
+  const markdownContent = stripStructuredArticleSections(stripFirstMarkdownH1(rawContent), locale);
   const categoryLabel = getCategoryLabel(article.category, locale);
   const checkedDate = formatDate(article.last_checked_at ?? article.source_info?.last_checked, locale);
   const updatedDate = formatDate(article.updated_at ?? article.created_at, locale);
@@ -284,13 +350,15 @@ export default async function ArticlePage({ params }: PageProps) {
         </div>
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,820px)_340px] lg:items-start lg:justify-center">
-          <div className="space-y-6 lg:hidden">
-            <PracticalInfoGrid locale={locale} practicalInfo={article.practical_info} />
-            <PricesSection locale={locale} pricesInfo={article.prices_info} />
-            <AccessSection locale={locale} accessInfo={article.access_info} />
-          </div>
+          <aside className="order-1 lg:order-2">
+            <div className="space-y-5 lg:sticky lg:top-24">
+              <PracticalInfoGrid locale={locale} practicalInfo={article.practical_info} />
+              <PricesSection locale={locale} pricesInfo={article.prices_info} />
+              <AccessSection locale={locale} accessInfo={article.access_info} />
+            </div>
+          </aside>
 
-          <div className="min-w-0">
+          <div className="order-2 min-w-0 lg:order-1">
             <section className="max-w-[820px] rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-8">
               <ReactMarkdown components={markdownComponents} skipHtml>
                 {markdownContent}
@@ -303,14 +371,6 @@ export default async function ArticlePage({ params }: PageProps) {
               lastCheckedAt={article.last_checked_at}
             />
           </div>
-
-          <aside className="hidden lg:block">
-            <div className="sticky top-24 space-y-5">
-              <PracticalInfoGrid locale={locale} practicalInfo={article.practical_info} />
-              <PricesSection locale={locale} pricesInfo={article.prices_info} />
-              <AccessSection locale={locale} accessInfo={article.access_info} />
-            </div>
-          </aside>
         </div>
       </article>
     </main>

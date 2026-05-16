@@ -1,4 +1,4 @@
-import { getArticleLabel, getMappedLabel, sourceTypeLabels } from '@/lib/articleLabels';
+import { getArticleLabel } from '@/lib/articleLabels';
 import { formatDate } from '@/lib/articleFormatting';
 import { getLocalizedValue, normalizeLocale } from '@/lib/articleLocalization';
 import type { SourceInfo, SourceItem } from '@/lib/articleTypes';
@@ -29,11 +29,6 @@ function SourceLink({
   locale: string;
 }) {
   const label = getLocalizedValue(source.label, locale) ?? getHostname(source.url);
-  const sourceType = getMappedLabel(sourceTypeLabels, locale, source.type);
-  const usedFor = source.used_for
-    ?.filter((item) => typeof item === 'string' && item.trim().length > 0)
-    .map((item) => item.replace(/_/g, ' '))
-    .join(', ');
 
   if (!label || !source.url) {
     return null;
@@ -41,27 +36,14 @@ function SourceLink({
 
   return (
     <li className="rounded-xl border border-slate-100 bg-white p-3">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <a
-          href={source.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950"
-        >
-          {label}
-        </a>
-        {sourceType && (
-          <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-            {sourceType}
-          </span>
-        )}
-      </div>
-      {usedFor && (
-        <p className="mt-2 text-xs leading-relaxed text-slate-500">
-          <span className="font-semibold">{getArticleLabel(locale, 'usedFor')}:</span>{' '}
-          {usedFor}
-        </p>
-      )}
+      <a
+        href={source.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950"
+      >
+        {label}
+      </a>
     </li>
   );
 }
@@ -87,6 +69,10 @@ export default function ArticleSources({
       <h2 className="text-xl font-extrabold text-slate-950">
         {getArticleLabel(currentLocale, 'sources')}
       </h2>
+
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">
+        {getArticleLabel(currentLocale, 'sourcesIntro')}
+      </p>
 
       {checkedDate && (
         <p className="mt-2 text-sm text-slate-600">

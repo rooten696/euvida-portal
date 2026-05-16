@@ -20,15 +20,37 @@ type PriceGroup = {
 
 const priceCategoryOrder = [
   'ticket',
+  'lift_ticket',
+  'package',
   'beach_access',
+  'accommodation_person',
+  'accommodation_unit',
+  'accommodation',
+  'vehicle',
+  'pet',
+  'tax',
   'parking',
   'rental',
+  'protective_gear',
   'activity',
   'service',
   'food_drink',
-  'accommodation',
   'rules',
+  'adult',
+  'child',
+  'reduced',
+  'family',
+  'locker',
+  'other',
 ];
+
+const otherPriceLabels: Record<SupportedLocale, string> = {
+  cs: 'Další ceny',
+  en: 'Other prices',
+  de: 'Weitere Preise',
+  fr: 'Autres tarifs',
+  es: 'Otros precios',
+};
 
 function priceItemIsVisible(
   item: PriceItem,
@@ -39,12 +61,19 @@ function priceItemIsVisible(
 }
 
 function groupPriceItems(items: PriceItem[], locale: SupportedLocale): PriceGroup[] {
+  const hasCategories = items.some((item) => Boolean(item.category));
+
+  if (!hasCategories) {
+    return [{ key: 'all', label: null, items }];
+  }
+
   const groups = new Map<string, PriceGroup>();
 
   for (const item of items) {
     const rawCategory = item.category ?? 'other';
-    const label = getMappedLabel(priceCategoryLabels, locale, rawCategory);
-    const key = label ? rawCategory : 'other';
+    const mappedLabel = getMappedLabel(priceCategoryLabels, locale, rawCategory);
+    const key = mappedLabel ? rawCategory : 'other';
+    const label = mappedLabel ?? otherPriceLabels[locale];
 
     if (!groups.has(key)) {
       groups.set(key, {
