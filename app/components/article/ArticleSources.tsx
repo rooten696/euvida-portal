@@ -1,4 +1,4 @@
-import { getArticleLabel, getMappedLabel, sourceTypeLabels } from '@/lib/articleLabels';
+import { getArticleLabel } from '@/lib/articleLabels';
 import { formatDate } from '@/lib/articleFormatting';
 import { getLocalizedValue, normalizeLocale } from '@/lib/articleLocalization';
 import type { SourceInfo, SourceItem } from '@/lib/articleTypes';
@@ -29,28 +29,21 @@ function SourceLink({
   locale: string;
 }) {
   const label = getLocalizedValue(source.label, locale) ?? getHostname(source.url);
-  const sourceType = getMappedLabel(sourceTypeLabels, locale, source.type);
 
   if (!label || !source.url) {
     return null;
   }
 
   return (
-    <li className="flex flex-col gap-2 rounded-xl border border-slate-100 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+    <li className="rounded-xl border border-slate-100 bg-white p-3">
       <a
         href={source.url}
         target="_blank"
         rel="noreferrer"
-        title={source.used_for?.join(', ')}
         className="font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950"
       >
         {label}
       </a>
-      {sourceType && (
-        <span className="w-fit rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600">
-          {sourceType}
-        </span>
-      )}
     </li>
   );
 }
@@ -76,6 +69,10 @@ export default function ArticleSources({
       <h2 className="text-xl font-extrabold text-slate-950">
         {getArticleLabel(currentLocale, 'sources')}
       </h2>
+
+      <p className="mt-2 text-sm leading-relaxed text-slate-600">
+        {getArticleLabel(currentLocale, 'sourcesIntro')}
+      </p>
 
       {checkedDate && (
         <p className="mt-2 text-sm text-slate-600">

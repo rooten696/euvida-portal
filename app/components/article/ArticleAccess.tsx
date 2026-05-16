@@ -18,8 +18,45 @@ type Detail = {
   value: string;
 };
 
+const rawAccessLabels: Record<string, string[]> = {
+  car: ['auto', 'car'],
+  bike: ['kolo', 'bike'],
+  public_transport: ['mhd', 'public transport', 'verejna doprava', 'veřejná doprava'],
+  train: ['vlak', 'train'],
+  bus: ['bus', 'autobus'],
+  boat: ['lod', 'loď', 'boat'],
+  walk: ['pesky', 'pěšky', 'walk'],
+};
+
+function normalizeAccessLabel(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+}
+
+function isRawAccessLabel(label: string, mode: string | null | undefined): boolean {
+  if (!mode) {
+    return false;
+  }
+
+  const normalizedLabel = normalizeAccessLabel(label);
+  const normalizedMode = normalizeAccessLabel(mode.replace(/_/g, ' '));
+  const knownLabels = rawAccessLabels[mode]?.map(normalizeAccessLabel) ?? [];
+
+  return normalizedLabel === normalizedMode || knownLabels.includes(normalizedLabel);
+}
+
 function accessItemLabel(item: AccessItem, locale: string): string | null {
-  return getLocalizedValue(item.label, locale) ?? getMappedLabel(accessModeLabels, locale, item.mode);
+  const label = getLocalizedValue(item.label, locale);
+  const modeLabel = getMappedLabel(accessModeLabels, locale, item.mode);
+
+  if (modeLabel && (!label || isRawAccessLabel(label, item.mode))) {
+    return modeLabel;
+  }
+
+  return label ?? modeLabel;
 }
 
 function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {

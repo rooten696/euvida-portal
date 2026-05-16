@@ -127,7 +127,44 @@ export type VisitInfo = {
   avoid_if_possible_keys?: string[] | string | null;
   swimming_type?: string | null;
   official_opening_hours?: LocalizedField;
+  opening_hours_text?: LocalizedField;
   water_quality_note?: LocalizedField;
+  family_friendly?: boolean | null;
+  dogs_allowed?: boolean | null;
+  dogs_allowed_note?: LocalizedField;
+  water_nearby?: boolean | null;
+  beach_nearby?: boolean | null;
+  electric_hookup?: boolean | null;
+  kitchen_available?: boolean | null;
+  showers_available?: boolean | null;
+  washing_machine_available?: boolean | null;
+  baby_room_available?: boolean | null;
+  shop_available?: boolean | null;
+  restaurant_available?: boolean | null;
+  campfire_places?: boolean | null;
+  trail_network_km?: number | string | null;
+  marked_mtb_routes_km?: number | string | null;
+  difficulty?: string[] | string | null;
+  lift_available?: boolean | null;
+  lift_name?: string | null;
+  bike_rental_available?: boolean | null;
+  scooter_rental_available?: boolean | null;
+  bike_school_available?: boolean | null;
+  service_available?: boolean | null;
+  bike_wash_available?: boolean | null;
+  free_parking?: boolean | null;
+  beginner_friendly?: boolean | null;
+  helmet_required?: boolean | null;
+  full_face_required_on_hard_trails?: boolean | null;
+  protective_gear_required_on_hard_trails?: boolean | null;
+  trail_highlights?: TrailHighlight[] | null;
+  safety_note?: LocalizedField;
+};
+
+export type TrailHighlight = {
+  id?: string | null;
+  difficulty?: string | null;
+  length_km?: number | string | null;
 };
 
 export type ImageCredit = {

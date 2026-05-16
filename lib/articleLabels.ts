@@ -18,6 +18,7 @@ export const articleUiLabels: LabelMap = {
     prices: 'Vstupné a ceny',
     access: 'Jak se tam dostat',
     sources: 'Zdroje a ověření',
+    sourcesIntro: 'Zdroje použité pro ověření cen, provozu, pravidel a praktických informací.',
     photo: 'Foto',
     infoChecked: 'Informace ověřeny k',
     seasonNote: 'Sezónní poznámka',
@@ -55,6 +56,7 @@ export const articleUiLabels: LabelMap = {
     prices: 'Prices and tickets',
     access: 'How to get there',
     sources: 'Sources and verification',
+    sourcesIntro: 'Sources used to verify prices, opening details, rules, and practical information.',
     photo: 'Photo',
     infoChecked: 'Information verified on',
     seasonNote: 'Season note',
@@ -92,6 +94,7 @@ export const articleUiLabels: LabelMap = {
     prices: 'Eintritt und Preise',
     access: 'Anreise',
     sources: 'Quellen und Prüfung',
+    sourcesIntro: 'Quellen zur Prüfung von Preisen, Betrieb, Regeln und praktischen Informationen.',
     photo: 'Foto',
     infoChecked: 'Informationen geprüft am',
     seasonNote: 'Saisonhinweis',
@@ -129,6 +132,7 @@ export const articleUiLabels: LabelMap = {
     prices: 'Tarifs et billets',
     access: 'Comment s’y rendre',
     sources: 'Sources et vérification',
+    sourcesIntro: 'Sources utilisées pour vérifier les prix, les horaires, les règles et les informations pratiques.',
     photo: 'Photo',
     infoChecked: 'Informations vérifiées le',
     seasonNote: 'Note saisonnière',
@@ -166,6 +170,7 @@ export const articleUiLabels: LabelMap = {
     prices: 'Entradas y precios',
     access: 'Cómo llegar',
     sources: 'Fuentes y verificación',
+    sourcesIntro: 'Fuentes usadas para verificar precios, funcionamiento, normas e información práctica.',
     photo: 'Foto',
     infoChecked: 'Información verificada el',
     seasonNote: 'Nota de temporada',
@@ -259,6 +264,8 @@ export const durationLabels: LabelMap = {
     trail: 'Čas na trase',
     cycling_route: 'Čas na trase',
     ski_area: 'Doporučený čas na místě',
+    camping: 'Kolik času si vyhradit',
+    bike_trail: 'Kolik času si vyhradit',
   },
   en: {
     default: 'Time needed',
@@ -274,6 +281,8 @@ export const durationLabels: LabelMap = {
     trail: 'Time on route',
     cycling_route: 'Time on route',
     ski_area: 'Recommended time on site',
+    camping: 'Time needed',
+    bike_trail: 'Time needed',
   },
   de: {
     default: 'Benötigte Zeit',
@@ -289,6 +298,8 @@ export const durationLabels: LabelMap = {
     trail: 'Zeit auf der Route',
     cycling_route: 'Zeit auf der Route',
     ski_area: 'Empfohlene Zeit vor Ort',
+    camping: 'Benötigte Zeit',
+    bike_trail: 'Benötigte Zeit',
   },
   fr: {
     default: 'Temps à prévoir',
@@ -304,6 +315,8 @@ export const durationLabels: LabelMap = {
     trail: 'Temps sur l’itinéraire',
     cycling_route: 'Temps sur l’itinéraire',
     ski_area: 'Temps conseillé sur place',
+    camping: 'Temps à prévoir',
+    bike_trail: 'Temps à prévoir',
   },
   es: {
     default: 'Tiempo necesario',
@@ -319,6 +332,8 @@ export const durationLabels: LabelMap = {
     trail: 'Tiempo en la ruta',
     cycling_route: 'Tiempo en la ruta',
     ski_area: 'Tiempo recomendado en el lugar',
+    camping: 'Tiempo necesario',
+    bike_trail: 'Tiempo necesario',
   },
 };
 
@@ -336,6 +351,8 @@ export const placeTypeLabels: LabelMap = {
     trail: 'turistická trasa',
     cycling_route: 'cyklostezka',
     ski_area: 'lyžařský areál',
+    camping: 'kemp',
+    bike_trail: 'bike park',
   },
   en: {
     landmark: 'landmark',
@@ -350,6 +367,8 @@ export const placeTypeLabels: LabelMap = {
     trail: 'trail',
     cycling_route: 'cycling route',
     ski_area: 'ski area',
+    camping: 'camping',
+    bike_trail: 'bike park',
   },
   de: {
     landmark: 'Sehenswürdigkeit',
@@ -364,6 +383,8 @@ export const placeTypeLabels: LabelMap = {
     trail: 'Wanderroute',
     cycling_route: 'Radroute',
     ski_area: 'Skigebiet',
+    camping: 'Campingplatz',
+    bike_trail: 'Bikepark',
   },
   fr: {
     landmark: 'site remarquable',
@@ -378,6 +399,8 @@ export const placeTypeLabels: LabelMap = {
     trail: 'itinéraire de randonnée',
     cycling_route: 'itinéraire cyclable',
     ski_area: 'domaine skiable',
+    camping: 'camping',
+    bike_trail: 'bike park',
   },
   es: {
     landmark: 'monumento',
@@ -392,6 +415,8 @@ export const placeTypeLabels: LabelMap = {
     trail: 'ruta de senderismo',
     cycling_route: 'ruta ciclista',
     ski_area: 'estación de esquí',
+    camping: 'camping',
+    bike_trail: 'bike park',
   },
 };
 
@@ -603,6 +628,8 @@ export const categoryLabels: LabelMap = {
     castle: 'Hrad',
     chateau: 'Zámek',
     ski_area: 'Lyžařský areál',
+    camping: 'Kempy',
+    bike_trail: 'Bike parky a traily',
     city_tip: 'Tip do města',
   },
   en: {
@@ -613,6 +640,8 @@ export const categoryLabels: LabelMap = {
     castle: 'Castle',
     chateau: 'Chateau',
     ski_area: 'Ski area',
+    camping: 'Camping',
+    bike_trail: 'Bike parks and trails',
     city_tip: 'City tip',
   },
   de: {
@@ -623,6 +652,8 @@ export const categoryLabels: LabelMap = {
     castle: 'Burg',
     chateau: 'Schloss',
     ski_area: 'Skigebiet',
+    camping: 'Camping',
+    bike_trail: 'Bikeparks und Trails',
     city_tip: 'Stadttipp',
   },
   fr: {
@@ -633,6 +664,8 @@ export const categoryLabels: LabelMap = {
     castle: 'Château fort',
     chateau: 'Château',
     ski_area: 'Domaine skiable',
+    camping: 'Camping',
+    bike_trail: 'Bike parks et trails',
     city_tip: 'Idée en ville',
   },
   es: {
@@ -643,6 +676,8 @@ export const categoryLabels: LabelMap = {
     castle: 'Castillo',
     chateau: 'Palacio',
     ski_area: 'Estación de esquí',
+    camping: 'Camping',
+    bike_trail: 'Bike parks y trails',
     city_tip: 'Plan urbano',
   },
 };
@@ -682,20 +717,20 @@ export const sourceTypeLabels: LabelMap = {
 
 export const accessModeLabels: LabelMap = {
   cs: {
-    walk: 'pěšky',
-    metro: 'metro',
-    tram: 'tramvaj',
-    bus: 'autobus',
-    train: 'vlak',
-    public_transport: 'MHD',
+    walk: 'Pěšky',
+    metro: 'Metro',
+    tram: 'Tramvaj',
+    bus: 'Autobus',
+    train: 'Vlak',
+    public_transport: 'Veřejná doprava',
     train_bus: 'vlak + autobus',
-    car: 'auto',
-    parking: 'parkování',
-    taxi: 'taxi',
-    bike: 'kolo',
+    car: 'Auto',
+    parking: 'Parkování',
+    taxi: 'Taxi',
+    bike: 'Kolo',
     ferry: 'trajekt',
-    boat: 'loď',
-    cable_car: 'lanovka',
+    boat: 'Loď',
+    cable_car: 'Lanovka',
     funicular: 'pozemní lanovka',
     shuttle: 'shuttle',
     organized_tour: 'organizovaný výlet',
