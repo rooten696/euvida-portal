@@ -1,4 +1,8 @@
-import { getArticleLabel } from '@/lib/articleLabels';
+import {
+  getArticleLabel,
+  getMappedLabel,
+  priceCategoryLabels,
+} from '@/lib/articleLabels';
 import { formatDate, formatPriceItem, sortBySortOrder } from '@/lib/articleFormatting';
 import { getLocalizedValue, normalizeLocale } from '@/lib/articleLocalization';
 import type { PriceItem, PricesInfo, SupportedLocale } from '@/lib/articleTypes';
@@ -8,120 +12,37 @@ type ArticlePricesProps = {
   pricesInfo?: PricesInfo | null;
 };
 
-type LabelMap = Record<SupportedLocale, Record<string, string>>;
-
 type PriceGroup = {
+  key: string;
   label: string | null;
   items: PriceItem[];
 };
 
-const priceCategoryLabels: LabelMap = {
-  cs: {
-    accommodation_person: 'Osoby',
-    accommodation_unit: 'Ubytování a místa',
-    vehicle: 'Vozidla',
-    pet: 'Psi a domácí zvířata',
-    tax: 'Poplatky',
-    food_drink: 'Jídlo a pití',
-    rental: 'Půjčovny',
-    activity: 'Aktivity',
-    parking: 'Parkování',
-    ticket: 'Vstupné',
-    lift_ticket: 'Lanovka a bike ticket',
-    package: 'Balíčky',
-    protective_gear: 'Chrániče a vybavení',
-    service: 'Služby',
-    adult: 'Dospělí',
-    child: 'Děti',
-    reduced: 'Zlevněné',
-    family: 'Rodiny',
-    locker: 'Skříňky',
-  },
-  en: {
-    accommodation_person: 'People',
-    accommodation_unit: 'Accommodation and pitches',
-    vehicle: 'Vehicles',
-    pet: 'Dogs and pets',
-    tax: 'Fees',
-    food_drink: 'Food and drink',
-    rental: 'Rentals',
-    activity: 'Activities',
-    parking: 'Parking',
-    ticket: 'Admission',
-    lift_ticket: 'Lift and bike ticket',
-    package: 'Packages',
-    protective_gear: 'Protective gear and equipment',
-    service: 'Services',
-    adult: 'Adults',
-    child: 'Children',
-    reduced: 'Reduced',
-    family: 'Families',
-    locker: 'Lockers',
-  },
-  de: {
-    accommodation_person: 'Personen',
-    accommodation_unit: 'Unterkunft und Stellplätze',
-    vehicle: 'Fahrzeuge',
-    pet: 'Hunde und Haustiere',
-    tax: 'Gebühren',
-    food_drink: 'Essen und Trinken',
-    rental: 'Verleih',
-    activity: 'Aktivitäten',
-    parking: 'Parken',
-    ticket: 'Eintritt',
-    lift_ticket: 'Lift- und Bike-Ticket',
-    package: 'Pakete',
-    protective_gear: 'Protektoren und Ausrüstung',
-    service: 'Services',
-    adult: 'Erwachsene',
-    child: 'Kinder',
-    reduced: 'Ermäßigt',
-    family: 'Familien',
-    locker: 'Schließfächer',
-  },
-  fr: {
-    accommodation_person: 'Personnes',
-    accommodation_unit: 'Hébergement et emplacements',
-    vehicle: 'Véhicules',
-    pet: 'Chiens et animaux',
-    tax: 'Frais',
-    food_drink: 'Restauration',
-    rental: 'Locations',
-    activity: 'Activités',
-    parking: 'Stationnement',
-    ticket: 'Entrée',
-    lift_ticket: 'Remontée et bike ticket',
-    package: 'Forfaits',
-    protective_gear: 'Protections et équipement',
-    service: 'Services',
-    adult: 'Adultes',
-    child: 'Enfants',
-    reduced: 'Tarif réduit',
-    family: 'Familles',
-    locker: 'Casiers',
-  },
-  es: {
-    accommodation_person: 'Personas',
-    accommodation_unit: 'Alojamiento y parcelas',
-    vehicle: 'Vehículos',
-    pet: 'Perros y mascotas',
-    tax: 'Tasas',
-    food_drink: 'Comida y bebida',
-    rental: 'Alquileres',
-    activity: 'Actividades',
-    parking: 'Aparcamiento',
-    ticket: 'Entrada',
-    lift_ticket: 'Remonte y bike ticket',
-    package: 'Paquetes',
-    protective_gear: 'Protecciones y equipamiento',
-    service: 'Servicios',
-    adult: 'Adultos',
-    child: 'Niños',
-    reduced: 'Reducida',
-    family: 'Familias',
-    locker: 'Taquillas',
-  },
-};
+const priceCategoryOrder = [
+  'ticket',
+  'lift_ticket',
+  'package',
+  'beach_access',
+  'accommodation_person',
+  'accommodation_unit',
+  'accommodation',
+  'vehicle',
+  'pet',
+  'tax',
+  'parking',
+  'rental',
+  'protective_gear',
+  'activity',
+  'service',
+  'food_drink',
+  'rules',
+  'adult',
+  'child',
+  'reduced',
+  'family',
+  'locker',
+  'other',
+];
 
 const otherPriceLabels: Record<SupportedLocale, string> = {
   cs: 'Další ceny',
@@ -131,31 +52,82 @@ const otherPriceLabels: Record<SupportedLocale, string> = {
   es: 'Otros precios',
 };
 
-function priceCategoryLabel(category: string | null | undefined, locale: SupportedLocale): string | null {
-  if (!category) {
-    return null;
-  }
-
-  return priceCategoryLabels[locale][category] ?? priceCategoryLabels.cs[category] ?? otherPriceLabels[locale];
+function priceItemIsVisible(
+  item: PriceItem,
+  locale: SupportedLocale,
+  fallbackCurrency?: string | null
+): boolean {
+  return Boolean(formatPriceItem(item, locale, fallbackCurrency));
 }
 
 function groupPriceItems(items: PriceItem[], locale: SupportedLocale): PriceGroup[] {
   const hasCategories = items.some((item) => Boolean(item.category));
 
   if (!hasCategories) {
-    return [{ label: null, items }];
+    return [{ key: 'all', label: null, items }];
   }
 
   const groups = new Map<string, PriceGroup>();
 
   for (const item of items) {
-    const groupLabel = priceCategoryLabel(item.category, locale) ?? otherPriceLabels[locale];
-    const group = groups.get(groupLabel) ?? { label: groupLabel, items: [] };
-    group.items.push(item);
-    groups.set(groupLabel, group);
+    const rawCategory = item.category ?? 'other';
+    const mappedLabel = getMappedLabel(priceCategoryLabels, locale, rawCategory);
+    const key = mappedLabel ? rawCategory : 'other';
+    const label = mappedLabel ?? otherPriceLabels[locale];
+
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        label,
+        items: [],
+      });
+    }
+
+    groups.get(key)?.items.push(item);
   }
 
-  return [...groups.values()];
+  return [...groups.values()].sort((left, right) => {
+    const leftIndex = priceCategoryOrder.indexOf(left.key);
+    const rightIndex = priceCategoryOrder.indexOf(right.key);
+
+    if (leftIndex === -1 && rightIndex === -1) {
+      return 0;
+    }
+
+    if (leftIndex === -1) {
+      return 1;
+    }
+
+    if (rightIndex === -1) {
+      return -1;
+    }
+
+    return leftIndex - rightIndex;
+  });
+}
+
+function PriceStatusBadge({
+  officialBadge,
+  official,
+}: {
+  officialBadge?: string | null;
+  official?: boolean | null;
+}) {
+  if (typeof official !== 'boolean' || !officialBadge) {
+    return null;
+  }
+
+  return (
+    <span
+      className={`w-fit rounded-full px-2 py-0.5 text-[11px] font-extrabold uppercase tracking-wide ${
+        official
+          ? 'bg-green-100 text-green-800'
+          : 'bg-amber-100 text-amber-800'
+      }`}
+    >
+      {officialBadge}
+    </span>
+  );
 }
 
 function PriceRow({
@@ -165,42 +137,47 @@ function PriceRow({
   index,
 }: {
   item: PriceItem;
-  locale: string;
+  locale: SupportedLocale;
   fallbackCurrency?: string | null;
   index: number;
 }) {
-  const label = getLocalizedValue(item.label, locale);
-  const text = getLocalizedValue(item.text, locale);
-  const note = getLocalizedValue(item.note, locale);
-  const price = formatPriceItem(item, locale, fallbackCurrency);
+  const formatted = formatPriceItem(item, locale, fallbackCurrency);
 
-  if (!label && !text && !price) {
+  if (!formatted) {
     return null;
   }
 
+  const { label, text, note, value: price, official, officialBadge } = formatted;
+
   return (
-    <li className="border-b border-green-100 pb-3 last:border-b-0 last:pb-0">
-      <div className="flex items-start justify-between gap-3">
+    <li className="overflow-hidden rounded-xl border border-green-100 bg-white/85 p-3 shadow-sm shadow-green-950/5">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          {label && (
-            <h4 className="text-sm font-bold leading-snug text-slate-950">
-              {label}
-            </h4>
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {label && (
+              <h3 className="break-words text-sm font-bold leading-snug text-slate-950">
+                {label}
+              </h3>
+            )}
+            <PriceStatusBadge
+              official={official}
+              officialBadge={officialBadge}
+            />
+          </div>
           {text && (
-            <p className={`text-sm leading-relaxed text-slate-700 ${label ? 'mt-1' : ''}`}>
+            <p className={`break-words text-sm leading-relaxed text-slate-700 ${label ? 'mt-1' : ''}`}>
               {text}
             </p>
           )}
         </div>
         {price && (
-          <span className="shrink-0 rounded-full bg-white px-2.5 py-1 text-sm font-extrabold text-green-900 shadow-sm">
+          <span className="max-w-full break-words rounded-full bg-green-900 px-3 py-1 text-sm font-extrabold text-white shadow-sm sm:shrink-0">
             {price}
           </span>
         )}
       </div>
       {note && (
-        <p className="mt-2 text-xs leading-relaxed text-green-800/85">
+        <p className="mt-2 break-words text-sm leading-relaxed text-green-900/85">
           {note}
         </p>
       )}
@@ -218,11 +195,7 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
   }
 
   const visibleItems = items.filter((item) =>
-    Boolean(
-      getLocalizedValue(item.label, currentLocale) ||
-      getLocalizedValue(item.text, currentLocale) ||
-      formatPriceItem(item, currentLocale, pricesInfo.currency)
-    )
+    priceItemIsVisible(item, currentLocale, pricesInfo.currency)
   );
 
   if (visibleItems.length === 0) {
@@ -233,7 +206,7 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
   const seasonNote = getLocalizedValue(pricesInfo.season_note, currentLocale);
   const notes = getLocalizedValue(pricesInfo.notes, currentLocale);
   const lastChecked = formatDate(pricesInfo.last_checked, currentLocale);
-  const groupedItems = groupPriceItems(visibleItems, currentLocale);
+  const groups = groupPriceItems(visibleItems, currentLocale);
 
   return (
     <section className="rounded-2xl border border-green-100 bg-green-50/70 p-5 shadow-sm">
@@ -250,18 +223,18 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
         </p>
       )}
 
-      <div className="mt-4 space-y-4">
-        {groupedItems.map((group, groupIndex) => (
-          <div key={group.label ?? `prices-${groupIndex}`}>
+      <div className="mt-4 space-y-5">
+        {groups.map((group) => (
+          <section key={group.key} className="min-w-0">
             {group.label && (
-              <h3 className="mb-2 text-xs font-extrabold uppercase tracking-wide text-green-800">
+              <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-green-900">
                 {group.label}
               </h3>
             )}
             <ul className="space-y-3">
               {group.items.map((item, index) => (
                 <PriceRow
-                  key={item.id ?? `${item.price_type ?? 'price'}-${groupIndex}-${index}`}
+                  key={item.id ?? `${item.price_type ?? 'price'}-${group.key}-${index}`}
                   item={item}
                   locale={currentLocale}
                   fallbackCurrency={pricesInfo.currency}
@@ -269,12 +242,12 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
                 />
               ))}
             </ul>
-          </div>
+          </section>
         ))}
       </div>
 
       {(notes || lastChecked) && (
-        <div className="mt-4 space-y-1 border-t border-green-100 pt-4 text-xs leading-relaxed text-slate-600">
+        <div className="mt-4 space-y-1 border-t border-green-100 pt-4 text-sm leading-relaxed text-slate-600">
           {notes && (
             <p>
               <span className="font-semibold text-slate-800">

@@ -1,9 +1,5 @@
-import {
-  accessModeLabels,
-  getArticleLabel,
-  getMappedLabel,
-  recommendedLabels,
-} from '@/lib/articleLabels';
+import { getArticleLabel, recommendedLabels } from '@/lib/articleLabels';
+import { getBooleanLabel, getModeLabel } from '@/lib/articleDisplay';
 import { sortBySortOrder, toNumber } from '@/lib/articleFormatting';
 import { getLocalizedValue, normalizeLocale } from '@/lib/articleLocalization';
 import type { AccessInfo, AccessItem } from '@/lib/articleTypes';
@@ -48,9 +44,63 @@ function isRawAccessLabel(label: string, mode: string | null | undefined): boole
   return normalizedLabel === normalizedMode || knownLabels.includes(normalizedLabel);
 }
 
+function ModeIcon({ mode }: { mode?: string | null }) {
+  const normalizedMode = mode ?? 'other';
+
+  return (
+    <span
+      className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-yellow-900 shadow-sm ring-1 ring-yellow-100"
+      aria-hidden="true"
+    >
+      <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
+        {normalizedMode === 'car' || normalizedMode === 'parking' ? (
+          <>
+            <path d="M5 13l1.4-4.2A3 3 0 0 1 9.2 7h5.6a3 3 0 0 1 2.8 1.8L19 13" />
+            <path d="M4 13h16v4H4z" />
+            <path d="M7 17v1.5M17 17v1.5" />
+            <path d="M7.5 14.5h.1M16.4 14.5h.1" />
+          </>
+        ) : normalizedMode === 'bus' || normalizedMode === 'public_transport' ? (
+          <>
+            <rect x="5" y="4" width="14" height="13" rx="2" />
+            <path d="M8 8h8M8 12h8M8 17v2M16 17v2" />
+          </>
+        ) : normalizedMode === 'train' || normalizedMode === 'train_bus' ? (
+          <>
+            <rect x="6" y="3" width="12" height="14" rx="2" />
+            <path d="M9 7h6M9 12h.1M15 12h.1M8 21l3-4M16 21l-3-4" />
+          </>
+        ) : normalizedMode === 'bike' ? (
+          <>
+            <circle cx="7" cy="16" r="3" />
+            <circle cx="17" cy="16" r="3" />
+            <path d="M9.5 16l2.5-6 2.5 6M10.5 10h3.5M12 10l-2.5 6M12 10l5 6" />
+          </>
+        ) : normalizedMode === 'boat' || normalizedMode === 'ferry' ? (
+          <>
+            <path d="M5 13l2-6h10l2 6" />
+            <path d="M4 14h16l-2 4H6z" />
+            <path d="M7 20c1 0 1.5-.6 2.5-.6S11 20 12 20s1.5-.6 2.5-.6S16 20 17 20" />
+          </>
+        ) : normalizedMode === 'walk' ? (
+          <>
+            <circle cx="13" cy="5" r="1.8" />
+            <path d="M10 21l2-6-2-3M12 9l3 2 2 4M12 9l-2 3-3 1" />
+          </>
+        ) : (
+          <>
+            <path d="M12 21s7-5.2 7-11a7 7 0 1 0-14 0c0 5.8 7 11 7 11z" />
+            <circle cx="12" cy="10" r="2" />
+          </>
+        )}
+      </svg>
+    </span>
+  );
+}
+
 function accessItemLabel(item: AccessItem, locale: string): string | null {
   const label = getLocalizedValue(item.label, locale);
-  const modeLabel = getMappedLabel(accessModeLabels, locale, item.mode);
+  const modeLabel = getModeLabel(item.mode, locale);
 
   if (modeLabel && (!label || isRawAccessLabel(label, item.mode))) {
     return modeLabel;
@@ -61,6 +111,7 @@ function accessItemLabel(item: AccessItem, locale: string): string | null {
 
 function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
   const label = accessItemLabel(item, locale);
+  const modeLabel = getModeLabel(item.mode, locale);
   const description = getLocalizedValue(item.description, locale);
   const note = getLocalizedValue(item.note, locale);
   const walkMinutes = toNumber(item.walk_minutes);
@@ -77,7 +128,7 @@ function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
     typeof item.parking_available === 'boolean'
       ? {
           label: getArticleLabel(locale, 'parking'),
-          value: getArticleLabel(locale, item.parking_available ? 'yes' : 'no'),
+          value: getBooleanLabel(item.parking_available, locale) ?? '',
         }
       : null,
     item.roads && item.roads.length > 0
@@ -93,17 +144,25 @@ function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
   return (
     <li className="border-b border-yellow-100 pb-4 last:border-b-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
-        <div>
-          {label && (
-            <h3 className="text-sm font-bold leading-snug text-slate-950">
-              {label}
-            </h3>
-          )}
-          {description && (
-            <p className={`text-sm leading-relaxed text-slate-700 ${label ? 'mt-1' : ''}`}>
-              {description}
-            </p>
-          )}
+        <div className="flex min-w-0 items-start gap-3">
+          <ModeIcon mode={item.mode} />
+          <div className="min-w-0">
+            {label && (
+              <h3 className="break-words text-sm font-bold leading-snug text-slate-950">
+                {label}
+              </h3>
+            )}
+            {modeLabel && modeLabel !== label && (
+              <span className="mt-1 inline-flex rounded-full bg-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-yellow-800 shadow-sm">
+                {modeLabel}
+              </span>
+            )}
+            {description && (
+              <p className={`break-words text-sm leading-relaxed text-slate-700 ${label ? 'mt-1' : ''}`}>
+                {description}
+              </p>
+            )}
+          </div>
         </div>
         {item.recommended && (
           <span className="shrink-0 rounded-full bg-yellow-300 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-yellow-950">
@@ -113,17 +172,17 @@ function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
       </div>
 
       {details.length > 0 && (
-        <dl className="mt-3 grid gap-2 rounded-xl bg-white/70 p-3 text-xs text-slate-700">
+        <dl className="mt-3 grid gap-2 rounded-xl bg-white/70 p-3 text-sm text-slate-700">
           {details.map((detail) => (
-            <div key={`${detail.label}-${detail.value}`} className="flex gap-2">
-              <dt className="shrink-0 font-bold text-slate-950">{detail.label}:</dt>
-              <dd>{detail.value}</dd>
+            <div key={`${detail.label}-${detail.value}`} className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
+              <dt className="font-bold text-slate-950">{detail.label}:</dt>
+              <dd className="break-words">{detail.value}</dd>
             </div>
           ))}
         </dl>
       )}
 
-      {note && <p className="mt-2 text-xs leading-relaxed text-yellow-900/85">{note}</p>}
+      {note && <p className="mt-2 break-words text-sm leading-relaxed text-yellow-900/85">{note}</p>}
     </li>
   );
 }

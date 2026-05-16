@@ -39,7 +39,7 @@ function SourceLink({
       <a
         href={source.url}
         target="_blank"
-        rel="noreferrer"
+        rel="noopener noreferrer"
         className="font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950"
       >
         {label}

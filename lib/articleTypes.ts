@@ -126,8 +126,10 @@ export type VisitInfo = {
   best_time_keys?: string[] | string | null;
   avoid_if_possible_keys?: string[] | string | null;
   swimming_type?: string | null;
-  official_opening_hours?: LocalizedField;
   opening_hours_text?: LocalizedField;
+  official_opening_hours?: LocalizedField | Record<string, unknown>;
+  nudist_beach?: boolean | null;
+  nudist_beach_note?: LocalizedField;
   water_quality_note?: LocalizedField;
   family_friendly?: boolean | null;
   dogs_allowed?: boolean | null;
@@ -168,6 +170,7 @@ export type TrailHighlight = {
 };
 
 export type ImageCredit = {
+  attribution_text?: string | null;
   author_name?: string | null;
   author_url?: string | null;
   license_name?: string | null;

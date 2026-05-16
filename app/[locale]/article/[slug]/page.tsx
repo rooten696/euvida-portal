@@ -1,25 +1,23 @@
-import ArticleAccess from '@/app/components/article/ArticleAccess';
 import ArticleHero from '@/app/components/article/ArticleHero';
-import ArticlePracticalInfo from '@/app/components/article/ArticlePracticalInfo';
-import ArticlePrices from '@/app/components/article/ArticlePrices';
-import ArticleQuickInfo from '@/app/components/article/ArticleQuickInfo';
-import ArticleSources from '@/app/components/article/ArticleSources';
-import {
-  categoryLabels,
-  getArticleLabel,
-  getMappedLabel,
-} from '@/lib/articleLabels';
+import AccessSection from '@/app/components/article/AccessSection';
+import PracticalInfoGrid from '@/app/components/article/PracticalInfoGrid';
+import PricesSection from '@/app/components/article/PricesSection';
+import QuickOverview from '@/app/components/article/QuickOverview';
+import SourcesSection from '@/app/components/article/SourcesSection';
+import { getArticleLabel } from '@/lib/articleLabels';
+import { getCategoryLabel, getLocalizedArticle } from '@/lib/articleDisplay';
 import { formatDate } from '@/lib/articleFormatting';
 import {
-  getArticleContent,
-  getArticleExcerpt,
-  getArticleTitle,
-  getLocalizedValue,
   getLocationName,
   normalizeLocale,
   stripFirstMarkdownH1,
 } from '@/lib/articleLocalization';
-import type { Article, LocationRecord, SupportedLocale } from '@/lib/articleTypes';
+import {
+  supportedLocales,
+  type Article,
+  type LocationRecord,
+  type SupportedLocale,
+} from '@/lib/articleTypes';
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -31,6 +29,7 @@ import ReactMarkdown from 'react-markdown';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
 type PageProps = {
   params: Promise<{ locale: string; slug: string }>;
@@ -94,23 +93,35 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: 'Článek nenalezen | Euvida' };
   }
 
-  const title = getArticleTitle(article, locale);
-  const excerpt = getArticleExcerpt(article, locale);
-  const content = getArticleContent(article, locale);
-  const imageAlt = getLocalizedValue(article.image_alt, locale) ?? title;
-  const description = excerpt ?? descriptionFromContent(content) ?? 'Přečtěte si článek na Euvida.eu';
+  const localizedArticle = getLocalizedArticle(article, locale);
+  const description =
+    localizedArticle.excerpt ??
+    descriptionFromContent(localizedArticle.content) ??
+    'Přečtěte si článek na Euvida.eu';
 
   return {
-    title: `${title} | Euvida`,
+    metadataBase: new URL(siteUrl),
+    title: `${localizedArticle.title} | Euvida`,
     description,
+    alternates: {
+      canonical: `/${locale}/article/${slug}`,
+      languages: Object.fromEntries(
+        supportedLocales.map((supportedLocale) => [
+          supportedLocale,
+          `/${supportedLocale}/article/${slug}`,
+        ])
+      ),
+    },
     openGraph: {
-      title,
+      title: localizedArticle.title,
       description,
+      type: 'article',
+      url: `/${locale}/article/${slug}`,
       images: article.image_url
         ? [
             {
               url: article.image_url,
-              alt: imageAlt,
+              alt: localizedArticle.imageAlt,
             },
           ]
         : undefined,
@@ -171,32 +182,32 @@ function Breadcrumb({
 
 const markdownComponents = {
   p: (props: ComponentPropsWithoutRef<'p'>) => (
-    <p className="mb-6 text-lg leading-relaxed text-slate-800" {...props} />
+    <p className="mb-6 break-words text-base leading-8 text-slate-800 md:text-lg" {...props} />
   ),
   h1: (props: ComponentPropsWithoutRef<'h1'>) => (
-    <h1 className="mb-6 mt-12 text-3xl font-extrabold text-slate-950" {...props} />
+    <h1 className="mb-6 mt-12 break-words text-3xl font-extrabold text-slate-950" {...props} />
   ),
   h2: (props: ComponentPropsWithoutRef<'h2'>) => (
-    <h2 className="mb-5 mt-12 text-3xl font-extrabold text-blue-950" {...props} />
+    <h2 className="mb-5 mt-12 break-words text-2xl font-extrabold text-blue-950 md:text-3xl" {...props} />
   ),
   h3: (props: ComponentPropsWithoutRef<'h3'>) => (
-    <h3 className="mb-4 mt-8 text-2xl font-bold text-slate-950" {...props} />
+    <h3 className="mb-4 mt-8 break-words text-xl font-bold text-slate-950 md:text-2xl" {...props} />
   ),
   strong: (props: ComponentPropsWithoutRef<'strong'>) => (
     <strong className="font-bold text-blue-950" {...props} />
   ),
   ul: (props: ComponentPropsWithoutRef<'ul'>) => (
-    <ul className="mb-6 list-disc space-y-2 pl-6 text-lg leading-relaxed text-slate-800" {...props} />
+    <ul className="mb-6 list-disc space-y-2 pl-6 text-base leading-8 text-slate-800 md:text-lg" {...props} />
   ),
   ol: (props: ComponentPropsWithoutRef<'ol'>) => (
-    <ol className="mb-6 list-decimal space-y-2 pl-6 text-lg leading-relaxed text-slate-800" {...props} />
+    <ol className="mb-6 list-decimal space-y-2 pl-6 text-base leading-8 text-slate-800 md:text-lg" {...props} />
   ),
   li: (props: ComponentPropsWithoutRef<'li'>) => <li className="pl-1" {...props} />,
   a: (props: ComponentPropsWithoutRef<'a'>) => (
-    <a className="font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950" {...props} />
+    <a className="break-words font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" {...props} />
   ),
   blockquote: (props: ComponentPropsWithoutRef<'blockquote'>) => (
-    <blockquote className="mb-6 border-l-4 border-yellow-300 pl-5 text-lg italic text-slate-700" {...props} />
+    <blockquote className="mb-6 border-l-4 border-yellow-300 pl-5 text-base italic leading-8 text-slate-700 md:text-lg" {...props} />
   ),
 };
 
@@ -276,12 +287,10 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   const { country, region } = await getLocationData(article);
-  const title = getArticleTitle(article, locale);
-  const excerpt = getArticleExcerpt(article, locale);
-  const rawContent = getArticleContent(article, locale);
+  const localizedArticle = getLocalizedArticle(article, locale);
+  const { title, excerpt, content: rawContent, imageAlt } = localizedArticle;
   const markdownContent = stripStructuredArticleSections(stripFirstMarkdownH1(rawContent), locale);
-  const imageAlt = getLocalizedValue(article.image_alt, locale) ?? title;
-  const categoryLabel = getMappedLabel(categoryLabels, locale, article.category);
+  const categoryLabel = getCategoryLabel(article.category, locale);
   const checkedDate = formatDate(article.last_checked_at ?? article.source_info?.last_checked, locale);
   const updatedDate = formatDate(article.updated_at ?? article.created_at, locale);
   const countryName = getLocationName(country, locale);
@@ -336,28 +345,27 @@ export default async function ArticlePage({ params }: PageProps) {
           imageCredit={article.image_url ? article.source_info?.images?.[0] : null}
         />
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+        <div className="mt-8">
+          <QuickOverview locale={locale} article={article} />
+        </div>
+
+        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,820px)_340px] lg:items-start lg:justify-center">
           <aside className="order-1 lg:order-2">
             <div className="space-y-5 lg:sticky lg:top-24">
-            <ArticleQuickInfo
-              locale={locale}
-              visitInfo={article.visit_info}
-              practicalInfo={article.practical_info}
-            />
-            <ArticlePracticalInfo locale={locale} practicalInfo={article.practical_info} />
-            <ArticlePrices locale={locale} pricesInfo={article.prices_info} />
-            <ArticleAccess locale={locale} accessInfo={article.access_info} />
+              <PracticalInfoGrid locale={locale} practicalInfo={article.practical_info} />
+              <PricesSection locale={locale} pricesInfo={article.prices_info} />
+              <AccessSection locale={locale} accessInfo={article.access_info} />
             </div>
           </aside>
 
           <div className="order-2 min-w-0 lg:order-1">
-            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+            <section className="max-w-[820px] rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-8">
               <ReactMarkdown components={markdownComponents} skipHtml>
                 {markdownContent}
               </ReactMarkdown>
             </section>
 
-            <ArticleSources
+            <SourcesSection
               locale={locale}
               sourceInfo={article.source_info}
               lastCheckedAt={article.last_checked_at}
