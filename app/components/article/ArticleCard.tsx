@@ -52,10 +52,14 @@ export default function ArticleCard({
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 via-slate-100 to-yellow-50 px-5 text-center">
-            <span className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
-              Euvida
-            </span>
+          <div className="relative flex h-full items-center justify-center overflow-hidden bg-blue-950 px-5 text-center">
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,#dbeafe_0%,#e0f2fe_38%,#fef3c7_100%)]" />
+            <div className="absolute inset-0 opacity-70 [background-image:linear-gradient(120deg,rgba(15,23,42,0.08)_0_1px,transparent_1px_18px)]" />
+            <div className="relative rounded-full border border-white/70 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
+              <span className="text-xs font-extrabold uppercase tracking-wide text-blue-950">
+                Euvida
+              </span>
+            </div>
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
