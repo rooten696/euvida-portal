@@ -1,9 +1,11 @@
 'use client';
 
+import { supabase } from '@/lib/supabaseBrowserClient';
 import { useState, useEffect, useCallback } from 'react';
-import { createClient, Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 // ODEBRÁNO: translateCountryData (už ho nepoužíváme, jedeme po částech)
 import { translateRegionData, translateSingleText } from '../../actions/translate';
+import AdminCommentsPanel from '../../components/admin/AdminCommentsPanel';
 
 type CountryData = {
   id: string;
@@ -47,11 +49,6 @@ type PlaceData = {
   description: string;
   image_url: string;
 };
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 const emptyRegion: RegionData = {
   country_id: '', name: '', language: '', description: '', image_url: '',
@@ -430,6 +427,8 @@ export default function AdminPage() {
               </button>
             </div>
           </div>
+
+          <AdminCommentsPanel />
 
           {/* FORMULÁŘ ZEMĚ */}
           <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">

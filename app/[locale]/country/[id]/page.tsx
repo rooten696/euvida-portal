@@ -2,6 +2,7 @@ import CountryArticleExplorer from '@/app/components/country/CountryArticleExplo
 import DestinationCard from '@/app/components/destination/DestinationCard';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
+import SafeImage from '@/app/components/SafeImage';
 import {
   getArticleCategoryLabel,
   toArticleCardData,
@@ -19,7 +20,6 @@ import {
 } from '@/lib/destinationTypes';
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -260,13 +260,15 @@ export default async function CountryPage({ params }: CountryPageParams) {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden bg-slate-950">
         {displayCountry.image_url ? (
-          <Image
+          <SafeImage
             src={displayCountry.image_url}
             alt={displayCountry.name}
             fill
             priority
             sizes="100vw"
             className="object-cover opacity-75"
+            fallbackClassName="opacity-75"
+            fallbackLabel={displayCountry.name}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-slate-900 to-emerald-950" />

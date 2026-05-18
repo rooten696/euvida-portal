@@ -1,4 +1,4 @@
-import Image from 'next/image';
+import SafeImage from '@/app/components/SafeImage';
 import ImageCredit from './ImageCredit';
 import type { ImageCredit as ImageCreditData } from '@/lib/articleTypes';
 import { getArticleLabel } from '@/lib/articleLabels';
@@ -75,13 +75,14 @@ export default function ArticleHero({
       <figure>
         <div className="relative aspect-[16/9] max-h-[620px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100 shadow-sm">
           {imageUrl ? (
-            <Image
+            <SafeImage
               src={imageUrl}
               alt={imageAlt}
               fill
               priority
               sizes="(max-width: 1200px) 100vw, 1120px"
               className="object-cover"
+              fallbackLabel={title}
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-gradient-to-br from-blue-50 via-slate-100 to-yellow-50 px-6 text-center">

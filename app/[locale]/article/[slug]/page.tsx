@@ -1,5 +1,6 @@
 import ArticleHero from '@/app/components/article/ArticleHero';
 import AccessSection from '@/app/components/article/AccessSection';
+import ArticleComments from '@/app/components/article/ArticleComments';
 import PracticalInfoGrid from '@/app/components/article/PracticalInfoGrid';
 import PricesSection from '@/app/components/article/PricesSection';
 import QuickOverview from '@/app/components/article/QuickOverview';
@@ -370,6 +371,8 @@ export default async function ArticlePage({ params }: PageProps) {
               sourceInfo={article.source_info}
               lastCheckedAt={article.last_checked_at}
             />
+
+            <ArticleComments articleSlug={slug} locale={locale} />
           </div>
         </div>
       </article>

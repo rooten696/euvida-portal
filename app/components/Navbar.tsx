@@ -1,16 +1,12 @@
 'use client';
 
+import { supabase } from '@/lib/supabaseBrowserClient';
 import Image from 'next/image';
 import Link from 'next/link';
-import { createClient, User } from '@supabase/supabase-js';
+import type { User } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 type Country = {
   id: string;
@@ -177,10 +173,14 @@ export default function Navbar() {
               <Link href={`/${locale}/oblibene`} className="text-gray-600 hover:text-red-500 font-bold flex items-center gap-1 transition-colors text-sm md:text-base">
                 <span className="text-red-500">❤️</span> <span className="hidden sm:inline">{t('favorites')}</span>
               </Link>
+
+              <Link href={`/${locale}/profile`} className="text-gray-600 hover:text-blue-900 font-bold transition-colors text-sm md:text-base">
+                {t('profile')}
+              </Link>
               
-              <div className="hidden md:block text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+              <Link href={`/${locale}/profile`} className="hidden md:block text-xs font-medium text-gray-400 bg-gray-50 px-3 py-1 rounded-full border border-gray-100 hover:text-blue-900 hover:border-blue-100 transition-colors">
                 {user.email}
-              </div>
+              </Link>
               
               <button onClick={handleLogout} className="bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-200 transition-colors">
                 {t('logout')}
