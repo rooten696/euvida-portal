@@ -10,7 +10,6 @@ type AdminComment = {
   article_slug: string;
   user_id: string;
   author_name: string | null;
-  user_email: string | null;
   content: string;
   status: CommentStatus;
   created_at: string;
@@ -67,7 +66,7 @@ export default function AdminCommentsPanel() {
 
     const { data, error } = await supabase
       .from('article_comments')
-      .select('id, article_slug, user_id, author_name, user_email, content, status, created_at, updated_at')
+      .select('id, article_slug, user_id, author_name, content, status, created_at, updated_at')
       .order('created_at', { ascending: false })
       .limit(100);
 
@@ -199,11 +198,11 @@ export default function AdminCommentsPanel() {
                           {statusLabels[comment.status]}
                         </span>
                         <p className="break-words text-sm font-extrabold text-slate-950">
-                          {comment.author_name || comment.user_email || 'Uživatel'}
+                          {comment.author_name || 'Uživatel'}
                         </p>
                       </div>
                       <p className="mt-1 text-xs font-medium text-slate-500">
-                        /article/{comment.article_slug} · {formatDate(comment.created_at)}
+                        /article/{comment.article_slug} · {formatDate(comment.created_at)} · {comment.user_id}
                       </p>
                     </div>
                     <div className="flex flex-wrap gap-2">

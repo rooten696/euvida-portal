@@ -12,7 +12,6 @@ type ArticleComment = {
   article_slug: string;
   user_id: string;
   author_name: string | null;
-  user_email?: string | null;
   content: string;
   status: CommentStatus;
   created_at: string;
@@ -171,7 +170,7 @@ export default function ArticleComments({ articleSlug, locale }: ArticleComments
 
     let query = supabase
       .from('article_comments')
-      .select('id, article_slug, user_id, author_name, user_email, content, status, created_at, updated_at')
+      .select('id, article_slug, user_id, author_name, content, status, created_at, updated_at')
       .eq('article_slug', articleSlug)
       .order('created_at', { ascending: false });
 
@@ -244,11 +243,10 @@ export default function ArticleComments({ articleSlug, locale }: ArticleComments
       .insert({
         article_slug: articleSlug,
         user_id: session.user.id,
-        user_email: session.user.email,
         author_name: getDisplayName(session.user),
         content: trimmedContent,
       })
-      .select('id, article_slug, user_id, author_name, user_email, content, status, created_at, updated_at')
+      .select('id, article_slug, user_id, author_name, content, status, created_at, updated_at')
       .single();
 
     if (insertError) {
