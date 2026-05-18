@@ -40,7 +40,7 @@ export default async function LocaleLayout({
           <div className="pt-16 flex-grow flex flex-col"> 
             {children}
           </div>
-          <Footer />
+          <Footer locale={locale} />
           
           {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
           <CookieBanner />

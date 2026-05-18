@@ -107,6 +107,39 @@ function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOp
     .sort((left, right) => left.label.localeCompare(right.label, locale));
 }
 
+function formatSupabaseError(error: unknown): string {
+  if (!error) {
+    return 'neznámá chyba';
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'object') {
+    const errorRecord = error as Record<string, unknown>;
+    const usefulEntries = ['message', 'details', 'hint', 'code', 'name', 'status']
+      .map((key) => [key, errorRecord[key]] as const)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '');
+
+    if (usefulEntries.length > 0) {
+      return usefulEntries
+        .map(([key, value]) => `${key}: ${String(value)}`)
+        .join(', ');
+    }
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function warnHomepageLoadError(resource: string, error: unknown) {
+  console.warn(`[Euvida] Nepodařilo se načíst ${resource}: ${formatSupabaseError(error)}`);
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);
@@ -157,15 +190,15 @@ export default async function HomePage({ params }: PageProps) {
   ]);
 
   if (articlesResult.error) {
-    console.error('Chyba při načítání článků:', articlesResult.error);
+    warnHomepageLoadError('články', articlesResult.error);
   }
 
   if (countriesResult.error) {
-    console.error('Chyba při načítání zemí:', countriesResult.error);
+    warnHomepageLoadError('země', countriesResult.error);
   }
 
   if (regionsResult.error) {
-    console.error('Chyba při načítání regionů:', regionsResult.error);
+    warnHomepageLoadError('regiony', regionsResult.error);
   }
 
   const articles = (articlesResult.data ?? []) as Article[];
