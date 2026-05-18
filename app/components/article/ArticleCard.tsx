@@ -93,18 +93,6 @@ export default function ArticleCard({
             {article.excerpt}
           </p>
         )}
-        {article.badges && article.badges.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {article.badges.map((badge) => (
-              <span
-                key={badge}
-                className="max-w-full break-words rounded-full bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-900"
-              >
-                {badge}
-              </span>
-            ))}
-          </div>
-        )}
         <div className="mt-5 flex items-center justify-between gap-3 text-sm">
           <span className="font-bold text-blue-800 group-hover:text-blue-950">
             {getDestinationLabel(locale, 'readMore')}
