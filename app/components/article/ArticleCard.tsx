@@ -1,7 +1,7 @@
 import type { ArticleCardData } from '@/lib/articleCards';
 import { getArticleLabel } from '@/lib/articleLabels';
 import { getDestinationLabel } from '@/lib/destinationLabels';
-import Image from 'next/image';
+import SafeImage from '@/app/components/SafeImage';
 import Link from 'next/link';
 
 type ArticleCardProps = {
@@ -43,13 +43,14 @@ export default function ArticleCard({
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
         {article.imageUrl ? (
-          <Image
+          <SafeImage
             src={article.imageUrl}
             alt={article.imageAlt}
             fill
             priority={priority}
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
+            fallbackLabel={article.categoryLabel ?? 'Euvida'}
           />
         ) : (
           <div className="relative flex h-full items-center justify-center overflow-hidden bg-blue-950 px-5 text-center">

@@ -27,6 +27,16 @@ function getAuthErrorMessage(error: unknown): string {
   return `Něco se pokazilo: ${error.message}`;
 }
 
+const oauthProviderLabels: Record<'google' | 'facebook', string> = {
+  google: 'Google',
+  facebook: 'Facebook',
+};
+
+const oauthProviderEnabled: Record<'google' | 'facebook', boolean> = {
+  google: process.env.NEXT_PUBLIC_SUPABASE_AUTH_GOOGLE_ENABLED === 'true',
+  facebook: process.env.NEXT_PUBLIC_SUPABASE_AUTH_FACEBOOK_ENABLED === 'true',
+};
+
 export default function LoginPage() {
   const locale = useLocale();
   const router = useRouter();
@@ -94,6 +104,14 @@ export default function LoginPage() {
   };
 
   const handleOAuth = async (provider: Provider) => {
+    if ((provider === 'google' || provider === 'facebook') && !oauthProviderEnabled[provider]) {
+      setError(
+        `Přihlášení přes ${oauthProviderLabels[provider]} je připravené ve frontendu, ale provider ještě není zapnutý v Supabase. Zapni ho v Supabase Auth > Providers a nastav NEXT_PUBLIC_SUPABASE_AUTH_${provider.toUpperCase()}_ENABLED=true.`
+      );
+      setNotice('');
+      return;
+    }
+
     setOauthProvider(provider);
     setError('');
     setNotice('');
@@ -136,7 +154,11 @@ export default function LoginPage() {
             type="button"
             onClick={() => handleOAuth('google')}
             disabled={Boolean(oauthProvider)}
-            className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`rounded-xl border px-4 py-3 text-sm font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              oauthProviderEnabled.google
+                ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+            }`}
           >
             {oauthProvider === 'google' ? 'Přesměrovávám...' : 'Google'}
           </button>
@@ -144,11 +166,21 @@ export default function LoginPage() {
             type="button"
             onClick={() => handleOAuth('facebook')}
             disabled={Boolean(oauthProvider)}
-            className="rounded-xl border border-gray-200 px-4 py-3 text-sm font-extrabold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className={`rounded-xl border px-4 py-3 text-sm font-extrabold transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              oauthProviderEnabled.facebook
+                ? 'border-gray-200 text-gray-700 hover:bg-gray-50'
+                : 'border-amber-200 bg-amber-50 text-amber-800 hover:bg-amber-100'
+            }`}
           >
             {oauthProvider === 'facebook' ? 'Přesměrovávám...' : 'Facebook'}
           </button>
         </div>
+
+        {(!oauthProviderEnabled.google || !oauthProviderEnabled.facebook) && (
+          <p className="-mt-3 mb-6 rounded-xl bg-amber-50 p-3 text-center text-xs font-semibold leading-relaxed text-amber-800">
+            Sociální přihlášení se zobrazí jako aktivní po zapnutí providerů v Supabase.
+          </p>
+        )}
 
         <div className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-wide text-gray-400">
           <span className="h-px flex-1 bg-gray-100" />

@@ -1,3 +1,4 @@
+import SafeImage from '@/app/components/SafeImage';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -33,12 +34,13 @@ export default function DestinationCard({
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
         {imageUrl ? (
-          <Image
+          <SafeImage
             src={imageUrl}
             alt={imageAlt}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
             className="object-cover transition-transform duration-500 group-hover:scale-105"
+            fallbackLabel={badge ?? 'Euvida'}
           />
         ) : (
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#dbeafe_0%,#e0f2fe_40%,#fef3c7_100%)]" />

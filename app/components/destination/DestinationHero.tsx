@@ -1,3 +1,4 @@
+import SafeImage from '@/app/components/SafeImage';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
@@ -30,13 +31,15 @@ export default function DestinationHero({
   return (
     <header className="relative overflow-hidden border-b border-slate-200 bg-slate-950">
       {imageUrl && (
-        <Image
+        <SafeImage
           src={imageUrl}
           alt={imageAlt}
           fill
           priority
           sizes="100vw"
           className="object-cover opacity-70"
+          fallbackClassName="opacity-70"
+          fallbackLabel={title}
         />
       )}
       <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-950/20" />

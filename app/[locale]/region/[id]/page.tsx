@@ -1,6 +1,7 @@
 import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import RegionArticleExplorer from '@/app/components/region/RegionArticleExplorer';
+import SafeImage from '@/app/components/SafeImage';
 import {
   getArticleCategoryLabel,
   toArticleCardData,
@@ -361,13 +362,15 @@ export default async function RegionPage({ params }: RegionPageParams) {
     <main className="min-h-screen bg-slate-50 text-slate-950">
       <section className="relative overflow-hidden bg-slate-950">
         {displayRegion.image_url ? (
-          <Image
+          <SafeImage
             src={displayRegion.image_url}
             alt={displayRegion.name}
             fill
             priority
             sizes="100vw"
             className="object-cover opacity-75"
+            fallbackClassName="opacity-75"
+            fallbackLabel={displayRegion.name}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-950 via-slate-900 to-blue-950" />
