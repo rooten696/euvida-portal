@@ -26,7 +26,7 @@ export default async function ArticleList({
 
   let query = supabase
     .from('articles')
-    .select('id, slug, image_url, image_alt, category, title, excerpt, content, translations, country_id, region_id, created_at, reading_time_minutes, published, featured, visit_info, prices_info, access_info')
+    .select('id, slug, image_url, image_alt, category, title, excerpt, content, translations, country_id, region_id, created_at, reading_time_minutes, published, featured')
     .eq('published', true)
     .order('created_at', { ascending: false });
 

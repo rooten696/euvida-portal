@@ -31,7 +31,7 @@ const supabase = createClient(
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes, visit_info, prices_info, access_info';
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
 
 type RegionPageParams = {
   params: Promise<{ locale: string; id: string }>;

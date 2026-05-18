@@ -142,7 +142,7 @@ export default async function HomePage({ params }: PageProps) {
     supabase
       .from('articles')
       .select(
-        'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes, visit_info, prices_info, access_info'
+        'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes'
       )
       .eq('published', true)
       .order('created_at', { ascending: false }),
