@@ -1,14 +1,10 @@
 'use client';
 
+import { supabase } from '@/lib/supabaseBrowserClient';
 import { useState, useEffect, useCallback } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 // Definice toho, co z databáze dostaneme
 type SavedCountry = {
@@ -20,6 +16,7 @@ type SavedCountry = {
 };
 
 export default function FavoritesPage() {
+  const locale = useLocale();
   const [countries, setCountries] = useState<SavedCountry[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -58,12 +55,12 @@ export default function FavoritesPage() {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (!session?.user) {
         // Pokud sem vleze někdo nepřihlášený, vyhodíme ho na login
-        router.push('/login');
+        router.push(`/${locale}/login`);
       } else {
         fetchFavorites(session.user.id);
       }
     });
-  }, [fetchFavorites, router]);
+  }, [fetchFavorites, locale, router]);
 
   if (loading) {
     return (

@@ -1,252 +1,404 @@
-import { createClient } from '@supabase/supabase-js';
-import ArticleList from '@/app/components/ArticleList';
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import Image from 'next/image'; // PŘIDÁNO: Import pro SVG vlajky
-import ReactMarkdown from 'react-markdown';
+import CountryArticleExplorer from '@/app/components/country/CountryArticleExplorer';
+import DestinationCard from '@/app/components/destination/DestinationCard';
 import FavoriteButton from '@/app/components/FavoriteButton';
-import { getTranslations } from 'next-intl/server';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
+import SafeImage from '@/app/components/SafeImage';
+import {
+  getArticleCategoryLabel,
+  toArticleCardData,
+  type ArticleCardData,
+} from '@/lib/articleCards';
+import { normalizeLocale } from '@/lib/articleLocalization';
+import type { Article, SupportedLocale } from '@/lib/articleTypes';
+import { supportedLocales } from '@/lib/articleTypes';
+import { getDestinationLabel } from '@/lib/destinationLabels';
+import {
+  type CountryDestination,
+  type RegionDestination,
+  getCountryDisplay,
+  getRegionDisplay,
+} from '@/lib/destinationTypes';
+import { createClient } from '@supabase/supabase-js';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-type Region = {
-  id: string;
-  name: string;
-  language: string;
-  description: string;
-  image_url: string;
-  translations?: Record<string, Record<string, string>>;
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
+const articleSelect =
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+
+type CountryPageParams = {
+  params: Promise<{ locale: string; id: string }>;
 };
 
-type TranslationData = Record<string, Record<string, string>>;
+type FilterOption = {
+  value: string;
+  label: string;
+};
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const resolvedParams = await params;
-  const { locale, id } = resolvedParams;
+const countryMetadata: Record<
+  SupportedLocale,
+  {
+    title: (countryName: string) => string;
+    description: (countryName: string) => string;
+    notFound: string;
+  }
+> = {
+  cs: {
+    title: (countryName) => `${countryName} – cestovní průvodce | Euvida`,
+    description: (countryName) =>
+      `Praktický cestovní průvodce pro ${countryName}: regiony, články a tipy na výlety po Evropě.`,
+    notFound: 'Země nenalezena | Euvida',
+  },
+  en: {
+    title: (countryName) => `${countryName} – travel guide | Euvida`,
+    description: (countryName) =>
+      `A practical travel guide to ${countryName}: regions, articles, and trip ideas across Europe.`,
+    notFound: 'Country not found | Euvida',
+  },
+  de: {
+    title: (countryName) => `${countryName} – Reiseführer | Euvida`,
+    description: (countryName) =>
+      `Praktischer Reiseführer für ${countryName}: Regionen, Artikel und Ideen für Ausflüge in Europa.`,
+    notFound: 'Land nicht gefunden | Euvida',
+  },
+  fr: {
+    title: (countryName) => `${countryName} – guide de voyage | Euvida`,
+    description: (countryName) =>
+      `Guide pratique pour ${countryName} : régions, articles et idées de sorties en Europe.`,
+    notFound: 'Pays introuvable | Euvida',
+  },
+  es: {
+    title: (countryName) => `${countryName} – guía de viaje | Euvida`,
+    description: (countryName) =>
+      `Guía práctica de ${countryName}: regiones, artículos e ideas para viajar por Europa.`,
+    notFound: 'País no encontrado | Euvida',
+  },
+};
+
+function incrementCount(map: Map<string, number>, key: string | null | undefined) {
+  if (!key) {
+    return;
+  }
+
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+function countBy<T>(
+  items: T[],
+  getKey: (item: T) => string | null | undefined
+): Map<string, number> {
+  const counts = new Map<string, number>();
+
+  for (const item of items) {
+    incrementCount(counts, getKey(item));
+  }
+
+  return counts;
+}
+
+function toTimestamp(value: string | null | undefined): number {
+  if (!value) {
+    return 0;
+  }
+
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function sortArticles(articles: Article[]): Article[] {
+  return [...articles].sort((left, right) => {
+    const featuredOrder = Number(Boolean(right.featured)) - Number(Boolean(left.featured));
+
+    if (featuredOrder !== 0) {
+      return featuredOrder;
+    }
+
+    return toTimestamp(right.created_at) - toTimestamp(left.created_at);
+  });
+}
+
+function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
+  const counts = countBy(articles, (article) => article.category);
+
+  return [...counts.entries()]
+    .map(([category, count]) => ({
+      value: category,
+      label: `${getArticleCategoryLabel(category, locale) ?? category} (${count})`,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label, locale));
+}
+
+function regionFilterOptions(
+  regions: Array<ReturnType<typeof getRegionDisplay> & { articleCount: number }>,
+  locale: SupportedLocale
+): FilterOption[] {
+  return regions
+    .filter((region) => region.articleCount > 0)
+    .map((region) => ({
+      value: region.id,
+      label: `${region.name} (${region.articleCount})`,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label, locale));
+}
+
+export const revalidate = 3600;
+
+export async function generateMetadata({
+  params,
+}: CountryPageParams): Promise<Metadata> {
+  const { locale: rawLocale, id } = await params;
+  const locale = normalizeLocale(rawLocale);
+  const copy = countryMetadata[locale];
 
   const { data: country } = await supabase
     .from('countries')
-    .select('name, description, image_url, translations')
+    .select('id, name, description, image_url, translations')
     .eq('id', id)
     .single();
 
-  if (!country) return { title: 'Země nenalezena | Euvida' };
+  if (!country) {
+    return { title: copy.notFound };
+  }
 
-  const allTranslations = country.translations as TranslationData | null;
-  const translation = allTranslations?.[locale];
-  const displayName = translation?.name || country.name;
-  const displayDescription = translation?.description || country.description;
+  const displayCountry = getCountryDisplay(country as CountryDestination, locale);
+  const title = copy.title(displayCountry.name);
+  const description = displayCountry.description || copy.description(displayCountry.name);
+  const canonical = `/${locale}/country/${displayCountry.id}`;
 
   return {
-    title: `${displayName} | Euvida`,
-    description: displayDescription,
+    metadataBase: new URL(siteUrl),
+    title,
+    description,
+    alternates: {
+      canonical,
+      languages: Object.fromEntries(
+        supportedLocales.map((supportedLocale) => [
+          supportedLocale,
+          `/${supportedLocale}/country/${displayCountry.id}`,
+        ])
+      ),
+    },
     openGraph: {
-      title: `${displayName}: Vše o životě a cestování`,
-      description: displayDescription,
-      images: [{ url: country.image_url || '/og-default.jpg' }],
+      title,
+      description,
+      url: canonical,
+      images: displayCountry.image_url ? [{ url: displayCountry.image_url }] : undefined,
     },
   };
 }
 
-export default async function CountryPage({ params }: { params: Promise<{ locale: string; id: string }> }) {
-  const resolvedParams = await params;
-  const { locale, id } = resolvedParams;
+export default async function CountryPage({ params }: CountryPageParams) {
+  const { locale: rawLocale, id } = await params;
+  const locale = normalizeLocale(rawLocale);
 
-  const t = await getTranslations('CountryDetail');
+  const [countryResult, regionsResult, articlesResult] = await Promise.all([
+    supabase.from('countries').select('*').eq('id', id).single(),
+    supabase
+      .from('regions')
+      .select('id, country_id, name, language, description, image_url, translations')
+      .eq('country_id', id)
+      .order('name'),
+    supabase
+      .from('articles')
+      .select(articleSelect)
+      .eq('published', true)
+      .eq('country_id', id),
+  ]);
 
-  const { data: country } = await supabase
-    .from('countries')
-    .select('*')
-    .eq('id', id)
-    .single();
+  if (!countryResult.data) {
+    notFound();
+  }
 
-  if (!country) notFound();
+  if (regionsResult.error) {
+    console.error('Chyba při načítání regionů:', regionsResult.error);
+  }
 
-  const allTranslations = country.translations as TranslationData | null;
-  const translation = allTranslations?.[locale];
+  if (articlesResult.error) {
+    console.error('Chyba při načítání článků:', articlesResult.error);
+  }
 
-  const displayData = {
-    ...country,
-    name: translation?.name || country.name,
-    description: translation?.description || country.description,
-    general_info: translation?.general_info || country.general_info,
-    travel_tourism: translation?.travel_tourism || country.travel_tourism,
-    life_work: translation?.life_work || country.life_work,
-    culture_food: translation?.culture_food || country.culture_food,
-    practical_cautions: translation?.practical_cautions || country.practical_cautions,
-  };
+  const displayCountry = getCountryDisplay(
+    countryResult.data as CountryDestination,
+    locale
+  );
+  const rawRegions = (regionsResult.data ?? []) as RegionDestination[];
+  const articles = sortArticles((articlesResult.data ?? []) as Article[]);
+  const articleCountByRegion = countBy(articles, (article) => article.region_id);
 
-  const { data: regions } = await supabase
-    .from('regions')
-    .select('*')
-    .eq('country_id', id)
-    .order('name');
+  const regions = rawRegions
+    .map((region) => ({
+      ...getRegionDisplay(region, locale),
+      articleCount: articleCountByRegion.get(region.id) ?? 0,
+    }))
+    .sort((left, right) => {
+      if (right.articleCount !== left.articleCount) {
+        return right.articleCount - left.articleCount;
+      }
 
-  const markdownComponents = {
-    p: (props: React.ComponentPropsWithoutRef<'p'>) => <p className="text-gray-700 leading-relaxed mb-4" {...props} />,
-    strong: (props: React.ComponentPropsWithoutRef<'strong'>) => <strong className="font-bold text-blue-900" {...props} />,
-    ul: (props: React.ComponentPropsWithoutRef<'ul'>) => <ul className="list-disc pl-5 mb-4 text-gray-700 space-y-1" {...props} />,
-    li: (props: React.ComponentPropsWithoutRef<'li'>) => <li {...props} />
-  };
+      return left.name.localeCompare(right.name, locale);
+    });
 
-  const regionMarkdownComponents = {
-    p: (props: React.ComponentPropsWithoutRef<'p'>) => <p className="text-gray-600 text-sm leading-relaxed mb-3 line-clamp-3" {...props} />,
-    strong: (props: React.ComponentPropsWithoutRef<'strong'>) => <strong className="font-bold text-gray-900" {...props} />,
-    ul: (props: React.ComponentPropsWithoutRef<'ul'>) => <ul className="list-disc pl-4 mb-3 text-gray-600 text-sm space-y-1" {...props} />,
-    li: (props: React.ComponentPropsWithoutRef<'li'>) => <li {...props} />
-  };
+  const regionNameById = new Map(regions.map((region) => [region.id, region.name]));
+  const articleCards: ArticleCardData[] = articles.map((article) =>
+    toArticleCardData(article, locale, {
+      countryName: displayCountry.name,
+      regionName: article.region_id ? regionNameById.get(article.region_id) : null,
+    })
+  );
+  const regionOptions = regionFilterOptions(regions, locale);
+  const categories = categoryOptions(articles, locale);
+  const articleCount = articleCards.length;
+  const regionCount = regions.length;
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900 font-sans">
-      
-      {/* OPRAVENÁ HORNÍ NAVIGACE (Tlačítko zpět + Přepínač jazyků) */}
-      <div className="absolute top-6 left-0 right-0 z-30 px-4">
-        <div className="max-w-5xl mx-auto flex items-center justify-between">
-          <Link href={`/${locale}`} className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2 rounded-full text-blue-900 font-bold hover:bg-white shadow-sm transition-colors">
-            &larr; {t('back_button')}
-          </Link>
-          
-          <LanguageSwitcher currentLocale={locale} />
-        </div>
-      </div>
-
-      <header className="relative py-32 px-4 text-center overflow-hidden border-b-4 border-yellow-400 min-h-[50vh] flex flex-col justify-center">
-        {displayData.image_url ? (
-          <div className="absolute inset-0 z-0 bg-cover bg-center" style={{ backgroundImage: `url('${displayData.image_url}')` }} />
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <section className="relative overflow-hidden bg-slate-950">
+        {displayCountry.image_url ? (
+          <SafeImage
+            src={displayCountry.image_url}
+            alt={displayCountry.name}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover opacity-75"
+            fallbackClassName="opacity-75"
+            fallbackLabel={displayCountry.name}
+          />
         ) : (
-          <div className="absolute inset-0 z-0 bg-blue-900" />
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-slate-900 to-emerald-950" />
         )}
-        <div className="absolute inset-0 bg-slate-900/60 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-950/50 to-slate-950/20" />
 
-        <div className="relative z-20">
-          {/* ZDE JE OPRAVA: Kombo pro zobrazení vlajky */}
-          <div className="flex justify-center mb-6">
-            {/* MOBIL: Emoji vlajka */}
-            <span className="md:hidden text-7xl drop-shadow-md">
-              {displayData.flag}
-            </span>
+        <div className="relative mx-auto flex min-h-[58vh] max-w-6xl flex-col px-4 pb-12 pt-8 md:px-6 md:pb-16">
+          <div className="flex items-start justify-between gap-4">
+            <nav
+              aria-label="Breadcrumb"
+              className="flex flex-wrap items-center gap-2 text-sm font-bold text-white/80"
+            >
+              <Link href={`/${locale}`} className="transition hover:text-white">
+                {getDestinationLabel(locale, 'home')}
+              </Link>
+              <span aria-hidden="true">/</span>
+              <Link href={`/${locale}#countries`} className="transition hover:text-white">
+                {getDestinationLabel(locale, 'countries')}
+              </Link>
+              <span aria-hidden="true">/</span>
+              <span className="text-white">{displayCountry.name}</span>
+            </nav>
 
-            {/* DESKTOP: SVG vlajka */}
-            <div className="hidden md:block">
-              <Image 
-                src={`/flags/${displayData.id.toLowerCase()}.svg`} 
-                alt={displayData.name} 
-                width={96} 
-                height={64} 
-                className="rounded-xl border-4 border-white/20 object-cover shadow-2xl w-24 h-16"
-              />
+            <div className="flex shrink-0 flex-col items-end gap-3 sm:flex-row sm:items-center">
+              <LanguageSwitcher currentLocale={locale} />
+              <FavoriteButton countryId={displayCountry.id} locale={locale} />
             </div>
           </div>
-          
-          <h1 className="text-6xl font-extrabold mb-4 text-white drop-shadow-lg tracking-tight">{displayData.name}</h1>
-          <p className="text-xl text-gray-100 max-w-2xl mx-auto drop-shadow-md font-medium leading-relaxed mb-8">{displayData.description}</p>
-          
-          <div className="flex justify-center">
-            <FavoriteButton countryId={displayData.id} />
+
+          <div className="mt-auto max-w-4xl pt-20 text-white">
+            <div className="mb-4 flex flex-wrap items-center gap-3">
+              <p className="inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-yellow-950">
+                {getDestinationLabel(locale, 'countryGuide')}
+              </p>
+              {displayCountry.flag && (
+                <span className="rounded-full bg-white/15 px-3 py-1 text-xl shadow-sm backdrop-blur">
+                  {displayCountry.flag}
+                </span>
+              )}
+            </div>
+            <h1 className="break-words text-4xl font-black leading-tight tracking-tight md:text-6xl">
+              {displayCountry.name}
+            </h1>
+            {displayCountry.description && (
+              <p className="mt-6 max-w-3xl break-words text-lg font-medium leading-relaxed text-white/90 md:text-xl">
+                {displayCountry.description}
+              </p>
+            )}
+
+            <dl className="mt-8 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                  {getDestinationLabel(locale, 'regionsCount')}
+                </dt>
+                <dd className="mt-1 text-3xl font-black">{regionCount}</dd>
+              </div>
+              <div className="rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                  {getDestinationLabel(locale, 'articlesCount')}
+                </dt>
+                <dd className="mt-1 text-3xl font-black">{articleCount}</dd>
+              </div>
+              <div className="col-span-2 rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur sm:col-span-1">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+                  {getDestinationLabel(locale, 'articleCategories')}
+                </dt>
+                <dd className="mt-1 text-3xl font-black">{categories.length}</dd>
+              </div>
+            </dl>
           </div>
         </div>
-      </header>
-
-      <section className="max-w-5xl mx-auto py-12 px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-16">
-          {displayData.general_info && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>📍</span> {t('general_info')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.general_info}</ReactMarkdown>
-            </div>
-          )}
-          {displayData.travel_tourism && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>✈️</span> {t('travel_tourism')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.travel_tourism}</ReactMarkdown>
-            </div>
-          )}
-          {displayData.life_work && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>💼</span> {t('life_work')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.life_work}</ReactMarkdown>
-            </div>
-          )}
-          {displayData.culture_food && (
-            <div className="bg-white rounded-2xl shadow-sm p-8 border border-gray-100">
-              <h2 className="text-2xl font-bold mb-4 text-blue-900 flex items-center gap-2"><span>🍷</span> {t('culture_food')}</h2>
-              <ReactMarkdown components={markdownComponents}>{displayData.culture_food}</ReactMarkdown>
-            </div>
-          )}
-          {displayData.practical_cautions && (
-            <div className="bg-orange-50/50 rounded-2xl shadow-sm p-8 border border-orange-100 md:col-span-2">
-              <h2 className="text-2xl font-bold mb-4 text-orange-900 flex items-center gap-2">
-                <span>⚠️</span> {t('practical_cautions')}
-              </h2>
-              <ReactMarkdown components={markdownComponents}>
-                {displayData.practical_cautions}
-              </ReactMarkdown>
-            </div>
-          )}
-        </div>
-{/* VÝPIS ČLÁNKŮ PRO DANOU ZEMI */}
-        <div className="mt-16 mb-8">
-          <h2 className="text-3xl font-extrabold text-blue-900 mb-8 flex items-center gap-3">
-            <span className="text-yellow-500">📰</span> Články a průvodce
-          </h2>
-          {/* Použijeme rovnou proměnnou 'id', kterou už máme nahoře z params */}
-          <ArticleList locale={locale} countryId={id} />
-        </div>
-        {regions && regions.length > 0 && (
-          <div className="mt-20">
-            <h2 className="text-3xl font-extrabold text-blue-900 mb-8 flex items-center gap-3">
-              <span className="text-yellow-500">🗺️</span> {t('regions_title')}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {regions.map((region: Region) => {
-                
-                const regionTranslations = region.translations as TranslationData | null;
-                const rLang = regionTranslations?.[locale];
-                
-                const rName = rLang?.name || region.name;
-                const rDesc = rLang?.description || region.description;
-
-                return (
-                  <Link href={`/${locale}/region/${region.id}`} key={region.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-xl hover:-translate-y-1 transition-all flex flex-col cursor-pointer">
-                    {region.image_url && (
-                      <div className="h-48 overflow-hidden shrink-0">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img 
-                          src={region.image_url} 
-                          alt={rName} 
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
-                        />
-                      </div>
-                    )}
-                    <div className="p-6 flex-grow flex flex-col">
-                      <div className="flex justify-between items-start mb-4">
-                        <h3 className="text-xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">{rName}</h3>
-                        {region.language && (
-                          <span className="text-xs font-bold bg-blue-50 text-blue-600 px-2 py-1 rounded-md uppercase shrink-0 ml-2">
-                            {region.language}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex-grow">
-                        <ReactMarkdown components={regionMarkdownComponents}>
-                          {rDesc}
-                        </ReactMarkdown>
-                      </div>
-                      <div className="mt-4 text-sm font-bold text-blue-600 group-hover:text-blue-800 flex items-center gap-1">
-                        {t('explore_region')} <span className="text-lg">&rarr;</span>
-                      </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </section>
+
+      <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
+        {regions.length > 0 && (
+          <section id="regions" className="mb-16">
+            <div className="mb-6">
+              <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+                {getDestinationLabel(locale, 'routes')}
+              </p>
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+                {getDestinationLabel(locale, 'regions')}
+              </h2>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {regions.map((region) => (
+                <DestinationCard
+                  key={region.id}
+                  href={`/${locale}/region/${region.id}`}
+                  title={region.name}
+                  description={region.description}
+                  imageUrl={region.image_url}
+                  imageAlt={region.name}
+                  badge={
+                    region.language
+                      ? `${getDestinationLabel(locale, 'language')}: ${region.language}`
+                      : getDestinationLabel(locale, 'regionGuide')
+                  }
+                  stats={[
+                    {
+                      label: getDestinationLabel(locale, 'articlesCount'),
+                      value: region.articleCount,
+                    },
+                  ]}
+                  actionLabel={getDestinationLabel(locale, 'exploreRegion')}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section id="articles">
+          <div className="mb-6">
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              {getDestinationLabel(locale, 'latestGuides')}
+            </p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {getDestinationLabel(locale, 'countryArticles')}
+            </h2>
+          </div>
+
+          <CountryArticleExplorer
+            locale={locale}
+            articles={articleCards}
+            regions={regionOptions}
+            categories={categories}
+          />
+        </section>
+      </div>
     </main>
   );
 }

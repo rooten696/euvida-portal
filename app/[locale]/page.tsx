@@ -1,160 +1,564 @@
-import Link from 'next/link';
-import ArticleList from '@/app/components/ArticleList';
-import Image from 'next/image'; // PŘIDÁNO: Import pro vykreslování SVG vlajek
+import ArticleCard from '@/app/components/article/ArticleCard';
+import DestinationCard from '@/app/components/destination/DestinationCard';
+import HomeArticleExplorer from '@/app/components/home/HomeArticleExplorer';
+import SmartSearch, { type SmartSearchItem } from '@/app/components/search/SmartSearch';
+import {
+  getArticleCategoryLabel,
+  toArticleCardData,
+  type ArticleCardData,
+} from '@/lib/articleCards';
+import { normalizeLocale } from '@/lib/articleLocalization';
+import type { Article, SupportedLocale } from '@/lib/articleTypes';
+import { supportedLocales } from '@/lib/articleTypes';
+import { getDestinationLabel } from '@/lib/destinationLabels';
+import {
+  type CountryDestination,
+  type RegionDestination,
+  getCountryDisplay,
+  getRegionDisplay,
+} from '@/lib/destinationTypes';
 import { createClient } from '@supabase/supabase-js';
 import { getTranslations } from 'next-intl/server';
+import type { Metadata } from 'next';
+import Image from 'next/image';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export const revalidate = 3600; 
+const heroImage =
+  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
-export default async function HomePage({
-  params
-}: {
-  params: Promise<{ locale: string }>
-}) {
-  const resolvedParams = await params;
-  const locale = resolvedParams.locale;
+const homeMetadata: Record<SupportedLocale, { title: string; description: string }> = {
+  cs: {
+    title: 'Euvida | Cestovatelský průvodce Evropou',
+    description:
+      'Praktické cestovatelské články, země a regiony Evropy pro výlety, koupání, památky i plánování cest.',
+  },
+  en: {
+    title: 'Euvida | Travel guide to Europe',
+    description:
+      'Practical travel articles, countries, and regions across Europe for trips, swimming, landmarks, and planning.',
+  },
+  de: {
+    title: 'Euvida | Reiseführer für Europa',
+    description:
+      'Praktische Reiseartikel, Länder und Regionen Europas für Ausflüge, Baden, Sehenswürdigkeiten und Reiseplanung.',
+  },
+  fr: {
+    title: 'Euvida | Guide de voyage en Europe',
+    description:
+      'Articles pratiques, pays et régions d’Europe pour les sorties, la baignade, les monuments et la préparation de voyage.',
+  },
+  es: {
+    title: 'Euvida | Guía de viaje por Europa',
+    description:
+      'Artículos prácticos, países y regiones de Europa para escapadas, baño, monumentos y planificación de viajes.',
+  },
+};
 
+type PageProps = {
+  params: Promise<{ locale: string }>;
+};
+
+type CountMap = Map<string, number>;
+
+type FilterOption = {
+  value: string;
+  label: string;
+};
+
+function presentValues(values: Array<string | null | undefined>): string[] {
+  return values.filter((value): value is string => Boolean(value?.trim()));
+}
+
+function countMeta(value: number, label: string, locale: SupportedLocale): string {
+  return `${value} ${label.toLocaleLowerCase(locale)}`;
+}
+
+function incrementCount(map: CountMap, key: string | null | undefined) {
+  if (!key) {
+    return;
+  }
+
+  map.set(key, (map.get(key) ?? 0) + 1);
+}
+
+function countBy<T>(items: T[], getKey: (item: T) => string | null | undefined): CountMap {
+  const counts = new Map<string, number>();
+
+  for (const item of items) {
+    incrementCount(counts, getKey(item));
+  }
+
+  return counts;
+}
+
+function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
+  const counts = countBy(articles, (article) => article.category);
+
+  return [...counts.entries()]
+    .map(([category, count]) => ({
+      value: category,
+      label: `${getArticleCategoryLabel(category, locale) ?? category} (${count})`,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label, locale));
+}
+
+function formatSupabaseError(error: unknown): string {
+  if (!error) {
+    return 'neznámá chyba';
+  }
+
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'object') {
+    const errorRecord = error as Record<string, unknown>;
+    const usefulEntries = ['message', 'details', 'hint', 'code', 'name', 'status']
+      .map((key) => [key, errorRecord[key]] as const)
+      .filter(([, value]) => value !== undefined && value !== null && value !== '');
+
+    if (usefulEntries.length > 0) {
+      return usefulEntries
+        .map(([key, value]) => `${key}: ${String(value)}`)
+        .join(', ');
+    }
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
+function warnHomepageLoadError(resource: string, error: unknown) {
+  console.warn(`[Euvida] Nepodařilo se načíst ${resource}: ${formatSupabaseError(error)}`);
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const locale = normalizeLocale(rawLocale);
+  const meta = homeMetadata[locale];
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: meta.title,
+    description: meta.description,
+    alternates: {
+      canonical: `/${locale}`,
+      languages: Object.fromEntries(
+        supportedLocales.map((supportedLocale) => [supportedLocale, `/${supportedLocale}`])
+      ),
+    },
+    openGraph: {
+      title: meta.title,
+      description: meta.description,
+      url: `/${locale}`,
+      images: [{ url: heroImage }],
+    },
+  };
+}
+
+export const revalidate = 3600;
+
+export default async function HomePage({ params }: PageProps) {
+  const { locale: rawLocale } = await params;
+  const locale = normalizeLocale(rawLocale);
   const t = await getTranslations('HomePage');
 
-  // 1. ČISTÝ DOTAZ NA SUPABASE (stáhne vše včetně JSONu translations)
-  const { data: countries } = await supabase
-    .from('countries')
-    .select('id, name, flag, description, image_url, translations')
-    .order('name');
+  const [articlesResult, countriesResult, regionsResult] = await Promise.all([
+    supabase
+      .from('articles')
+      .select(
+        'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes'
+      )
+      .eq('published', true)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('countries')
+      .select('id, name, flag, description, image_url, translations')
+      .order('name'),
+    supabase
+      .from('regions')
+      .select('id, country_id, name, language, description, image_url, translations')
+      .order('name'),
+  ]);
 
-  // 2. KOUZLO S PŘEKLADY (přepíše texty, pokud existují v JSONu)
-  const translatedCountries = countries?.map((country) => {
-    // Striktní typování pro TypeScript, abychom nepoužívali 'any'
-    type TranslationData = Record<string, { name: string; description: string }>;
-    
-    // Bezpečné načtení dat z JSONu
-    const allTranslations = country.translations as TranslationData | null;
-    const translation = allTranslations?.[locale];
+  if (articlesResult.error) {
+    warnHomepageLoadError('články', articlesResult.error);
+  }
 
-    return {
-      ...country,
-      name: translation?.name || country.name,
-      description: translation?.description || country.description
-    };
-  });
+  if (countriesResult.error) {
+    warnHomepageLoadError('země', countriesResult.error);
+  }
+
+  if (regionsResult.error) {
+    warnHomepageLoadError('regiony', regionsResult.error);
+  }
+
+  const articles = (articlesResult.data ?? []) as Article[];
+  const countries = ((countriesResult.data ?? []) as CountryDestination[]).map((country) =>
+    getCountryDisplay(country, locale)
+  );
+  const regions = ((regionsResult.data ?? []) as RegionDestination[]).map((region) =>
+    getRegionDisplay(region, locale)
+  );
+
+  const articleCountByCountry = countBy(articles, (article) => article.country_id);
+  const articleCountByRegion = countBy(articles, (article) => article.region_id);
+  const regionCountByCountry = countBy(regions, (region) => region.country_id);
+  const countryNameById = new Map(countries.map((country) => [country.id, country.name]));
+  const regionNameById = new Map(regions.map((region) => [region.id, region.name]));
+
+  const articleCards: ArticleCardData[] = articles.map((article) =>
+    toArticleCardData(article, locale, {
+      countryName: article.country_id ? countryNameById.get(article.country_id) : null,
+      regionName: article.region_id ? regionNameById.get(article.region_id) : null,
+    })
+  );
+  const featuredArticles = articleCards.filter((article) => article.featured).slice(0, 6);
+  const featuredArticleIds = new Set(
+    featuredArticles
+      .map((article) => article.id)
+      .filter((id): id is string => Boolean(id))
+  );
+  const featuredArticleSlugs = new Set(featuredArticles.map((article) => article.slug));
+  const latestArticles = articleCards
+    .filter(
+      (article) =>
+        !(article.id && featuredArticleIds.has(article.id)) &&
+        !featuredArticleSlugs.has(article.slug)
+    )
+    .slice(0, 12);
+  const categories = categoryOptions(articles, locale);
+  const countryFilterOptions = countries
+    .filter((country) => (articleCountByCountry.get(country.id) ?? 0) > 0)
+    .map((country) => ({
+      value: country.id,
+      label: country.name,
+    }))
+    .sort((left, right) => left.label.localeCompare(right.label, locale));
+  const countriesWithCounts = countries.map((country) => ({
+    ...country,
+    articleCount: articleCountByCountry.get(country.id) ?? 0,
+    regionCount: regionCountByCountry.get(country.id) ?? 0,
+  }));
+  const countriesWithArticles = countriesWithCounts
+    .filter((country) => country.articleCount > 0)
+    .sort((left, right) => {
+      if (right.articleCount !== left.articleCount) {
+        return right.articleCount - left.articleCount;
+      }
+
+      return left.name.localeCompare(right.name, locale);
+    });
+  const extraCountries = countriesWithCounts
+    .filter((country) => country.articleCount === 0)
+    .sort((left, right) => {
+      if (right.regionCount !== left.regionCount) {
+        return right.regionCount - left.regionCount;
+      }
+
+      return left.name.localeCompare(right.name, locale);
+    })
+    .slice(0, 6);
+  const homepageCountries = [...countriesWithArticles, ...extraCountries];
+  const regionsWithCounts = regions.map((region) => ({
+    ...region,
+    articleCount: articleCountByRegion.get(region.id) ?? 0,
+    countryName: countryNameById.get(region.country_id) ?? null,
+  }));
+  const selectedRegions = regionsWithCounts
+    .filter((region) => region.articleCount > 0)
+    .sort((left, right) => {
+      if (right.articleCount !== left.articleCount) {
+        return right.articleCount - left.articleCount;
+      }
+
+      return left.name.localeCompare(right.name, locale);
+    })
+    .slice(0, 8);
+  const articlesCountLabel = getDestinationLabel(locale, 'articlesCount');
+  const regionsCountLabel = getDestinationLabel(locale, 'regionsCount');
+  const searchItems: SmartSearchItem[] = [
+    ...articleCards.map((article) => ({
+      id: `article-${article.id ?? article.slug}`,
+      title: article.title,
+      href: `/${locale}/article/${article.slug}`,
+      typeLabel: article.categoryLabel ?? getDestinationLabel(locale, 'articlesAndGuides'),
+      description: article.excerpt,
+      meta: presentValues([
+        article.regionName,
+        article.countryName,
+        article.readingTimeMinutes ? `${article.readingTimeMinutes} min` : null,
+      ]).join(' · '),
+      keywords: presentValues([
+        article.category,
+        article.categoryLabel,
+        article.countryName,
+        article.regionName,
+        ...(article.badges ?? []),
+      ]),
+      priority: article.featured ? 8 : 5,
+    })),
+    ...countriesWithCounts.map((country) => ({
+      id: `country-${country.id}`,
+      title: country.name,
+      href: `/${locale}/country/${country.id}`,
+      typeLabel: getDestinationLabel(locale, 'countryGuide'),
+      description: country.description,
+      meta: presentValues([
+        countMeta(country.articleCount, articlesCountLabel, locale),
+        countMeta(country.regionCount, regionsCountLabel, locale),
+      ]).join(' · '),
+      keywords: presentValues([country.id, country.flag, country.name]),
+      priority: country.articleCount > 0 ? 7 : 2,
+    })),
+    ...regionsWithCounts.map((region) => ({
+      id: `region-${region.id}`,
+      title: region.name,
+      href: `/${locale}/region/${region.id}`,
+      typeLabel: getDestinationLabel(locale, 'regionGuide'),
+      description: region.description,
+      meta: presentValues([
+        region.countryName,
+        countMeta(region.articleCount, articlesCountLabel, locale),
+      ]).join(' · '),
+      keywords: presentValues([region.countryName, region.language, region.name]),
+      priority: region.articleCount > 0 ? 6 : 1,
+    })),
+  ];
 
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900 font-sans pb-20">
-      
-      {/* 1. HERO SEKCE */}
-      <section className="relative h-[75vh] flex items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop"
-            alt="Krásy Evropy"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-blue-900/40 mix-blend-multiply" />
-          <div className="absolute inset-0 bg-gradient-to-t from-gray-50 via-transparent to-transparent" />
-        </div>
+    <main className="min-h-screen bg-slate-50 text-slate-950">
+      <section className="relative overflow-hidden bg-slate-950">
+        <Image
+          src={heroImage}
+          alt={t('title')}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover opacity-75"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-950/45 to-slate-950/20" />
 
-        <div className="relative z-10 text-center px-4 max-w-4xl mx-auto mt-16">
-          <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 drop-shadow-xl tracking-tight">
-            {t('title')}
-          </h1>
-          <p className="text-xl md:text-2xl text-white/95 mb-10 font-medium drop-shadow-lg max-w-2xl mx-auto">
-            {t('subtitle')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="#destinace" className="bg-yellow-400 text-yellow-900 px-8 py-4 rounded-full font-extrabold text-lg hover:bg-yellow-300 transition-all shadow-lg hover:shadow-2xl hover:-translate-y-1">
-              {t('cta')}
-            </a>
+        <div className="relative mx-auto flex min-h-[68vh] max-w-6xl flex-col justify-end px-4 pb-20 pt-32 md:px-6">
+          <div className="max-w-4xl text-white">
+            <p className="mb-4 inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-yellow-950">
+              {getDestinationLabel(locale, 'travelGuide')}
+            </p>
+            <h1 className="max-w-4xl break-words text-4xl font-black leading-tight tracking-tight md:text-6xl">
+              {t('title')}
+            </h1>
+            <p className="mt-6 max-w-2xl break-words text-lg font-medium leading-relaxed text-white/90 md:text-xl">
+              {t('subtitle')}
+            </p>
+            <div className="mt-8">
+              <SmartSearch items={searchItems} locale={locale} />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <a
+                href="#featured"
+                className="inline-flex rounded-full bg-yellow-300 px-6 py-3 text-sm font-extrabold text-yellow-950 shadow-lg shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-yellow-200"
+              >
+                {getDestinationLabel(locale, 'articlesAndGuides')}
+              </a>
+              <a
+                href="#countries"
+                className="inline-flex rounded-full bg-white/90 px-6 py-3 text-sm font-extrabold text-blue-950 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
+              >
+                {getDestinationLabel(locale, 'countries')}
+              </a>
+              <a
+                href="#regions"
+                className="inline-flex rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20"
+              >
+                {getDestinationLabel(locale, 'regions')}
+              </a>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* 2. PROČ EUVIDA */}
-      <section className="max-w-6xl mx-auto px-4 py-8 -mt-24 relative z-20">
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300">
-            <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">✈️</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature1_title')}</h3>
-            <p className="text-gray-600 leading-relaxed">{t('feature1_desc')}</p>
+      {featuredArticles.length > 0 && (
+        <section id="featured" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 md:px-6">
+          <div className="mb-8">
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              {getDestinationLabel(locale, 'featuredArticles')}
+            </p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {getDestinationLabel(locale, 'articlesAndGuides')}
+            </h2>
           </div>
-          <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300 delay-100">
-            <div className="w-16 h-16 bg-green-50 text-green-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">💼</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature2_title')}</h3>
-            <p className="text-gray-600 leading-relaxed">{t('feature2_desc')}</p>
-          </div>
-          <div className="bg-white/95 backdrop-blur-sm p-8 rounded-3xl shadow-xl shadow-blue-900/10 border border-gray-100 flex flex-col items-center text-center hover:-translate-y-2 transition-transform duration-300 delay-200">
-            <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center text-3xl mb-6 shadow-inner">🍷</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-3">{t('feature3_title')}</h3>
-            <p className="text-gray-600 leading-relaxed">{t('feature3_desc')}</p>
-          </div>
-        </div>
-
-        <div className="mt-16 mb-8">
-          <h2 className="text-3xl font-extrabold text-blue-900 mb-8 flex items-center gap-3">
-            <span className="text-yellow-500">📰</span> Články a průvodce
-          </h2>
-          {/* Použijeme rovnou proměnnou 'id', kterou už máme nahoře z params */}
-          <ArticleList locale={locale} limit={6} />
-        </div>
-      </section>
-
-      {/* 3. VÝPIS ZEMÍ */}
-      <section id="destinace" className="max-w-6xl mx-auto px-4 py-20 scroll-mt-24">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-extrabold text-blue-900 mb-4">{t('where_to')}</h2>
-          <p className="text-lg text-gray-500 max-w-2xl mx-auto">{t('where_to_desc')}</p>
-        </div>
-
-        {translatedCountries && translatedCountries.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {translatedCountries.map((country) => (
-              <Link href={`/${locale}/country/${country.id}`} key={country.id} className="group rounded-3xl bg-white overflow-hidden shadow-sm hover:shadow-2xl hover:shadow-blue-900/10 border border-gray-100 transition-all duration-300 hover:-translate-y-2 flex flex-col">
-                <div className="h-64 relative overflow-hidden shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={country.image_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop'}
-                    alt={country.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-gray-900/90 via-gray-900/20 to-transparent" />
-                  <div className="absolute bottom-6 left-6 right-6 flex justify-between items-end">
-                    <h3 className="text-3xl font-extrabold text-white drop-shadow-md">{country.name}</h3>
-                    
-                    {/* MOBIL: Nativní emoji vlajka (na větších displejích se schová) */}
-<span className="md:hidden text-4xl drop-shadow-xl group-hover:scale-125 group-hover:-rotate-6 transition-transform duration-300 origin-bottom-right">
-  {country.flag}
-</span>
-
-{/* DESKTOP: SVG vlajka pro jistotu kvůli Windows (na mobilech se schová) */}
-<div className="hidden md:block origin-bottom-right group-hover:scale-110 group-hover:-rotate-3 transition-transform duration-300">
-  <Image 
-    src={`/flags/${country.id.toLowerCase()}.svg`} 
-    alt={country.name} 
-    width={48} 
-    height={32} 
-    className="rounded border-2 border-white/20 object-cover shadow-lg w-12 h-8"
-  />
-</div>
-
-                  </div>
-                </div>
-                <div className="p-6 flex-grow flex flex-col">
-                  <p className="text-gray-600 line-clamp-3 mb-6 flex-grow leading-relaxed">{country.description}</p>
-                </div>
-              </Link>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {featuredArticles.map((article, index) => (
+              <ArticleCard
+                key={article.slug}
+                article={article}
+                locale={locale}
+                priority={index < 3}
+              />
             ))}
           </div>
+        </section>
+      )}
+
+      {latestArticles.length > 0 && (
+        <section id="articles" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 md:px-6">
+          <div className="mb-8">
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              {getDestinationLabel(locale, 'latestArticles')}
+            </p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {getDestinationLabel(locale, 'latestGuides')}
+            </h2>
+          </div>
+          <HomeArticleExplorer
+            locale={locale}
+            articles={latestArticles}
+            categories={categories}
+            countries={countryFilterOptions}
+          />
+        </section>
+      )}
+
+      {categories.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 py-10 md:px-6">
+          <div className="mb-6">
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              {getDestinationLabel(locale, 'articleCategories')}
+            </p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {getDestinationLabel(locale, 'quickChoices')}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {categories.map((category) => (
+              <a
+                key={category.value}
+                href="#articles"
+                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
+              >
+                <span className="text-xs font-bold uppercase tracking-wide text-blue-700">
+                  {getDestinationLabel(locale, 'categoryCount')}
+                </span>
+                <h3 className="mt-2 text-lg font-extrabold text-slate-950">
+                  {category.label}
+                </h3>
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section
+        id="countries"
+        className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 md:px-6"
+      >
+        <div className="mb-8 max-w-3xl">
+          <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+            {getDestinationLabel(locale, 'countries')}
+          </p>
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+            {t('where_to')}
+          </h2>
+          <p className="mt-4 text-lg leading-relaxed text-slate-600">
+            {t('where_to_desc') || getDestinationLabel(locale, 'destinationsIntro')}
+          </p>
+        </div>
+
+        {homepageCountries.length > 0 ? (
+          <>
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {homepageCountries.map((country) => (
+                <DestinationCard
+                  key={country.id}
+                  href={`/${locale}/country/${country.id}`}
+                  title={country.name}
+                  description={country.description}
+                  imageUrl={country.image_url}
+                  imageAlt={country.name}
+                  badge={getDestinationLabel(locale, 'countryGuide')}
+                  flag={country.flag}
+                  flagSrc={`/flags/${country.id.toLowerCase()}.svg`}
+                  stats={[
+                    {
+                      label: getDestinationLabel(locale, 'articlesCount'),
+                      value: country.articleCount,
+                    },
+                    {
+                      label: getDestinationLabel(locale, 'regionsCount'),
+                      value: country.regionCount,
+                    },
+                  ]}
+                  actionLabel={getDestinationLabel(locale, 'exploreCountry')}
+                />
+              ))}
+            </div>
+            <div className="mt-8 flex justify-center">
+              <a
+                href={`/${locale}/countries`}
+                className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+              >
+                {getDestinationLabel(locale, 'showAllCountries')}
+              </a>
+            </div>
+          </>
         ) : (
-          <p className="text-center text-gray-400 italic py-12 bg-white rounded-3xl border border-gray-100 shadow-sm">{t('no_countries')}</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
+            {t('no_countries')}
+          </div>
         )}
       </section>
 
+      {selectedRegions.length > 0 && (
+        <section
+          id="regions"
+          className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-20 pt-8 md:px-6"
+        >
+          <div className="mb-8 max-w-3xl">
+            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              {getDestinationLabel(locale, 'selectedRegions')}
+            </p>
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              {getDestinationLabel(locale, 'regions')}
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {selectedRegions.map((region) => (
+              <DestinationCard
+                key={region.id}
+                href={`/${locale}/region/${region.id}`}
+                title={region.name}
+                description={region.description}
+                imageUrl={region.image_url}
+                imageAlt={region.name}
+                badge={getDestinationLabel(locale, 'regionGuide')}
+                stats={[
+                  {
+                    label: getDestinationLabel(locale, 'articlesCount'),
+                    value: region.articleCount,
+                  },
+                ]}
+                actionLabel={getDestinationLabel(locale, 'exploreRegion')}
+              />
+            ))}
+          </div>
+          <div className="mt-8 flex justify-center">
+            <a
+              href={`/${locale}/regions`}
+              className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+            >
+              {getDestinationLabel(locale, 'allRegions')}
+            </a>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
