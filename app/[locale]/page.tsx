@@ -1,4 +1,3 @@
-import ArticleCard from '@/app/components/article/ArticleCard';
 import DestinationCard from '@/app/components/destination/DestinationCard';
 import HomeArticleExplorer from '@/app/components/home/HomeArticleExplorer';
 import SmartSearch, { type SmartSearchItem } from '@/app/components/search/SmartSearch';
@@ -68,6 +67,7 @@ type CountMap = Map<string, number>;
 type FilterOption = {
   value: string;
   label: string;
+  count?: number;
 };
 
 function presentValues(values: Array<string | null | undefined>): string[] {
@@ -102,7 +102,8 @@ function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOp
   return [...counts.entries()]
     .map(([category, count]) => ({
       value: category,
-      label: `${getArticleCategoryLabel(category, locale) ?? category} (${count})`,
+      label: getArticleCategoryLabel(category, locale) ?? category,
+      count,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, locale));
 }
@@ -221,28 +222,8 @@ export default async function HomePage({ params }: PageProps) {
       regionName: article.region_id ? regionNameById.get(article.region_id) : null,
     })
   );
-  const featuredArticles = articleCards.filter((article) => article.featured).slice(0, 6);
-  const featuredArticleIds = new Set(
-    featuredArticles
-      .map((article) => article.id)
-      .filter((id): id is string => Boolean(id))
-  );
-  const featuredArticleSlugs = new Set(featuredArticles.map((article) => article.slug));
-  const latestArticles = articleCards
-    .filter(
-      (article) =>
-        !(article.id && featuredArticleIds.has(article.id)) &&
-        !featuredArticleSlugs.has(article.slug)
-    )
-    .slice(0, 12);
+  const latestArticlesLimit = 18;
   const categories = categoryOptions(articles, locale);
-  const countryFilterOptions = countries
-    .filter((country) => (articleCountByCountry.get(country.id) ?? 0) > 0)
-    .map((country) => ({
-      value: country.id,
-      label: country.name,
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label, locale));
   const countriesWithCounts = countries.map((country) => ({
     ...country,
     articleCount: articleCountByCountry.get(country.id) ?? 0,
@@ -347,7 +328,7 @@ export default async function HomePage({ params }: PageProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-950/45 to-slate-950/20" />
 
-        <div className="relative mx-auto flex min-h-[68vh] max-w-6xl flex-col justify-end px-4 pb-20 pt-32 md:px-6">
+        <div className="relative mx-auto flex min-h-[54vh] max-w-6xl flex-col justify-end px-4 pb-14 pt-20 md:min-h-[58vh] md:px-6 md:pt-24">
           <div className="max-w-4xl text-white">
             <p className="mb-4 inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-yellow-950">
               {getDestinationLabel(locale, 'travelGuide')}
@@ -361,97 +342,30 @@ export default async function HomePage({ params }: PageProps) {
             <div className="mt-8">
               <SmartSearch items={searchItems} locale={locale} />
             </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a
-                href="#featured"
-                className="inline-flex rounded-full bg-yellow-300 px-6 py-3 text-sm font-extrabold text-yellow-950 shadow-lg shadow-slate-950/20 transition hover:-translate-y-0.5 hover:bg-yellow-200"
-              >
-                {getDestinationLabel(locale, 'articlesAndGuides')}
-              </a>
-              <a
-                href="#countries"
-                className="inline-flex rounded-full bg-white/90 px-6 py-3 text-sm font-extrabold text-blue-950 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white"
-              >
-                {getDestinationLabel(locale, 'countries')}
-              </a>
-              <a
-                href="#regions"
-                className="inline-flex rounded-full border border-white/40 bg-white/10 px-6 py-3 text-sm font-extrabold text-white backdrop-blur transition hover:-translate-y-0.5 hover:bg-white/20"
-              >
-                {getDestinationLabel(locale, 'regions')}
-              </a>
-            </div>
           </div>
         </div>
       </section>
 
-      {featuredArticles.length > 0 && (
-        <section id="featured" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 md:px-6">
+      {articleCards.length > 0 && (
+        <section id="articles" className="relative z-10 mx-auto -mt-8 max-w-6xl scroll-mt-24 px-4 pb-10 md:px-6">
           <div className="mb-8">
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
-              {getDestinationLabel(locale, 'featuredArticles')}
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-              {getDestinationLabel(locale, 'articlesAndGuides')}
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {featuredArticles.map((article, index) => (
-              <ArticleCard
-                key={article.slug}
-                article={article}
-                locale={locale}
-                priority={index < 3}
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {latestArticles.length > 0 && (
-        <section id="articles" className="mx-auto max-w-6xl scroll-mt-24 px-4 py-10 md:px-6">
-          <div className="mb-8">
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+            <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
               {getDestinationLabel(locale, 'latestArticles')}
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-              {getDestinationLabel(locale, 'latestGuides')}
             </h2>
           </div>
           <HomeArticleExplorer
             locale={locale}
-            articles={latestArticles}
+            articles={articleCards}
             categories={categories}
-            countries={countryFilterOptions}
+            defaultVisibleCount={latestArticlesLimit}
           />
-        </section>
-      )}
-
-      {categories.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-10 md:px-6">
-          <div className="mb-6">
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
-              {getDestinationLabel(locale, 'articleCategories')}
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-              {getDestinationLabel(locale, 'quickChoices')}
-            </h2>
-          </div>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {categories.map((category) => (
-              <a
-                key={category.value}
-                href="#articles"
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-lg hover:shadow-blue-950/5"
-              >
-                <span className="text-xs font-bold uppercase tracking-wide text-blue-700">
-                  {getDestinationLabel(locale, 'categoryCount')}
-                </span>
-                <h3 className="mt-2 text-lg font-extrabold text-slate-950">
-                  {category.label}
-                </h3>
-              </a>
-            ))}
+          <div className="mt-8 flex justify-center">
+            <a
+              href={`/${locale}/articles`}
+              className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+            >
+              {getDestinationLabel(locale, 'showAllArticles')}
+            </a>
           </div>
         </section>
       )}

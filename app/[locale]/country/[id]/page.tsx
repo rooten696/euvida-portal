@@ -39,6 +39,7 @@ type CountryPageParams = {
 type FilterOption = {
   value: string;
   label: string;
+  count?: number;
 };
 
 const countryMetadata: Record<
@@ -129,20 +130,8 @@ function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOp
   return [...counts.entries()]
     .map(([category, count]) => ({
       value: category,
-      label: `${getArticleCategoryLabel(category, locale) ?? category} (${count})`,
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label, locale));
-}
-
-function regionFilterOptions(
-  regions: Array<ReturnType<typeof getRegionDisplay> & { articleCount: number }>,
-  locale: SupportedLocale
-): FilterOption[] {
-  return regions
-    .filter((region) => region.articleCount > 0)
-    .map((region) => ({
-      value: region.id,
-      label: `${region.name} (${region.articleCount})`,
+      label: getArticleCategoryLabel(category, locale) ?? category,
+      count,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, locale));
 }
@@ -251,7 +240,6 @@ export default async function CountryPage({ params }: CountryPageParams) {
       regionName: article.region_id ? regionNameById.get(article.region_id) : null,
     })
   );
-  const regionOptions = regionFilterOptions(regions, locale);
   const categories = categoryOptions(articles, locale);
   const articleCount = articleCards.length;
   const regionCount = regions.length;
@@ -343,8 +331,27 @@ export default async function CountryPage({ params }: CountryPageParams) {
       </section>
 
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
+        {articleCards.length > 0 && (
+          <section id="articles" className={regions.length > 0 ? 'mb-16' : undefined}>
+            <div className="mb-6">
+              <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+                {getDestinationLabel(locale, 'countryArticles')}
+              </h2>
+            </div>
+
+            <CountryArticleExplorer
+              locale={locale}
+              articles={articleCards}
+              categories={categories}
+            />
+          </section>
+        )}
+
         {regions.length > 0 && (
-          <section id="regions" className="mb-16">
+          <section
+            id="regions"
+            className={articleCards.length === 0 ? 'mb-16' : undefined}
+          >
             <div className="mb-6">
               <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
                 {getDestinationLabel(locale, 'routes')}
@@ -381,23 +388,21 @@ export default async function CountryPage({ params }: CountryPageParams) {
           </section>
         )}
 
-        <section id="articles">
-          <div className="mb-6">
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
-              {getDestinationLabel(locale, 'latestGuides')}
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
-              {getDestinationLabel(locale, 'countryArticles')}
-            </h2>
-          </div>
+        {articleCards.length === 0 && (
+          <section id="articles">
+            <div className="mb-6">
+              <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+                {getDestinationLabel(locale, 'countryArticles')}
+              </h2>
+            </div>
 
-          <CountryArticleExplorer
-            locale={locale}
-            articles={articleCards}
-            regions={regionOptions}
-            categories={categories}
-          />
-        </section>
+            <CountryArticleExplorer
+              locale={locale}
+              articles={articleCards}
+              categories={categories}
+            />
+          </section>
+        )}
       </div>
     </main>
   );

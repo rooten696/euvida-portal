@@ -41,7 +41,7 @@ export default async function LocaleLayout({
       <body className={`${inter.className} flex flex-col min-h-screen`}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <Navbar /> 
-          <div className="pt-16 flex-grow flex flex-col"> 
+          <div className="flex-grow flex flex-col">
             {children}
           </div>
           <Footer locale={locale} />

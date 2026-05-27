@@ -41,6 +41,7 @@ type RegionPageParams = {
 type FilterOption = {
   value: string;
   label: string;
+  count?: number;
 };
 
 type MarkdownSection = {
@@ -175,7 +176,8 @@ function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOp
   return [...counts.entries()]
     .map(([category, count]) => ({
       value: category,
-      label: `${getArticleCategoryLabel(category, locale) ?? category} (${count})`,
+      label: getArticleCategoryLabel(category, locale) ?? category,
+      count,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, locale));
 }
@@ -462,10 +464,7 @@ export default async function RegionPage({ params }: RegionPageParams) {
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
         <section id="articles" className="mb-16">
           <div className="mb-6">
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
-              {getDestinationLabel(locale, 'latestGuides')}
-            </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+            <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
               {getDestinationLabel(locale, 'regionArticles')}
             </h2>
           </div>
