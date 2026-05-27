@@ -5,7 +5,14 @@ import { useState, useEffect, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 // ODEBRÁNO: translateCountryData (už ho nepoužíváme, jedeme po částech)
 import { translateRegionData, translateSingleText } from '../../actions/translate';
+import ImageManager from '@/app/components/admin/ImageManager';
 import AdminCommentsPanel from '../../components/admin/AdminCommentsPanel';
+import type {
+  ImageCredit,
+  LocalizedText,
+  SourceInfo,
+  SupportedLocale,
+} from '@/lib/articleTypes';
 
 type CountryData = {
   id: string;
@@ -50,12 +57,75 @@ type PlaceData = {
   image_url: string;
 };
 
+type ArticleImageData = {
+  id: string;
+  slug: string;
+  title: string;
+  category?: string | null;
+  image_url?: string | null;
+  image_alt?: LocalizedText | null;
+  source_info?: SourceInfo | null;
+  published?: boolean | null;
+  featured?: boolean | null;
+};
+
 const emptyRegion: RegionData = {
   country_id: '', name: '', language: '', description: '', image_url: '',
   general_info: '', nature_and_landscapes: '', history_and_culture: '', transport_and_life: '',
   temp_spring_air: '', temp_summer_air: '', temp_autumn_air: '', temp_winter_air: '',
   temp_spring_sea: '', temp_summer_sea: '', temp_autumn_sea: '', temp_winter_sea: ''
 };
+
+function cleanString(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+function cleanLocalizedText(value: LocalizedText | null | undefined): LocalizedText | null {
+  const cleaned: LocalizedText = {};
+
+  Object.entries(value ?? {}).forEach(([locale, text]) => {
+    const trimmed = text?.trim();
+
+    if (trimmed) {
+      cleaned[locale] = trimmed;
+    }
+  });
+
+  return Object.keys(cleaned).length > 0 ? cleaned : null;
+}
+
+function cleanImageCredit(credit: ImageCredit | null | undefined): ImageCredit | null {
+  if (!credit) {
+    return null;
+  }
+
+  const cleaned: ImageCredit = {};
+
+  (Object.entries(credit) as Array<[keyof ImageCredit, string | null | undefined]>).forEach(
+    ([key, value]) => {
+      const trimmed = value?.trim();
+
+      if (trimmed) {
+        cleaned[key] = trimmed;
+      }
+    }
+  );
+
+  return Object.keys(cleaned).length > 0 ? cleaned : null;
+}
+
+function withPrimaryImageCredit(
+  sourceInfo: SourceInfo | null | undefined,
+  credit: ImageCredit
+): SourceInfo {
+  const existingImages = sourceInfo?.images ?? [];
+
+  return {
+    ...(sourceInfo ?? {}),
+    images: [credit, ...existingImages.slice(1)],
+  };
+}
 
 export default function AdminPage() {
   const [session, setSession] = useState<Session | null>(null);
@@ -91,6 +161,10 @@ export default function AdminPage() {
   const [isPlaceActive, setIsPlaceActive] = useState(false);
   const [placeToDelete, setPlaceToDelete] = useState<string | null>(null);
 
+  const [articles, setArticles] = useState<ArticleImageData[]>([]);
+  const [articleImageForm, setArticleImageForm] = useState<ArticleImageData | null>(null);
+  const [isArticleImageActive, setIsArticleImageActive] = useState(false);
+
   const [status, setStatus] = useState('');
 
   const fetchCountries = useCallback(async () => {
@@ -108,12 +182,24 @@ export default function AdminPage() {
     if (data) setPlaces(data as PlaceData[]);
   }, []);
 
+  const fetchArticles = useCallback(async () => {
+    const { data } = await supabase
+      .from('articles')
+      .select('id, slug, title, category, image_url, image_alt, source_info, published, featured, created_at')
+      .order('created_at', { ascending: false });
+
+    if (data) {
+      setArticles(data as ArticleImageData[]);
+    }
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-    fetchCountries(); 
+    fetchCountries();
+    fetchArticles();
     return () => subscription.unsubscribe();
-  }, [fetchCountries]);
+  }, [fetchArticles, fetchCountries]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -365,6 +451,85 @@ export default function AdminPage() {
     setStatus('🗑️ Místo smazáno.');
   };
 
+  const selectArticleImage = (article: ArticleImageData) => {
+    setArticleImageForm({
+      ...article,
+      image_url: article.image_url ?? '',
+      image_alt: article.image_alt ?? {},
+      source_info: article.source_info ?? {},
+    });
+    setIsArticleImageActive(false);
+    setStatus('');
+  };
+
+  const updateArticleImageUrl = (value: string) => {
+    setArticleImageForm((prev) => (prev ? { ...prev, image_url: value } : prev));
+  };
+
+  const updateArticleAlt = (locale: SupportedLocale, value: string) => {
+    setArticleImageForm((prev) =>
+      prev
+        ? {
+            ...prev,
+            image_alt: {
+              ...(prev.image_alt ?? {}),
+              [locale]: value,
+            },
+          }
+        : prev
+    );
+  };
+
+  const updateArticleCredit = (credit: ImageCredit) => {
+    setArticleImageForm((prev) =>
+      prev
+        ? {
+            ...prev,
+            source_info: withPrimaryImageCredit(prev.source_info, credit),
+          }
+        : prev
+    );
+  };
+
+  const handleArticleImageSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!articleImageForm) {
+      return;
+    }
+
+    setStatus('Ukládám obrázek článku...');
+
+    const primaryCredit = cleanImageCredit(articleImageForm.source_info?.images?.[0]);
+    const remainingImages = articleImageForm.source_info?.images?.slice(1) ?? [];
+    const sourceInfoToSave: SourceInfo = {
+      ...(articleImageForm.source_info ?? {}),
+      images: primaryCredit
+        ? [primaryCredit, ...remainingImages]
+        : remainingImages.length > 0
+          ? remainingImages
+          : null,
+    };
+
+    const { error } = await supabase
+      .from('articles')
+      .update({
+        image_url: cleanString(articleImageForm.image_url),
+        image_alt: cleanLocalizedText(articleImageForm.image_alt),
+        source_info: sourceInfoToSave,
+      })
+      .eq('id', articleImageForm.id);
+
+    if (error) {
+      setStatus('Chyba obrázku článku: ' + error.message);
+      return;
+    }
+
+    setStatus('Obrázek článku uložen.');
+    setIsArticleImageActive(false);
+    fetchArticles();
+  };
+
   if (!session) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -430,6 +595,123 @@ export default function AdminPage() {
 
           <AdminCommentsPanel />
 
+          <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
+            <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-blue-900">Obrázky článků</h2>
+                <p className="mt-1 text-sm text-gray-500">
+                  Náhled, externí URL, upload, alt texty a licence pro detail článku.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={fetchArticles}
+                className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+              >
+                Obnovit články
+              </button>
+            </div>
+
+            <div className="grid gap-5 xl:grid-cols-[280px_1fr]">
+              <div className="max-h-[34rem] space-y-2 overflow-y-auto rounded-2xl border border-gray-100 bg-gray-50 p-2">
+                {articles.length > 0 ? (
+                  articles.map((article) => (
+                    <button
+                      key={article.id}
+                      type="button"
+                      onClick={() => selectArticleImage(article)}
+                      className={`w-full rounded-xl border p-3 text-left transition-all ${
+                        articleImageForm?.id === article.id
+                          ? 'border-blue-500 bg-white shadow-sm'
+                          : 'border-transparent hover:bg-white hover:shadow-sm'
+                      }`}
+                    >
+                      <span className="block truncate text-sm font-black text-gray-900">
+                        {article.title}
+                      </span>
+                      <span className="mt-1 block truncate text-xs font-medium text-gray-500">
+                        /article/{article.slug}
+                      </span>
+                      <span className="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">
+                        {article.image_url ? 'má obrázek' : 'bez obrázku'}
+                      </span>
+                    </button>
+                  ))
+                ) : (
+                  <p className="p-4 text-sm font-medium text-gray-500">
+                    Zatím nejsou načtené žádné články.
+                  </p>
+                )}
+              </div>
+
+              {articleImageForm ? (
+                <form onSubmit={handleArticleImageSubmit} className="space-y-4">
+                  <div className="flex flex-col gap-3 rounded-2xl bg-blue-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <h3 className="text-lg font-black text-blue-950">
+                        {articleImageForm.title}
+                      </h3>
+                      <p className="mt-1 text-xs font-semibold text-blue-700">
+                        {articleImageForm.category || 'bez kategorie'} · {articleImageForm.slug}
+                      </p>
+                    </div>
+                    {!isArticleImageActive && (
+                      <button
+                        type="button"
+                        onClick={() => setIsArticleImageActive(true)}
+                        className="rounded-xl bg-blue-900 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
+                      >
+                        Upravit obrázek článku
+                      </button>
+                    )}
+                  </div>
+
+                  <ImageManager
+                    title="Hlavní obrázek článku"
+                    entityType="articles"
+                    entityId={articleImageForm.slug}
+                    imageUrl={articleImageForm.image_url}
+                    disabled={!isArticleImageActive}
+                    altValues={articleImageForm.image_alt ?? {}}
+                    credit={articleImageForm.source_info?.images?.[0] ?? null}
+                    onImageUrlChange={updateArticleImageUrl}
+                    onAltChange={updateArticleAlt}
+                    onCreditChange={updateArticleCredit}
+                    onStatus={setStatus}
+                  />
+
+                  {isArticleImageActive && (
+                    <div className="flex gap-3">
+                      <button
+                        type="submit"
+                        className="flex-grow rounded-xl bg-blue-900 py-3 font-bold text-white hover:bg-blue-800"
+                      >
+                        Uložit obrázek článku
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const original = articles.find(
+                            (article) => article.id === articleImageForm.id
+                          );
+                          if (original) selectArticleImage(original);
+                          setIsArticleImageActive(false);
+                        }}
+                        className="rounded-xl bg-gray-100 px-5 font-bold text-gray-700 hover:bg-gray-200"
+                      >
+                        Zrušit
+                      </button>
+                    </div>
+                  )}
+                </form>
+              ) : (
+                <div className="flex min-h-72 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm font-medium text-gray-500">
+                  Vyber článek vlevo a uprav jeho obrázek, popisek a licenci.
+                </div>
+              )}
+            </div>
+          </section>
+
           {/* FORMULÁŘ ZEMĚ */}
           <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
             <div className="flex justify-between items-center border-b pb-4">
@@ -466,9 +748,18 @@ export default function AdminPage() {
                 <label className="text-xs font-bold text-gray-400 uppercase">Vlajka</label>
                 <input required disabled={!isCountryActive} name="flag" value={formData.flag} onChange={handleChange} className={inputClass} />
               </div>
-              <div className="col-span-2 lg:col-span-1">
-                <label className="text-xs font-bold text-gray-400 uppercase">URL Hlavní fotky</label>
-                <input disabled={!isCountryActive} name="image_url" value={formData.image_url} onChange={handleChange} className={inputClass} />
+              <div className="col-span-2 lg:col-span-4">
+                <ImageManager
+                  title="Obrázek země"
+                  entityType="countries"
+                  entityId={formData.id}
+                  imageUrl={formData.image_url}
+                  disabled={!isCountryActive}
+                  onImageUrlChange={(value) =>
+                    setFormData((prev) => ({ ...prev, image_url: value }))
+                  }
+                  onStatus={setStatus}
+                />
               </div>
               
               <div className="col-span-2 lg:col-span-4">
@@ -570,8 +861,17 @@ export default function AdminPage() {
                       <input disabled={!isRegionActive} name="language" value={regionFormData.language} onChange={handleRegionChange} className={inputClass} />
                     </div>
                     <div className="col-span-2">
-                      <label className="text-xs font-bold text-yellow-700 uppercase">Foto URL</label>
-                      <input disabled={!isRegionActive} name="image_url" value={regionFormData.image_url} onChange={handleRegionChange} className={inputClass} />
+                      <ImageManager
+                        title="Obrázek regionu"
+                        entityType="regions"
+                        entityId={regionFormData.id ?? regionFormData.name}
+                        imageUrl={regionFormData.image_url}
+                        disabled={!isRegionActive}
+                        onImageUrlChange={(value) =>
+                          setRegionFormData((prev) => ({ ...prev, image_url: value }))
+                        }
+                        onStatus={setStatus}
+                      />
                     </div>
                     <div className="col-span-2">
                       <label className="text-xs font-bold text-yellow-700 uppercase">Krátký popis</label>
@@ -672,8 +972,20 @@ export default function AdminPage() {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <input required disabled={!isPlaceActive} placeholder="Název (např. Sevilla)" name="name" value={placeFormData.name} onChange={handlePlaceChange} className={`col-span-2 md:col-span-1 ${inputClass}`} />
-                    <input disabled={!isPlaceActive} placeholder="Foto URL" name="image_url" value={placeFormData.image_url} onChange={handlePlaceChange} className={`col-span-2 md:col-span-1 ${inputClass}`} />
+                    <input required disabled={!isPlaceActive} placeholder="Název (např. Sevilla)" name="name" value={placeFormData.name} onChange={handlePlaceChange} className={`col-span-2 ${inputClass}`} />
+                    <div className="col-span-2">
+                      <ImageManager
+                        title="Obrázek místa"
+                        entityType="places"
+                        entityId={placeFormData.id ?? placeFormData.name}
+                        imageUrl={placeFormData.image_url}
+                        disabled={!isPlaceActive}
+                        onImageUrlChange={(value) =>
+                          setPlaceFormData((prev) => ({ ...prev, image_url: value }))
+                        }
+                        onStatus={setStatus}
+                      />
+                    </div>
                     <textarea required disabled={!isPlaceActive} placeholder="Popis místa..." name="description" value={placeFormData.description} onChange={handlePlaceChange} rows={3} className={`col-span-2 ${inputClass}`} />
                   </div>
                   

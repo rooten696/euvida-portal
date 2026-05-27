@@ -181,7 +181,7 @@ export default function SmartSearch({ items, locale }: SmartSearchProps) {
   }, [currentLocale, deferredQuery, items, suggestedItems]);
 
   const hasQuery = query.trim().length > 0;
-  const firstResult = hasQuery ? results[0] : null;
+  const searchHref = `/${currentLocale}/articles?q=${encodeURIComponent(query.trim())}`;
 
   return (
     <div
@@ -197,8 +197,8 @@ export default function SmartSearch({ items, locale }: SmartSearchProps) {
         onSubmit={(event) => {
           event.preventDefault();
 
-          if (firstResult) {
-            router.push(firstResult.href);
+          if (hasQuery) {
+            router.push(searchHref);
             setIsOpen(false);
           }
         }}
@@ -222,7 +222,7 @@ export default function SmartSearch({ items, locale }: SmartSearchProps) {
           />
           <button
             type="submit"
-            disabled={!firstResult}
+            disabled={!hasQuery}
             className="min-h-12 rounded-2xl bg-yellow-300 px-6 text-sm font-black text-yellow-950 shadow-sm transition hover:bg-yellow-200 disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-500"
           >
             {copy.button}

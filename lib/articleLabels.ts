@@ -666,7 +666,7 @@ export const categoryLabels: LabelMap = {
     ski_area: 'Lyžařský areál',
     beach: 'Pláže',
     camping: 'Kempy',
-    bike_trail: 'Bike parky a traily',
+    bike_trail: 'Bikeparky a traily',
     city_tip: 'Tip do města',
   },
   en: {

@@ -10,6 +10,7 @@ type ArticleCardProps = {
   country?: string | null;
   region?: string | null;
   priority?: boolean;
+  showFeaturedBadge?: boolean;
 };
 
 function locationLabel(
@@ -33,6 +34,7 @@ export default function ArticleCard({
   country,
   region,
   priority = false,
+  showFeaturedBadge = true,
 }: ArticleCardProps) {
   const location = locationLabel(article, country, region);
 
@@ -64,14 +66,14 @@ export default function ArticleCard({
           </div>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
-        {(article.categoryLabel || article.featured) && (
+        {(article.categoryLabel || (article.featured && showFeaturedBadge)) && (
           <div className="absolute left-4 right-4 top-4 flex flex-wrap items-start justify-between gap-2">
             {article.categoryLabel && (
               <span className="max-w-full rounded-full bg-white/90 px-3 py-1 text-xs font-bold uppercase tracking-wide text-slate-700 shadow-sm backdrop-blur">
                 {article.categoryLabel}
               </span>
             )}
-            {article.featured && (
+            {article.featured && showFeaturedBadge && (
               <span className="rounded-full bg-yellow-300 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-yellow-950 shadow-sm">
                 {getArticleLabel(locale, 'featured')}
               </span>
