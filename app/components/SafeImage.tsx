@@ -14,9 +14,9 @@ function shouldUseDirectImage(src: ImageProps['src']): boolean {
   }
 
   try {
-    const hostname = new URL(src).hostname;
+    const { protocol } = new URL(src);
 
-    return hostname === 'commons.wikimedia.org' || hostname === 'upload.wikimedia.org';
+    return protocol === 'http:' || protocol === 'https:';
   } catch {
     return false;
   }
