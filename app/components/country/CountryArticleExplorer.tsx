@@ -47,6 +47,12 @@ export default function CountryArticleExplorer({
   }
 
   return (
-    <ArticleCategoryExplorer locale={locale} articles={articles} categories={categories} />
+    <ArticleCategoryExplorer
+      locale={locale}
+      articles={articles}
+      categories={categories}
+      defaultVisibleCount={12}
+      showMoreLabel={getDestinationLabel(locale, 'showMoreArticles')}
+    />
   );
 }

@@ -1,5 +1,6 @@
 import CountryArticleExplorer from '@/app/components/country/CountryArticleExplorer';
 import DestinationCard from '@/app/components/destination/DestinationCard';
+import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import SafeImage from '@/app/components/SafeImage';
@@ -40,6 +41,12 @@ type FilterOption = {
   value: string;
   label: string;
   count?: number;
+};
+
+type MarkdownSection = {
+  title: string;
+  content?: string | null;
+  tone: 'blue' | 'green' | 'orange' | 'slate';
 };
 
 const countryMetadata: Record<
@@ -134,6 +141,12 @@ function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOp
       count,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, locale));
+}
+
+function hasMarkdownContent(
+  section: MarkdownSection
+): section is MarkdownSection & { content: string } {
+  return Boolean(section.content?.trim());
 }
 
 export const revalidate = 3600;
@@ -243,6 +256,34 @@ export default async function CountryPage({ params }: CountryPageParams) {
   const categories = categoryOptions(articles, locale);
   const articleCount = articleCards.length;
   const regionCount = regions.length;
+  const countrySectionCandidates: MarkdownSection[] = [
+    {
+      title: getDestinationLabel(locale, 'generalInfo'),
+      content: displayCountry.general_info,
+      tone: 'slate',
+    },
+    {
+      title: getDestinationLabel(locale, 'travelTourism'),
+      content: displayCountry.travel_tourism,
+      tone: 'green',
+    },
+    {
+      title: getDestinationLabel(locale, 'lifeWork'),
+      content: displayCountry.life_work,
+      tone: 'blue',
+    },
+    {
+      title: getDestinationLabel(locale, 'cultureFood'),
+      content: displayCountry.culture_food,
+      tone: 'orange',
+    },
+    {
+      title: getDestinationLabel(locale, 'practicalCautions'),
+      content: displayCountry.practical_cautions,
+      tone: 'slate',
+    },
+  ];
+  const countrySections = countrySectionCandidates.filter(hasMarkdownContent);
 
   return (
     <main className="min-h-screen bg-slate-50 text-slate-950">
@@ -332,7 +373,10 @@ export default async function CountryPage({ params }: CountryPageParams) {
 
       <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
         {articleCards.length > 0 && (
-          <section id="articles" className={regions.length > 0 ? 'mb-16' : undefined}>
+          <section
+            id="articles"
+            className={countrySections.length > 0 || regions.length > 0 ? 'mb-16' : undefined}
+          >
             <div className="mb-6">
               <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
                 {getDestinationLabel(locale, 'countryArticles')}
@@ -347,11 +391,24 @@ export default async function CountryPage({ params }: CountryPageParams) {
           </section>
         )}
 
-        {regions.length > 0 && (
+        {countrySections.length > 0 && (
           <section
-            id="regions"
-            className={articleCards.length === 0 ? 'mb-16' : undefined}
+            id="country-info"
+            className={regions.length > 0 ? 'mb-16 grid grid-cols-1 gap-5 md:grid-cols-2' : 'grid grid-cols-1 gap-5 md:grid-cols-2'}
           >
+            {countrySections.map((section) => (
+              <DestinationMarkdownSection
+                key={section.title}
+                title={section.title}
+                content={section.content}
+                tone={section.tone}
+              />
+            ))}
+          </section>
+        )}
+
+        {regions.length > 0 && (
+          <section id="regions">
             <div className="mb-6">
               <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
                 {getDestinationLabel(locale, 'routes')}
@@ -388,7 +445,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
           </section>
         )}
 
-        {articleCards.length === 0 && (
+        {articleCards.length === 0 && countrySections.length === 0 && (
           <section id="articles">
             <div className="mb-6">
               <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
