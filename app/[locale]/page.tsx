@@ -6,6 +6,7 @@ import {
   toArticleCardData,
   type ArticleCardData,
 } from '@/lib/articleCards';
+import { getArticleHref } from '@/lib/articleRouting';
 import { normalizeLocale } from '@/lib/articleLocalization';
 import type { Article, SupportedLocale } from '@/lib/articleTypes';
 import { supportedLocales } from '@/lib/articleTypes';
@@ -270,7 +271,7 @@ export default async function HomePage({ params }: PageProps) {
     ...articleCards.map((article) => ({
       id: `article-${article.id ?? article.slug}`,
       title: article.title,
-      href: `/${locale}/article/${article.slug}`,
+      href: getArticleHref(article, locale),
       typeLabel: article.categoryLabel ?? getDestinationLabel(locale, 'articlesAndGuides'),
       description: article.excerpt,
       meta: presentValues([

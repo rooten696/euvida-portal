@@ -1,4 +1,5 @@
 import type { ArticleCardData } from '@/lib/articleCards';
+import { getArticleHref } from '@/lib/articleRouting';
 import { getArticleLabel } from '@/lib/articleLabels';
 import { getDestinationLabel } from '@/lib/destinationLabels';
 import SafeImage from '@/app/components/SafeImage';
@@ -40,7 +41,7 @@ export default function ArticleCard({
 
   return (
     <Link
-      href={`/${locale}/article/${article.slug}`}
+      href={getArticleHref(article, locale)}
       className="group flex min-h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-blue-950/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-100">
