@@ -91,7 +91,7 @@ export default function ArticleCategoryExplorer({
   return (
     <section className="space-y-6">
       <nav
-        className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"
+        className="rounded-2xl border border-white/5 bg-slate-900/50 p-3 shadow-sm md:p-4"
         aria-label={getDestinationLabel(locale, 'articleCategories')}
       >
         <div className="flex gap-2 overflow-x-auto pb-1">
@@ -102,10 +102,10 @@ export default function ArticleCategoryExplorer({
               setVisiblePageCount(1);
             }}
             aria-pressed={category === ''}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+            className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
               category === ''
-                ? 'bg-blue-900 text-white shadow-sm'
-                : 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-blue-50'
+                ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                : 'border border-white/10 bg-white/5 text-slate-300 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400'
             }`}
           >
             {getDestinationLabel(locale, 'allArticles')}
@@ -121,10 +121,10 @@ export default function ArticleCategoryExplorer({
                 setVisiblePageCount(1);
               }}
               aria-pressed={category === option.value}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
                 category === option.value
-                  ? 'bg-blue-900 text-white shadow-sm'
-                  : 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-blue-50'
+                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
+                  : 'border border-white/10 bg-white/5 text-slate-300 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400'
               }`}
             >
               {option.label}
@@ -155,7 +155,7 @@ export default function ArticleCategoryExplorer({
               <button
                 type="button"
                 onClick={() => setVisiblePageCount((currentCount) => currentCount + 1)}
-                className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
                 {showMoreLabel}
               </button>
@@ -163,7 +163,7 @@ export default function ArticleCategoryExplorer({
           )}
         </>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
+        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm">
           {getDestinationLabel(locale, 'noFilteredArticles')}
         </div>
       )}

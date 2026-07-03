@@ -38,7 +38,7 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${inter.className} flex flex-col min-h-screen`}>
+      <body className={`${inter.className} flex flex-col min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-slate-950`}>
         <NextIntlClientProvider messages={messages} locale={locale}>
           <Navbar /> 
           <div className="flex-grow flex flex-col">

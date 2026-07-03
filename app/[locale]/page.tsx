@@ -172,14 +172,19 @@ export default async function HomePage({ params }: PageProps) {
   const locale = normalizeLocale(rawLocale);
   const t = await getTranslations('HomePage');
 
+  let articlesQuery = supabase
+    .from('articles')
+    .select(
+      'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes'
+    )
+    .eq('published', true);
+
+  if (process.env.NEXT_PUBLIC_SITE_MODE === 'cz') {
+    articlesQuery = articlesQuery.eq('country_id', 'CZE');
+  }
+
   const [articlesResult, countriesResult, regionsResult] = await Promise.all([
-    supabase
-      .from('articles')
-      .select(
-        'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes'
-      )
-      .eq('published', true)
-      .order('created_at', { ascending: false }),
+    articlesQuery.order('created_at', { ascending: false }),
     supabase
       .from('countries')
       .select('id, name, flag, description, image_url, translations')
@@ -316,7 +321,7 @@ export default async function HomePage({ params }: PageProps) {
   ];
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="relative overflow-hidden bg-slate-950">
         <Image
           src={heroImage}
@@ -326,11 +331,11 @@ export default async function HomePage({ params }: PageProps) {
           sizes="100vw"
           className="object-cover opacity-75"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-950/45 to-slate-950/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
 
         <div className="relative mx-auto flex min-h-[54vh] max-w-6xl flex-col justify-end px-4 pb-14 pt-20 md:min-h-[58vh] md:px-6 md:pt-24">
           <div className="max-w-4xl text-white">
-            <p className="mb-4 inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-yellow-950">
+            <p className="mb-4 inline-flex rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-400">
               {getDestinationLabel(locale, 'travelGuide')}
             </p>
             <h1 className="max-w-4xl break-words text-4xl font-black leading-tight tracking-tight md:text-6xl">
@@ -349,7 +354,7 @@ export default async function HomePage({ params }: PageProps) {
       {articleCards.length > 0 && (
         <section id="articles" className="relative z-10 mx-auto -mt-8 max-w-6xl scroll-mt-24 px-4 pb-10 md:px-6">
           <div className="mb-8">
-            <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+            <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
               {getDestinationLabel(locale, 'latestArticles')}
             </h2>
           </div>
@@ -362,7 +367,7 @@ export default async function HomePage({ params }: PageProps) {
           <div className="mt-8 flex justify-center">
             <a
               href={`/${locale}/articles`}
-              className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+              className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20"
             >
               {getDestinationLabel(locale, 'showAllArticles')}
             </a>
@@ -375,13 +380,13 @@ export default async function HomePage({ params }: PageProps) {
         className="mx-auto max-w-6xl scroll-mt-24 px-4 py-14 md:px-6"
       >
         <div className="mb-8 max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+          <p className="text-sm font-bold uppercase tracking-wide text-emerald-500">
             {getDestinationLabel(locale, 'countries')}
           </p>
-          <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-5xl">
+          <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-5xl">
             {t('where_to')}
           </h2>
-          <p className="mt-4 text-lg leading-relaxed text-slate-600">
+          <p className="mt-4 text-lg leading-relaxed text-slate-400">
             {t('where_to_desc') || getDestinationLabel(locale, 'destinationsIntro')}
           </p>
         </div>
@@ -417,14 +422,14 @@ export default async function HomePage({ params }: PageProps) {
             <div className="mt-8 flex justify-center">
               <a
                 href={`/${locale}/countries`}
-                className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+                className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20"
               >
                 {getDestinationLabel(locale, 'showAllCountries')}
               </a>
             </div>
           </>
         ) : (
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
+          <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm">
             {t('no_countries')}
           </div>
         )}
@@ -436,10 +441,10 @@ export default async function HomePage({ params }: PageProps) {
           className="mx-auto max-w-6xl scroll-mt-24 px-4 pb-20 pt-8 md:px-6"
         >
           <div className="mb-8 max-w-3xl">
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+            <p className="text-sm font-bold uppercase tracking-wide text-emerald-500">
               {getDestinationLabel(locale, 'selectedRegions')}
             </p>
-            <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+            <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
               {getDestinationLabel(locale, 'regions')}
             </h2>
           </div>
@@ -466,7 +471,7 @@ export default async function HomePage({ params }: PageProps) {
           <div className="mt-8 flex justify-center">
             <a
               href={`/${locale}/regions`}
-              className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5"
+              className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20"
             >
               {getDestinationLabel(locale, 'allRegions')}
             </a>
