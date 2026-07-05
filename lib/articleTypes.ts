@@ -70,6 +70,7 @@ export type PricesInfo = {
   summary?: LocalizedField;
   items?: PriceItem[] | null;
   notes?: LocalizedField;
+  booking_url?: string | null;
 };
 
 export type AccessMode =

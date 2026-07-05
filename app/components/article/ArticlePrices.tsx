@@ -190,7 +190,15 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
   const currentLocale = normalizeLocale(locale);
   const items = sortBySortOrder(pricesInfo?.items ?? []);
 
-  if (!pricesInfo || items.length === 0) {
+  const summary = getLocalizedValue(pricesInfo?.summary, currentLocale);
+  const seasonNote = getLocalizedValue(pricesInfo?.season_note, currentLocale);
+  const notes = getLocalizedValue(pricesInfo?.notes, currentLocale);
+  const lastChecked = formatDate(pricesInfo?.last_checked, currentLocale);
+  const bookingUrl = pricesInfo?.booking_url;
+
+  const hasContent = items.length > 0 || summary || bookingUrl;
+
+  if (!pricesInfo || !hasContent) {
     return null;
   }
 
@@ -198,15 +206,11 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
     priceItemIsVisible(item, currentLocale, pricesInfo.currency)
   );
 
-  if (visibleItems.length === 0) {
+  const groups = groupPriceItems(visibleItems, currentLocale);
+
+  if (visibleItems.length === 0 && !summary && !bookingUrl) {
     return null;
   }
-
-  const summary = getLocalizedValue(pricesInfo.summary, currentLocale);
-  const seasonNote = getLocalizedValue(pricesInfo.season_note, currentLocale);
-  const notes = getLocalizedValue(pricesInfo.notes, currentLocale);
-  const lastChecked = formatDate(pricesInfo.last_checked, currentLocale);
-  const groups = groupPriceItems(visibleItems, currentLocale);
 
   return (
     <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
@@ -215,6 +219,22 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
       </h2>
 
       {summary && <p className="mt-2 text-sm leading-relaxed text-slate-300">{summary}</p>}
+
+      {bookingUrl && (
+        <div className="mt-3 flex flex-wrap items-baseline gap-1 text-sm text-slate-300">
+          <span className="font-bold text-white">
+            {getArticleLabel(currentLocale, 'bookingUrl')}
+          </span>{' '}
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:text-emerald-300 underline font-semibold break-all"
+          >
+            {bookingUrl}
+          </a>
+        </div>
+      )}
 
       {seasonNote && (
         <p className="mt-3 rounded-xl bg-slate-800/50 p-3 text-sm leading-relaxed text-slate-300">
