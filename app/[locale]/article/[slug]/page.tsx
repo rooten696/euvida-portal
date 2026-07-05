@@ -299,6 +299,18 @@ export default async function ArticlePage({ params }: PageProps) {
   const regionName = getLocationName(region, locale);
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
 
+  // Merge booking_url from practical_info into prices_info
+  const dbPricesInfo = article.prices_info || {};
+  const dbPracticalInfo = article.practical_info || {};
+  const dbBookingUrl = (dbPricesInfo as any)?.booking_url || (dbPracticalInfo as any)?.[locale]?.booking_url || (dbPracticalInfo as any)?.cs?.booking_url;
+
+  const pricesInfo = article.prices_info || dbBookingUrl
+    ? {
+        ...article.prices_info,
+        booking_url: dbBookingUrl
+      }
+    : null;
+
   const metaItems = [
     article.reading_time_minutes
       ? {
@@ -382,7 +394,7 @@ export default async function ArticlePage({ params }: PageProps) {
           {/* Right Column - Prices & Access */}
           <aside className="hidden lg:block order-3 lg:order-3">
             <div className="space-y-5 lg:sticky lg:top-24">
-              <PricesSection locale={locale} pricesInfo={article.prices_info} />
+              <PricesSection locale={locale} pricesInfo={pricesInfo} />
               <AccessSection locale={locale} accessInfo={article.access_info} />
             </div>
           </aside>
@@ -391,7 +403,7 @@ export default async function ArticlePage({ params }: PageProps) {
         <MobileInfoDrawer
           locale={locale}
           practicalInfo={article.practical_info}
-          pricesInfo={article.prices_info}
+          pricesInfo={pricesInfo}
           accessInfo={article.access_info}
         />
       </article>

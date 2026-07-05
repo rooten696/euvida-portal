@@ -31,6 +31,7 @@ export default function ArticlePracticalInfo({
   }
 
   const rows = Object.entries(localizedInfo)
+    .filter(([key]) => key.toLowerCase() !== 'booking_url')
     .map(([key, value]) => {
       if (!value || typeof value !== 'string' || value.trim().length === 0) {
         return null;
