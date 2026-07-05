@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import PricesSection from './PricesSection';
 import AccessSection from './AccessSection';
 import PracticalInfoGrid from './PracticalInfoGrid';
+import { getArticleLabel } from '@/lib/articleLabels';
 import type { PracticalInfoLocales, PricesInfo, AccessInfo, SupportedLocale } from '@/lib/articleTypes';
 
 type MobileInfoDrawerProps = {
@@ -16,33 +17,18 @@ type MobileInfoDrawerProps = {
 const labels: Record<string, Record<string, string>> = {
   cs: {
     title: 'Bližší info',
-    prices: 'Ceník',
-    practical: 'Praktické informace',
-    access: 'Přístup & doprava',
   },
   en: {
     title: 'More info',
-    prices: 'Prices',
-    practical: 'Practical info',
-    access: 'Access & transport',
   },
   de: {
     title: 'Mehr Infos',
-    prices: 'Preise',
-    practical: 'Praktische Infos',
-    access: 'Anreise & Transport',
   },
   fr: {
     title: "Plus d'infos",
-    prices: 'Tarifs',
-    practical: 'Infos pratiques',
-    access: 'Accès & transport',
   },
   es: {
     title: 'Más información',
-    prices: 'Precios',
-    practical: 'Información práctica',
-    access: 'Acceso y transporte',
   },
 };
 
@@ -146,7 +132,7 @@ export default function MobileInfoDrawer({
             </div>
 
             {/* Accordion List */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-6 pb-32 space-y-4">
               
               {/* Prices Section */}
               {hasPrices && (
@@ -155,7 +141,7 @@ export default function MobileInfoDrawer({
                     onClick={() => toggleSection('prices')}
                     className="flex items-center justify-between w-full p-4 font-bold text-left hover:bg-white/5 transition-colors text-amber-400 text-base"
                   >
-                    <span className="flex items-center gap-2">💰 {t.prices}</span>
+                    <span className="flex items-center gap-2">💰 {getArticleLabel(locale, 'prices')}</span>
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" 
                       className={`w-4 h-4 transition-transform duration-200 ${activeTab === 'prices' ? 'rotate-180' : ''}`}
@@ -178,7 +164,7 @@ export default function MobileInfoDrawer({
                     onClick={() => toggleSection('practical')}
                     className="flex items-center justify-between w-full p-4 font-bold text-left hover:bg-white/5 transition-colors text-emerald-400 text-base"
                   >
-                    <span className="flex items-center gap-2">📋 {t.practical}</span>
+                    <span className="flex items-center gap-2">📋 {getArticleLabel(locale, 'practicalInfo')}</span>
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" 
                       className={`w-4 h-4 transition-transform duration-200 ${activeTab === 'practical' ? 'rotate-180' : ''}`}
@@ -201,7 +187,7 @@ export default function MobileInfoDrawer({
                     onClick={() => toggleSection('access')}
                     className="flex items-center justify-between w-full p-4 font-bold text-left hover:bg-white/5 transition-colors text-rose-400 text-base"
                   >
-                    <span className="flex items-center gap-2">🚗 {t.access}</span>
+                    <span className="flex items-center gap-2">🚗 {getArticleLabel(locale, 'access')}</span>
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={3} stroke="currentColor" 
                       className={`w-4 h-4 transition-transform duration-200 ${activeTab === 'access' ? 'rotate-180' : ''}`}

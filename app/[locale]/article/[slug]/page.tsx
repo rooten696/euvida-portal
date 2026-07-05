@@ -297,6 +297,7 @@ export default async function ArticlePage({ params }: PageProps) {
   const updatedDate = formatDate(article.updated_at ?? article.created_at, locale);
   const countryName = getLocationName(country, locale);
   const regionName = getLocationName(region, locale);
+  const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
 
   const metaItems = [
     article.reading_time_minutes
@@ -344,6 +345,7 @@ export default async function ArticlePage({ params }: PageProps) {
           imageAlt={imageAlt}
           imageCredit={article.image_url ? article.source_info?.images?.[0] : null}
           breadcrumb={<Breadcrumb locale={locale} country={country} region={region} />}
+          weatherLocation={weatherLocation}
         />
 
         {/* <div className="mt-8">

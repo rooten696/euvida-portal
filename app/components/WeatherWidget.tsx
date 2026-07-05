@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-export default function WeatherWidget({ locationName }: { locationName: string }) {
+export default function WeatherWidget({ locationName, dark = false }: { locationName: string; dark?: boolean }) {
   const [temp, setTemp] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -40,14 +40,20 @@ export default function WeatherWidget({ locationName }: { locationName: string }
     fetchWeather();
   }, [locationName]);
 
-  if (loading) return <div className="animate-pulse bg-blue-100/50 h-12 w-32 rounded-2xl"></div>;
+  if (loading) {
+    return <div className={`animate-pulse ${dark ? 'bg-slate-800/50' : 'bg-blue-100/50'} h-12 w-32 rounded-2xl`}></div>;
+  }
 
   if (error || temp === null) {
     return (
-      <div className="inline-flex items-center gap-2 bg-gray-100/80 backdrop-blur-sm border border-gray-200 text-gray-600 px-4 py-2 rounded-2xl shadow-sm text-sm font-medium">
+      <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl shadow-sm text-sm font-medium border backdrop-blur-sm ${
+        dark 
+          ? 'bg-slate-900/60 border-white/10 text-slate-300' 
+          : 'bg-gray-100/80 border-gray-200 text-gray-600'
+      }`}>
         <span>☁️</span> 
         <div className="flex flex-col text-left">
-          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-none">Počasí</span>
+          <span className={`text-[10px] font-bold uppercase tracking-wider leading-none ${dark ? 'text-slate-500' : 'text-gray-400'}`}>Počasí</span>
           <span className="leading-tight">Nedostupné</span>
         </div>
       </div>
@@ -55,10 +61,16 @@ export default function WeatherWidget({ locationName }: { locationName: string }
   }
 
   return (
-    <div className="inline-flex items-center gap-2 bg-blue-50 border border-blue-100 text-blue-900 px-4 py-2 rounded-2xl shadow-sm hover:scale-105 transition-transform cursor-default">
+    <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl shadow-sm hover:scale-105 transition-transform cursor-default border ${
+      dark 
+        ? 'bg-slate-900/60 border-white/10 text-white backdrop-blur-sm' 
+        : 'bg-blue-50 border-blue-100 text-blue-900'
+    }`}>
       <span className="text-2xl drop-shadow-sm">🌤️</span>
       <div className="flex flex-col text-left">
-        <span className="text-[10px] font-bold text-blue-600 uppercase tracking-wider leading-none">Aktuálně</span>
+        <span className={`text-[10px] font-bold uppercase tracking-wider leading-none ${
+          dark ? 'text-emerald-400' : 'text-blue-600'
+        }`}>Aktuálně</span>
         <span className="font-extrabold text-lg leading-tight">{temp} °C</span>
       </div>
     </div>

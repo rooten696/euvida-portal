@@ -1,5 +1,6 @@
 import SafeImage from '@/app/components/SafeImage';
 import ImageCredit from './ImageCredit';
+import WeatherWidget from '@/app/components/WeatherWidget';
 import type { ImageCredit as ImageCreditData } from '@/lib/articleTypes';
 import { getArticleLabel } from '@/lib/articleLabels';
 
@@ -19,6 +20,7 @@ type ArticleHeroProps = {
   imageAlt: string;
   imageCredit?: ImageCreditData | null;
   breadcrumb?: React.ReactNode;
+  weatherLocation?: string | null;
 };
 
 export default function ArticleHero({
@@ -32,6 +34,7 @@ export default function ArticleHero({
   imageAlt,
   imageCredit,
   breadcrumb,
+  weatherLocation,
 }: ArticleHeroProps) {
   return (
     <header className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl min-h-[360px] md:min-h-[420px] flex flex-col justify-between p-6 md:p-10 mb-8">
@@ -67,9 +70,16 @@ export default function ArticleHero({
 
       {/* Bottom Row: Text content */}
       <div className="relative z-10 max-w-4xl space-y-4 mt-8 md:mt-16">
-        <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl">
-          {title}
-        </h1>
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl flex-1">
+            {title}
+          </h1>
+          {weatherLocation && (
+            <div className="shrink-0 self-start md:self-center">
+              <WeatherWidget locationName={weatherLocation} dark />
+            </div>
+          )}
+        </div>
 
         {excerpt && (
           <p className="max-w-3xl break-words text-lg font-medium leading-relaxed text-slate-300 md:text-xl">
