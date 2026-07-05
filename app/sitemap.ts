@@ -5,7 +5,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-const siteUrl = 'https://www.euvida.cz';
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://euvida.eu';
 const locales = ['cs', 'en', 'de', 'fr', 'es'];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
