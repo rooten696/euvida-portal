@@ -3,8 +3,6 @@
 import { supabase } from '@/lib/supabaseBrowserClient';
 import { useState, useEffect, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
-// ODEBRÁNO: translateCountryData (už ho nepoužíváme, jedeme po částech)
-import { translateRegionData, translateSingleText } from '../../actions/translate';
 import ImageManager from '@/app/components/admin/ImageManager';
 import AdminCommentsPanel from '../../components/admin/AdminCommentsPanel';
 import type {
@@ -263,48 +261,6 @@ export default function AdminPage() {
     }
   };
 
-  // FUNKCE PRO PŘEKLAD KONKRÉTNÍHO POLE
-  const handleTranslateSingle = async (field: keyof CountryData) => {
-    if (!formData.id) {
-      setStatus('❌ Nejdřív musíš zemi uložit do databáze!');
-      return;
-    }
-    
-    setTranslatingField(field);
-    setStatus(`🤖 Překládám pole: ${field}...`);
-
-    try {
-      const textToTranslate = formData[field] as string;
-      const newTranslations = await translateSingleText(textToTranslate, sourceLang);
-
-      const updatedTranslations = { ...(formData.translations || {}) };
-      
-      // Sloučení nových překladů s těmi stávajícími v JSONu
-      Object.entries(newTranslations).forEach(([lang, translatedText]) => {
-        if (!updatedTranslations[lang]) updatedTranslations[lang] = {};
-        updatedTranslations[lang][field] = translatedText;
-      });
-
-      // Uložení rovnou do databáze (updatujeme jen JSON)
-      const { error } = await supabase
-        .from('countries')
-        .update({ translations: updatedTranslations })
-        .eq('id', formData.id);
-
-      if (error) throw error;
-
-      // Aktualizace lokálního stavu (aby se hned vybarvily vlaječky)
-      setFormData(prev => ({ ...prev, translations: updatedTranslations }));
-      setStatus(`✅ Pole bylo úspěšně přeloženo a uloženo!`);
-      
-      // Aktualizovat i seznam zemí vlevo
-      fetchCountries();
-    } catch (err: unknown) {
-      if (err instanceof Error) setStatus('❌ Chyba překladu: ' + err.message);
-    } finally {
-      setTranslatingField(null);
-    }
-  };
 
   const deleteCountry = async (id: string) => {
     const { error } = await supabase.from('countries').delete().eq('id', id);
@@ -315,28 +271,6 @@ export default function AdminPage() {
     }
   };
 
-  // NÁPOVĚDNÉ VLAJEČKY PRO JEDNOTLIVÁ POLE
-  const renderFlags = (field: keyof CountryData) => {
-    const targets = sourceLang === 'en' ? ['cs', 'de', 'es', 'fr'] : ['en', 'de', 'es', 'fr'];
-    const flags: Record<string, string> = { cs: '🇨🇿', en: '🇬🇧', de: '🇩🇪', es: '🇪🇸', fr: '🇫🇷' };
-    
-    return (
-      <div className="flex gap-1 mr-3">
-        {targets.map(lang => {
-          const isTranslated = !!formData.translations?.[lang]?.[field];
-          return (
-            <span 
-              key={lang} 
-              className={`text-sm transition-all ${isTranslated ? 'opacity-100 grayscale-0' : 'opacity-30 grayscale'}`} 
-              title={isTranslated ? `Přeloženo do ${lang.toUpperCase()}` : `Chybí překlad do ${lang.toUpperCase()}`}
-            >
-              {flags[lang]}
-            </span>
-          );
-        })}
-      </div>
-    );
-  };
 
   const handleRegionChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setRegionFormData({ ...regionFormData, [e.target.name]: e.target.value });
@@ -367,36 +301,13 @@ export default function AdminPage() {
 
   const handleRegionSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setStatus('🤖 DeepL překládá region...');
+    setStatus('Ukládám region...');
     
     try {
-      const allTexts = await translateRegionData({
-        name: regionFormData.name,
-        description: regionFormData.description,
-        general_info: regionFormData.general_info || '',
-        nature_and_landscapes: regionFormData.nature_and_landscapes || '',
-        history_and_culture: regionFormData.history_and_culture || '',
-        transport_and_life: regionFormData.transport_and_life || ''
-      }, sourceLang);
-
-      const { cs, ...translations } = allTexts;
-
-      const dataToSave = {
-        ...regionFormData,
-        name: cs.name,
-        description: cs.description,
-        general_info: cs.general_info,
-        nature_and_landscapes: cs.nature_and_landscapes,
-        history_and_culture: cs.history_and_culture,
-        transport_and_life: cs.transport_and_life,
-        translations: translations
-      };
-
-      setStatus('Ukládám region...');
-      const { error } = await supabase.from('regions').upsert([dataToSave]);
+      const { error } = await supabase.from('regions').upsert([regionFormData]);
       if (error) throw error;
       
-      setStatus('✅ Region přeložen a uložen!');
+      setStatus('✅ Region uložen!');
       fetchRegions(formData.id);
       setIsRegionActive(false);
 
@@ -733,14 +644,7 @@ export default function AdminPage() {
               <div className="col-span-2 lg:col-span-1">
                 <div className="flex justify-between items-end mb-1">
                   <label className="text-xs font-bold text-gray-400 uppercase">Název</label>
-                  {isEditing && (
-                    <div className="flex items-center">
-                      {renderFlags('name')}
-                      <button type="button" onClick={() => handleTranslateSingle('name')} disabled={translatingField === 'name'} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">
-                        {translatingField === 'name' ? '...' : '🤖'}
-                      </button>
-                    </div>
-                  )}
+
                 </div>
                 <input required disabled={!isCountryActive} name="name" value={formData.name} onChange={handleChange} className={inputClass} />
               </div>
@@ -765,14 +669,7 @@ export default function AdminPage() {
               <div className="col-span-2 lg:col-span-4">
                 <div className="flex justify-between items-end mb-1">
                   <label className="text-xs font-bold text-gray-400 uppercase">Popis</label>
-                  {isEditing && (
-                    <div className="flex items-center">
-                      {renderFlags('description')}
-                      <button type="button" onClick={() => handleTranslateSingle('description')} disabled={translatingField === 'description' || !formData.description} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 disabled:opacity-50">
-                        {translatingField === 'description' ? 'Překládám...' : '🤖 Přeložit'}
-                      </button>
-                    </div>
-                  )}
+
                 </div>
                 <input required disabled={!isCountryActive} name="description" value={formData.description} onChange={handleChange} className={inputClass} />
               </div>
@@ -783,20 +680,7 @@ export default function AdminPage() {
                   <div key={field} className="col-span-2 lg:col-span-2 mt-4 border-t border-gray-100 pt-4">
                     <div className="flex justify-between items-end mb-2">
                       <label className="text-xs font-bold text-gray-400 uppercase">{field.replace('_', ' ')}</label>
-                      {/* ZDE JE KOUZLO: Vlaječky a nezávislé tlačítko přeložit */}
-                      {isEditing && (
-                        <div className="flex items-center">
-                          {renderFlags(key)}
-                          <button 
-                            type="button" 
-                            onClick={() => handleTranslateSingle(key)} 
-                            disabled={translatingField === key || !formData[key]} 
-                            className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 disabled:opacity-50 font-bold"
-                          >
-                            {translatingField === key ? 'Překládám...' : '🤖 Přeložit'}
-                          </button>
-                        </div>
-                      )}
+
                     </div>
                     <textarea disabled={!isCountryActive} name={field} value={formData[key] as string} onChange={handleChange} rows={6} className={inputClass} />
                   </div>

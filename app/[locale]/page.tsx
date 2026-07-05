@@ -322,7 +322,7 @@ export default async function HomePage({ params }: PageProps) {
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-100">
-      <section className="relative overflow-hidden bg-slate-950">
+      <section className="relative z-20 bg-slate-950">
         <Image
           src={heroImage}
           alt={t('title')}
@@ -333,8 +333,8 @@ export default async function HomePage({ params }: PageProps) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
 
-        <div className="relative mx-auto flex min-h-[54vh] max-w-6xl flex-col justify-end px-4 pb-14 pt-20 md:min-h-[58vh] md:px-6 md:pt-24">
-          <div className="max-w-4xl text-white">
+        <div className="relative mx-auto flex min-h-[54vh] max-w-6xl flex-col justify-end items-center px-4 pb-14 pt-20 md:min-h-[58vh] md:px-6 md:pt-24">
+          <div className="max-w-4xl text-white flex flex-col items-center text-center">
             <p className="mb-4 inline-flex rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-400">
               {getDestinationLabel(locale, 'travelGuide')}
             </p>
@@ -344,7 +344,7 @@ export default async function HomePage({ params }: PageProps) {
             <p className="mt-6 max-w-2xl break-words text-lg font-medium leading-relaxed text-white/90 md:text-xl">
               {t('subtitle')}
             </p>
-            <div className="mt-8">
+            <div className="mt-8 w-full max-w-2xl mx-auto">
               <SmartSearch items={searchItems} locale={locale} />
             </div>
           </div>
@@ -352,7 +352,7 @@ export default async function HomePage({ params }: PageProps) {
       </section>
 
       {articleCards.length > 0 && (
-        <section id="articles" className="relative z-10 mx-auto -mt-8 max-w-6xl scroll-mt-24 px-4 pb-10 md:px-6">
+        <section id="articles" className="relative z-10 mx-auto -mt-8 max-w-6xl scroll-mt-24 px-4 pt-10 pb-10 md:px-6">
           <div className="mb-8">
             <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
               {getDestinationLabel(locale, 'latestArticles')}

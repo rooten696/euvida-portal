@@ -668,6 +668,8 @@ export const categoryLabels: LabelMap = {
     camping: 'Kempy',
     bike_trail: 'Bikeparky a traily',
     city_tip: 'Tip do města',
+    trip: 'Výlety',
+    trips: 'Výlety',
   },
   en: {
     landmark: 'Landmarks',
@@ -687,6 +689,8 @@ export const categoryLabels: LabelMap = {
     camping: 'Camping',
     bike_trail: 'Bike parks and trails',
     city_tip: 'City tip',
+    trip: 'Trips',
+    trips: 'Trips',
   },
   de: {
     landmark: 'Sehenswürdigkeiten',
@@ -706,6 +710,8 @@ export const categoryLabels: LabelMap = {
     camping: 'Camping',
     bike_trail: 'Bikeparks und Trails',
     city_tip: 'Stadttipp',
+    trip: 'Ausflüge',
+    trips: 'Ausflüge',
   },
   fr: {
     landmark: 'Monuments',
@@ -725,6 +731,8 @@ export const categoryLabels: LabelMap = {
     camping: 'Camping',
     bike_trail: 'Bike parks et trails',
     city_tip: 'Idée en ville',
+    trip: 'Excursions',
+    trips: 'Excursions',
   },
   es: {
     landmark: 'Monumentos',
@@ -744,6 +752,8 @@ export const categoryLabels: LabelMap = {
     camping: 'Camping',
     bike_trail: 'Bike parks y trails',
     city_tip: 'Plan urbano',
+    trip: 'Excursiones',
+    trips: 'Excursiones',
   },
 };
 

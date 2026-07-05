@@ -1,26 +1,149 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
-  --background: #020617; /* slate-950 */
-  --foreground: #f1f5f9; /* slate-100 */
+  --background: #020617;
+  --foreground: #f1f5f9;
+
+  --slate-950: #020617;
+  --slate-900: #0f172a;
+  --slate-800: #1e293b;
+  --slate-700: #334155;
+  --slate-600: #475569;
+  --slate-500: #64748b;
+  --slate-400: #94a3b8;
+  --slate-300: #cbd5e1;
+  --slate-200: #e2e8f0;
+  --slate-100: #f1f5f9;
+  --white: #ffffff;
+
+  --emerald-400: #34d399;
+  --emerald-500: #10b981;
+
+  --blue-400: #60a5fa;
+  --blue-500: #3b82f6;
+  --amber-400: #fbbf24;
+  --amber-500: #f59e0b;
+  --rose-400: #fb7185;
+  --rose-500: #f43f5e;
+  --cyan-400: #22d3ee;
+  --cyan-500: #06b6d4;
+  --indigo-400: #818cf8;
+  --indigo-500: #6366f1;
+}
+
+.light {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  --slate-950: #f8fafc;
+  --slate-900: #ffffff;
+  --slate-800: #e2e8f0;
+  --slate-700: #475569;
+  --slate-600: #64748b;
+  --slate-500: #64748b;
+  --slate-400: #475569;
+  --slate-300: #334155;
+  --slate-200: #1e293b;
+  --slate-100: #0f172a;
+  --white: #0f172a;
+
+  --emerald-400: #059669;
+  --emerald-500: #047857;
+
+  --blue-400: #1d4ed8;
+  --blue-500: #1e40af;
+  --amber-400: #b45309;
+  --amber-500: #92400e;
+  --rose-400: #be123c;
+  --rose-500: #9f1239;
+  --cyan-400: #0e7490;
+  --cyan-500: #155e75;
+  --indigo-400: #4338ca;
+  --indigo-500: #3730a3;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
+  --font-sans: var(--font-outfit), system-ui, sans-serif;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #020617;
-    --foreground: #f1f5f9;
-  }
+  --color-slate-950: var(--slate-950);
+  --color-slate-900: var(--slate-900);
+  --color-slate-800: var(--slate-800);
+  --color-slate-700: var(--slate-700);
+  --color-slate-600: var(--slate-600);
+  --color-slate-500: var(--slate-500);
+  --color-slate-400: var(--slate-400);
+  --color-slate-300: var(--slate-300);
+  --color-slate-200: var(--slate-200);
+  --color-slate-100: var(--slate-100);
+  --color-white: var(--white);
+
+  --color-emerald-400: var(--emerald-400);
+  --color-emerald-500: var(--emerald-500);
+
+  --color-blue-400: var(--blue-400);
+  --color-blue-500: var(--blue-500);
+  --color-amber-400: var(--amber-400);
+  --color-amber-500: var(--amber-500);
+  --color-rose-400: var(--rose-400);
+  --color-rose-500: var(--rose-500);
+  --color-cyan-400: var(--cyan-400);
+  --color-cyan-500: var(--cyan-500);
+  --color-indigo-400: var(--indigo-400);
+  --color-indigo-500: var(--indigo-500);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Typography Overrides for Light Mode */
+.light .prose, .light .prose-invert {
+  --tw-prose-body: var(--slate-700);
+  --tw-prose-headings: var(--slate-100);
+  --tw-prose-lead: var(--slate-600);
+  --tw-prose-links: var(--emerald-400);
+  --tw-prose-bold: var(--slate-100);
+  --tw-prose-counters: var(--slate-500);
+  --tw-prose-bullets: var(--slate-300);
+  --tw-prose-hr: rgba(15, 23, 42, 0.1);
+  --tw-prose-quotes: var(--slate-100);
+  --tw-prose-quote-borders: var(--emerald-500);
+  --tw-prose-captions: var(--slate-500);
+  --tw-prose-code: var(--slate-100);
+  --tw-prose-pre-code: var(--slate-200);
+  --tw-prose-pre-bg: var(--slate-800);
+  --tw-prose-th-borders: var(--slate-300);
+  --tw-prose-td-borders: var(--slate-200);
+
+  --tw-prose-invert-body: var(--slate-700);
+  --tw-prose-invert-headings: var(--slate-100);
+  --tw-prose-invert-lead: var(--slate-600);
+  --tw-prose-invert-links: var(--emerald-400);
+  --tw-prose-invert-bold: var(--slate-100);
+  --tw-prose-invert-counters: var(--slate-500);
+  --tw-prose-invert-bullets: var(--slate-300);
+  --tw-prose-invert-hr: rgba(15, 23, 42, 0.1);
+  --tw-prose-invert-quotes: var(--slate-100);
+  --tw-prose-invert-quote-borders: var(--emerald-500);
+  --tw-prose-invert-captions: var(--slate-500);
+  --tw-prose-invert-code: var(--slate-100);
+  --tw-prose-invert-pre-code: var(--slate-200);
+  --tw-prose-invert-pre-bg: var(--slate-800);
+  --tw-prose-invert-th-borders: var(--slate-300);
+  --tw-prose-invert-td-borders: var(--slate-200);
 }

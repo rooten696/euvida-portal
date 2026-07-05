@@ -3,7 +3,8 @@
 import ArticleCard from '@/app/components/article/ArticleCard';
 import type { ArticleCardData } from '@/lib/articleCards';
 import { getDestinationLabel } from '@/lib/destinationLabels';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export type ArticleCategoryOption = {
   value: string;
@@ -53,8 +54,19 @@ export default function ArticleCategoryExplorer({
   showMoreLabel,
   showFeaturedBadges = true,
 }: ArticleCategoryExplorerProps) {
-  const [category, setCategory] = useState('');
+  const searchParams = useSearchParams();
+  const urlCategory = searchParams.get('category') || '';
+  const urlCountry = searchParams.get('country') || '';
+  
+  const [category, setCategory] = useState(urlCategory);
+  const [country, setCountry] = useState(urlCountry);
   const [visiblePageCount, setVisiblePageCount] = useState(1);
+
+  // Zajištění interaktivity s URL (např. z Navbar sub-baru)
+  useEffect(() => {
+    setCategory(searchParams.get('category') || '');
+    setCountry(searchParams.get('country') || '');
+  }, [searchParams]);
 
   const sortedCategories = useMemo(
     () =>
@@ -71,14 +83,22 @@ export default function ArticleCategoryExplorer({
   );
 
   const filteredArticles = useMemo(() => {
+    let result = articles;
+
     if (category) {
-      return articles.filter((article) => article.category === category);
+      const activeCategories = category.split(',');
+      result = result.filter((article) => article.category && activeCategories.includes(article.category));
     }
 
-    return articles;
-  }, [articles, category]);
+    if (country) {
+      const activeCountries = country.split(',');
+      result = result.filter((article) => article.countryId && activeCountries.includes(article.countryId));
+    }
 
-  const shouldLimitArticles = !category && typeof defaultVisibleCount === 'number';
+    return result;
+  }, [articles, category, country]);
+
+  const shouldLimitArticles = !category && !country && typeof defaultVisibleCount === 'number';
   const visibleCount = shouldLimitArticles
     ? defaultVisibleCount * visiblePageCount
     : filteredArticles.length;
@@ -90,51 +110,10 @@ export default function ArticleCategoryExplorer({
 
   return (
     <section className="space-y-6">
-      <nav
-        className="rounded-2xl border border-white/5 bg-slate-900/50 p-3 shadow-sm md:p-4"
-        aria-label={getDestinationLabel(locale, 'articleCategories')}
-      >
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            type="button"
-            onClick={() => {
-              setCategory('');
-              setVisiblePageCount(1);
-            }}
-            aria-pressed={category === ''}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
-              category === ''
-                ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                : 'border border-white/10 bg-white/5 text-slate-300 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400'
-            }`}
-          >
-            {getDestinationLabel(locale, 'allArticles')}
-            <span className="ml-2 text-xs opacity-70">{articles.length}</span>
-          </button>
-
-          {sortedCategories.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                setCategory(option.value);
-                setVisiblePageCount(1);
-              }}
-              aria-pressed={category === option.value}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 ${
-                category === option.value
-                  ? 'bg-emerald-500 text-slate-950 shadow-sm'
-                  : 'border border-white/10 bg-white/5 text-slate-300 hover:border-emerald-500/30 hover:bg-emerald-500/10 hover:text-emerald-400'
-              }`}
-            >
-              {option.label}
-              {typeof option.count === 'number' && (
-                <span className="ml-2 text-xs opacity-70">{option.count}</span>
-              )}
-            </button>
-          ))}
-        </div>
-      </nav>
+      {/* 
+        Menu "Nejnovější články" bylo odstraněno dle požadavku, 
+        protože filtrace probíhá z hlavního Sub-baru navigace.
+      */}
 
       {visibleArticles.length > 0 ? (
         <>

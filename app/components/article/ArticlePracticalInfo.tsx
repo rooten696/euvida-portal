@@ -30,36 +30,39 @@ export default function ArticlePracticalInfo({
     return null;
   }
 
-  const rows = practicalOrder
-    .map((key) => {
-      const value = localizedInfo[key];
-
-      if (!value || value.trim().length === 0) {
+  const rows = Object.entries(localizedInfo)
+    .map(([key, value]) => {
+      if (!value || typeof value !== 'string' || value.trim().length === 0) {
         return null;
       }
 
+      // Try to find a translated label in practicalLabels, otherwise capitalize the key
+      const normalizedKey = key.toLowerCase().replace(/[\s_-]+/g, '_');
+      const labelFromMap = (practicalLabels[currentLocale] as any)[normalizedKey] || (practicalLabels[currentLocale] as any)[key];
+      const label = labelFromMap ?? (key.charAt(0).toUpperCase() + key.slice(1));
+
       return {
         key,
-        label: practicalLabels[currentLocale][key],
+        label,
         value: stripLeadingListMarkers(value),
       };
     })
-    .filter((row): row is { key: PracticalInfoKey; label: string; value: string } => Boolean(row));
+    .filter((row): row is { key: string; label: string; value: string } => Boolean(row));
 
   if (rows.length === 0) {
     return null;
   }
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <h2 className="mb-4 text-lg font-extrabold text-slate-950">
+    <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
+      <h2 className="mb-4 text-lg font-extrabold text-white">
         {getArticleLabel(currentLocale, 'practicalInfo')}
       </h2>
-      <div className="grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
         {rows.map((row) => (
-          <div key={row.key} className="rounded-xl border border-slate-100 bg-slate-50 p-3">
-            <h3 className="text-sm font-bold text-slate-950">{row.label}</h3>
-            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-700">
+          <div key={row.key} className="rounded-xl border border-white/5 bg-slate-800/50 p-3">
+            <h3 className="text-sm font-bold text-white">{row.label}</h3>
+            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-300">
               {row.value}
             </p>
           </div>

@@ -32,18 +32,16 @@ export default function SafeImage({
   ...props
 }: SafeImageProps) {
   const [failed, setFailed] = useState(false);
+  const imageSrc = src && typeof src === 'string' && src.trim().length > 0 ? src : '/placeholder.png';
 
   if (failed) {
     return (
-      <div
-        className={`absolute inset-0 flex items-center justify-center bg-[linear-gradient(135deg,#dbeafe_0%,#e0f2fe_40%,#fef3c7_100%)] px-5 text-center ${fallbackClassName ?? ''}`}
-      >
-        <div className="rounded-full border border-white/70 bg-white/80 px-4 py-2 shadow-sm backdrop-blur">
-          <span className="text-xs font-extrabold uppercase tracking-wide text-blue-950">
-            {fallbackLabel}
-          </span>
-        </div>
-      </div>
+      <Image
+        {...props}
+        alt={alt}
+        src="/placeholder.png"
+        unoptimized
+      />
     );
   }
 
@@ -51,8 +49,9 @@ export default function SafeImage({
     <Image
       {...props}
       alt={alt}
-      src={src}
-      unoptimized={unoptimized ?? shouldUseDirectImage(src)}
+      src={imageSrc}
+      unoptimized={unoptimized ?? shouldUseDirectImage(imageSrc)}
+      className={`${props.className ?? ''} contrast-[1.08]`.trim()}
       onError={(event) => {
         setFailed(true);
         onError?.(event);

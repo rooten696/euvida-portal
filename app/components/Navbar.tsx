@@ -7,6 +7,9 @@ import type { User } from '@supabase/supabase-js';
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
+import ThemeSwitcher from './ThemeSwitcher';
+import CountryNav from './CountryNav';
+import ArticleCategoryNav from './ArticleCategoryNav';
 
 type Country = {
   id: string;
@@ -100,51 +103,37 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="bg-slate-950/80 backdrop-blur-md border-b border-white/5 shadow-sm sticky top-0 z-50 transition-all">
-      <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-md transition-all duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
-        {/* LEVÁ ČÁST: Logo a Menu destinací */}
+        {/* LEVÁ ČÁST: Logo */}
         <div className="flex items-center gap-8">
           <Link href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center">
             EU<span className="text-emerald-400 transition-colors duration-200">VIDA</span><span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">.EU</span>
           </Link>
-
-          <div className="hidden md:block relative" onMouseLeave={() => setIsDropdownOpen(false)}>
-            <button 
-              onMouseEnter={() => setIsDropdownOpen(true)}
-              className="text-slate-300 hover:text-emerald-400 font-bold transition-colors flex items-center gap-1 pb-4"
-            >
-              {t('destinations')} <span className="text-xs text-slate-500">▼</span>
-            </button>
-
-            {/* DESKTOPOVÉ MENU ZEMÍ (Používá SVG obrázky podle ID) */}
-            {isDropdownOpen && (
-              <div className="absolute top-[calc(100%-1rem)] left-0 w-64 bg-slate-900 rounded-2xl shadow-xl border border-white/10 py-2 overflow-y-auto max-h-[70vh] overscroll-contain animate-in fade-in slide-in-from-top-2 custom-scrollbar">
-                {countries.map(country => (
-                  <Link 
-                    key={country.id} 
-                    href={`/${locale}/country/${country.id}`}
-                    className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300 hover:bg-white/5 hover:text-emerald-400 font-bold transition-colors"
-                    onClick={() => setIsDropdownOpen(false)}
-                  >
-                    <Image 
-                      src={`/flags/${country.id.toLowerCase()}.svg`} 
-                      alt={country.name} 
-                      width={24} 
-                      height={18} 
-                      className="rounded-sm border border-white/10 object-cover shadow-sm w-6 h-[18px] shrink-0"
-                    />
-                    <span>{country.name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
+
+        {/* STŘEDNÍ ČÁST: Hlavní navigace (Desktop) */}
+        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+          <Link href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
+            Domů
+          </Link>
+          <Link href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
+            Země
+          </Link>
+          <Link href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
+            Články
+          </Link>
+          <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors duration-150">
+            O nás
+          </Link>
+        </nav>
 
         {/* PRAVÁ ČÁST: Přihlášení, tlačítka a přepínač jazyka */}
         <div className="flex items-center gap-4 md:gap-6">
           
+          <ThemeSwitcher />
+
           {/* DESKTOPOVÝ PŘEPÍNAČ JAZYKŮ (Používá SVG obrázky podle kódu jazyka) */}
           <div className="hidden md:flex items-center gap-2 bg-slate-900/80 p-1 rounded-full border border-white/10">
             {languages.map(lang => (
@@ -244,6 +233,17 @@ export default function Navbar() {
           </div>
         </div>
       )}
-    </nav>
+
+      {/* SUB-BAR Z EUVIDA.CZ STYLU */}
+      <div className="border-t border-white/5 bg-slate-950/40 py-2.5">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center">
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-0 bg-slate-900/90 border border-white/10 rounded-2xl p-1.5 shadow-xl max-w-4xl w-full sm:w-auto z-40">
+            <ArticleCategoryNav locale={locale} />
+            <div className="h-6 w-[1px] bg-white/10 shrink-0 hidden sm:block mx-1.5" />
+            <CountryNav locale={locale} countries={countries} />
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }

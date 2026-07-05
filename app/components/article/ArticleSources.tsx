@@ -35,12 +35,12 @@ function SourceLink({
   }
 
   return (
-    <li className="rounded-xl border border-slate-100 bg-white p-3">
+    <li className="rounded-xl border border-white/5 bg-slate-800/50 p-3">
       <a
         href={source.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950"
+        className="font-semibold text-emerald-400 underline decoration-emerald-500/30 underline-offset-2 hover:text-emerald-300"
       >
         {label}
       </a>
@@ -65,18 +65,18 @@ export default function ArticleSources({
   }
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <h2 className="text-xl font-extrabold text-slate-950">
+    <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-xl backdrop-blur">
+      <h2 className="text-xl font-extrabold text-white">
         {getArticleLabel(currentLocale, 'sources')}
       </h2>
 
-      <p className="mt-2 text-sm leading-relaxed text-slate-600">
+      <p className="mt-2 text-sm leading-relaxed text-slate-300">
         {getArticleLabel(currentLocale, 'sourcesIntro')}
       </p>
 
       {checkedDate && (
-        <p className="mt-2 text-sm text-slate-600">
-          <span className="font-semibold text-slate-900">
+        <p className="mt-2 text-sm text-slate-400">
+          <span className="font-semibold text-slate-200">
             {getArticleLabel(currentLocale, 'infoChecked')}:
           </span>{' '}
           {checkedDate}

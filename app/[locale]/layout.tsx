@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 import '../globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -12,7 +12,10 @@ import { Analytics } from '@vercel/analytics/next';
 
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-const inter = Inter({ subsets: ['latin'] });
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
 
 export const metadata: Metadata = {
   title: 'Euvida | Vše o životě a cestování v Evropě',
@@ -37,17 +40,38 @@ export default async function LocaleLayout({
   const messages = await getMessages();
 
   return (
-    <html lang={locale}>
-      <body className={`${inter.className} flex flex-col min-h-screen bg-slate-950 text-slate-100 antialiased selection:bg-emerald-500 selection:text-slate-950`}>
+    <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
+      <head>
+        <script
+          id="theme-switcher-inline"
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('theme') === 'light') {
+                  document.documentElement.classList.add('light');
+                } else {
+                  document.documentElement.classList.remove('light');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
         <NextIntlClientProvider messages={messages} locale={locale}>
-          <Navbar /> 
-          <div className="flex-grow flex flex-col">
+          <div className="flex min-h-screen flex-col relative overflow-hidden">
+            {/* Subtle Ambient Background Gradients */}
+            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-[150px] pointer-events-none" />
+            
+            <Navbar /> 
+            <div className="flex-grow flex flex-col z-10">
             {children}
           </div>
-          <Footer locale={locale} />
-          
-          {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
-          <CookieBanner />
+            <Footer locale={locale} />
+            {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
+            <CookieBanner />
+          </div>
         </NextIntlClientProvider>
 
         {/* 🚀 GOOGLE ANALYTICS (přesunuto dovnitř body pro validní HTML) */}

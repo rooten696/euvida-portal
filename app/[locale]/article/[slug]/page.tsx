@@ -143,10 +143,10 @@ function Breadcrumb({
   const regionName = getLocationName(region, locale);
 
   return (
-    <nav aria-label="Breadcrumb" className="mb-8 text-sm text-slate-500">
+    <nav aria-label="Breadcrumb" className="mb-8 text-sm text-slate-400">
       <ol className="flex flex-wrap items-center gap-2">
         <li>
-          <Link href={`/${locale}`} className="font-semibold text-blue-800 hover:text-blue-950">
+          <Link href={`/${locale}`} className="font-semibold text-emerald-400 hover:text-emerald-300">
             {getArticleLabel(locale, 'home')}
           </Link>
         </li>
@@ -156,7 +156,7 @@ function Breadcrumb({
             <li>
               <Link
                 href={`/${locale}/country/${country.id}`}
-                className="font-semibold text-blue-800 hover:text-blue-950"
+                className="font-semibold text-emerald-400 hover:text-emerald-300"
               >
                 {countryName}
               </Link>
@@ -169,7 +169,7 @@ function Breadcrumb({
             <li>
               <Link
                 href={`/${locale}/region/${region.id}`}
-                className="font-semibold text-blue-800 hover:text-blue-950"
+                className="font-semibold text-emerald-400 hover:text-emerald-300"
               >
                 {regionName}
               </Link>
@@ -183,32 +183,32 @@ function Breadcrumb({
 
 const markdownComponents = {
   p: (props: ComponentPropsWithoutRef<'p'>) => (
-    <p className="mb-6 break-words text-base leading-8 text-slate-800 md:text-lg" {...props} />
+    <p className="mb-6 break-words text-base leading-8 text-slate-300 md:text-lg" {...props} />
   ),
   h1: (props: ComponentPropsWithoutRef<'h1'>) => (
-    <h1 className="mb-6 mt-12 break-words text-3xl font-extrabold text-slate-950" {...props} />
+    <h1 className="mb-6 mt-12 break-words text-3xl font-extrabold text-white" {...props} />
   ),
   h2: (props: ComponentPropsWithoutRef<'h2'>) => (
-    <h2 className="mb-5 mt-12 break-words text-2xl font-extrabold text-blue-950 md:text-3xl" {...props} />
+    <h2 className="mb-5 mt-12 break-words text-2xl font-extrabold text-white md:text-3xl" {...props} />
   ),
   h3: (props: ComponentPropsWithoutRef<'h3'>) => (
-    <h3 className="mb-4 mt-8 break-words text-xl font-bold text-slate-950 md:text-2xl" {...props} />
+    <h3 className="mb-4 mt-8 break-words text-xl font-bold text-white md:text-2xl" {...props} />
   ),
   strong: (props: ComponentPropsWithoutRef<'strong'>) => (
-    <strong className="font-bold text-blue-950" {...props} />
+    <strong className="font-bold text-white" {...props} />
   ),
   ul: (props: ComponentPropsWithoutRef<'ul'>) => (
-    <ul className="mb-6 list-disc space-y-2 pl-6 text-base leading-8 text-slate-800 md:text-lg" {...props} />
+    <ul className="mb-6 list-disc space-y-2 pl-6 text-base leading-8 text-slate-300 md:text-lg" {...props} />
   ),
   ol: (props: ComponentPropsWithoutRef<'ol'>) => (
-    <ol className="mb-6 list-decimal space-y-2 pl-6 text-base leading-8 text-slate-800 md:text-lg" {...props} />
+    <ol className="mb-6 list-decimal space-y-2 pl-6 text-base leading-8 text-slate-300 md:text-lg" {...props} />
   ),
   li: (props: ComponentPropsWithoutRef<'li'>) => <li className="pl-1" {...props} />,
   a: (props: ComponentPropsWithoutRef<'a'>) => (
-    <a className="break-words font-semibold text-blue-800 underline decoration-blue-200 underline-offset-2 hover:text-blue-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2" {...props} />
+    <a className="break-words font-semibold text-emerald-400 underline decoration-emerald-500/50 underline-offset-2 hover:text-emerald-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2" {...props} />
   ),
   blockquote: (props: ComponentPropsWithoutRef<'blockquote'>) => (
-    <blockquote className="mb-6 border-l-4 border-yellow-300 pl-5 text-base italic leading-8 text-slate-700 md:text-lg" {...props} />
+    <blockquote className="mb-6 border-l-4 border-emerald-500/50 pl-5 text-base italic leading-8 text-slate-400 md:text-lg" {...props} />
   ),
 };
 
@@ -330,10 +330,8 @@ export default async function ArticlePage({ params }: PageProps) {
   ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   return (
-    <main className="min-h-screen bg-slate-50 pb-16 pt-8 font-sans text-slate-950">
-      <article className="mx-auto max-w-6xl px-4 md:px-6">
-        <Breadcrumb locale={locale} country={country} region={region} />
-
+    <main className="min-h-screen bg-slate-950 pb-16 pt-8 font-sans text-slate-100">
+      <article className="mx-auto max-w-[1360px] px-4 md:px-6">
         <ArticleHero
           locale={locale}
           title={title}
@@ -344,23 +342,24 @@ export default async function ArticlePage({ params }: PageProps) {
           imageUrl={article.image_url}
           imageAlt={imageAlt}
           imageCredit={article.image_url ? article.source_info?.images?.[0] : null}
+          breadcrumb={<Breadcrumb locale={locale} country={country} region={region} />}
         />
 
-        <div className="mt-8">
+        {/* <div className="mt-8">
           <QuickOverview locale={locale} article={article} />
-        </div>
+        </div> */}
 
-        <div className="mt-10 grid gap-8 lg:grid-cols-[minmax(0,820px)_340px] lg:items-start lg:justify-center">
-          <aside className="order-1 lg:order-2">
+        <div className="mt-10 grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)_300px] lg:items-start">
+          {/* Left Column - Practical Info */}
+          <aside className="order-2 lg:order-1">
             <div className="space-y-5 lg:sticky lg:top-24">
               <PracticalInfoGrid locale={locale} practicalInfo={article.practical_info} />
-              <PricesSection locale={locale} pricesInfo={article.prices_info} />
-              <AccessSection locale={locale} accessInfo={article.access_info} />
             </div>
           </aside>
 
-          <div className="order-2 min-w-0 lg:order-1">
-            <section className="max-w-[820px] rounded-2xl border border-slate-200 bg-white p-5 shadow-sm md:p-8">
+          {/* Middle Column - Article Content */}
+          <div className="order-1 min-w-0 lg:order-2 space-y-8">
+            <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur md:p-8">
               <ReactMarkdown components={markdownComponents} skipHtml>
                 {markdownContent}
               </ReactMarkdown>
@@ -374,6 +373,14 @@ export default async function ArticlePage({ params }: PageProps) {
 
             <ArticleComments articleSlug={slug} locale={locale} />
           </div>
+
+          {/* Right Column - Prices & Access */}
+          <aside className="order-3 lg:order-3">
+            <div className="space-y-5 lg:sticky lg:top-24">
+              <PricesSection locale={locale} pricesInfo={article.prices_info} />
+              <AccessSection locale={locale} accessInfo={article.access_info} />
+            </div>
+          </aside>
         </div>
       </article>
     </main>
