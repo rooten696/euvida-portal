@@ -3,6 +3,7 @@ import AccessSection from '@/app/components/article/AccessSection';
 import ArticleComments from '@/app/components/article/ArticleComments';
 import PracticalInfoGrid from '@/app/components/article/PracticalInfoGrid';
 import PricesSection from '@/app/components/article/PricesSection';
+import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
 import QuickOverview from '@/app/components/article/QuickOverview';
 import SourcesSection from '@/app/components/article/SourcesSection';
 import { getArticleLabel } from '@/lib/articleLabels';
@@ -351,7 +352,7 @@ export default async function ArticlePage({ params }: PageProps) {
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[250px_minmax(0,1fr)_300px] lg:items-start">
           {/* Left Column - Practical Info */}
-          <aside className="order-2 lg:order-1">
+          <aside className="hidden lg:block order-2 lg:order-1">
             <div className="space-y-5 lg:sticky lg:top-24">
               <PracticalInfoGrid locale={locale} practicalInfo={article.practical_info} />
             </div>
@@ -375,13 +376,20 @@ export default async function ArticlePage({ params }: PageProps) {
           </div>
 
           {/* Right Column - Prices & Access */}
-          <aside className="order-3 lg:order-3">
+          <aside className="hidden lg:block order-3 lg:order-3">
             <div className="space-y-5 lg:sticky lg:top-24">
               <PricesSection locale={locale} pricesInfo={article.prices_info} />
               <AccessSection locale={locale} accessInfo={article.access_info} />
             </div>
           </aside>
         </div>
+
+        <MobileInfoDrawer
+          locale={locale}
+          practicalInfo={article.practical_info}
+          pricesInfo={article.prices_info}
+          accessInfo={article.access_info}
+        />
       </article>
     </main>
   );
