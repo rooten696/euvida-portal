@@ -346,6 +346,8 @@ export default async function ArticlePage({ params }: PageProps) {
           imageCredit={article.image_url ? article.source_info?.images?.[0] : null}
           breadcrumb={<Breadcrumb locale={locale} country={country} region={region} />}
           weatherLocation={weatherLocation}
+          regionName={regionName}
+          countryName={countryName}
         />
 
         {/* <div className="mt-8">

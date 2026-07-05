@@ -21,6 +21,8 @@ type ArticleHeroProps = {
   imageCredit?: ImageCreditData | null;
   breadcrumb?: React.ReactNode;
   weatherLocation?: string | null;
+  regionName?: string | null;
+  countryName?: string | null;
 };
 
 export default function ArticleHero({
@@ -35,6 +37,8 @@ export default function ArticleHero({
   imageCredit,
   breadcrumb,
   weatherLocation,
+  regionName,
+  countryName,
 }: ArticleHeroProps) {
   return (
     <header className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl min-h-[360px] md:min-h-[420px] flex flex-col justify-between p-6 md:p-10 mb-8">
@@ -76,7 +80,11 @@ export default function ArticleHero({
           </h1>
           {weatherLocation && (
             <div className="shrink-0 self-start md:self-center">
-              <WeatherWidget locationName={weatherLocation} dark />
+              <WeatherWidget 
+                locationName={weatherLocation} 
+                fallbackLocations={[regionName, countryName].filter((item): item is string => Boolean(item))}
+                dark 
+              />
             </div>
           )}
         </div>
