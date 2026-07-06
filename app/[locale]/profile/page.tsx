@@ -17,9 +17,13 @@ export default function ProfilePage() {
   const router = useRouter();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState('');
-  const [error, setError] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [profileStatus, setProfileStatus] = useState('');
+  const [profileError, setProfileError] = useState('');
+  const [passwordStatus, setPasswordStatus] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [username, setUsername] = useState('');
@@ -42,9 +46,7 @@ export default function ProfilePage() {
     let active = true;
 
     supabase.auth.getSession().then(({ data }) => {
-      if (!active) {
-        return;
-      }
+      if (!active) return;
 
       if (!data.session?.user) {
         setLoading(false);
@@ -76,16 +78,13 @@ export default function ProfilePage() {
     };
   }, [loginUrl, router]);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleProfileSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!user) return;
 
-    if (!user) {
-      return;
-    }
-
-    setSaving(true);
-    setStatus('');
-    setError('');
+    setSavingProfile(true);
+    setProfileStatus('');
+    setProfileError('');
 
     const updates = {
       data: {
@@ -96,23 +95,48 @@ export default function ProfilePage() {
         bio: bio.trim(),
       },
       ...(email.trim() && email.trim() !== user.email ? { email: email.trim() } : {}),
-      ...(newPassword.trim() ? { password: newPassword.trim() } : {}),
     };
 
     const { data, error: updateError } = await supabase.auth.updateUser(updates);
 
     if (updateError) {
-      setError(updateError.message);
+      setProfileError(updateError.message);
     } else {
       setSession((current) => current ? { ...current, user: data.user } : current);
-      setNewPassword('');
-      setStatus(email.trim() !== user.email
+      setProfileStatus(email.trim() !== user.email
         ? 'Profil uložen. Změnu e-mailu může být potřeba potvrdit v e-mailové schránce.'
         : 'Profil uložen.'
       );
     }
 
-    setSaving(false);
+    setSavingProfile(false);
+  };
+
+  const handlePasswordSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user) return;
+
+    if (!newPassword.trim()) {
+      setPasswordError('Zadejte prosím nové heslo.');
+      return;
+    }
+
+    setSavingPassword(true);
+    setPasswordStatus('');
+    setPasswordError('');
+
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword.trim(),
+    });
+
+    if (updateError) {
+      setPasswordError(updateError.message);
+    } else {
+      setNewPassword('');
+      setPasswordStatus('Heslo bylo úspěšně změněno.');
+    }
+
+    setSavingPassword(false);
   };
 
   const handleLogout = async () => {
@@ -122,157 +146,168 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-slate-50 px-4 py-12">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-slate-200 bg-white p-8 shadow-sm">
-          <div className="h-8 w-40 animate-pulse rounded bg-slate-100" />
-          <div className="mt-6 h-56 animate-pulse rounded-xl bg-slate-100" />
-        </div>
+      <main className="min-h-screen bg-slate-950 px-4 py-12 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
       </main>
     );
   }
 
-  if (!user) {
-    return (
-      <main className="min-h-screen bg-slate-50 px-4 py-12 text-slate-950">
-        <section className="mx-auto max-w-xl rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <p className="text-sm font-bold uppercase tracking-wide text-blue-700">Euvida účet</p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight text-slate-950">
-            Přihlášení je potřeba
-          </h1>
-          <p className="mt-3 text-sm leading-relaxed text-slate-600">
-            Profil a komentáře můžeš spravovat po přihlášení.
-          </p>
-          <Link
-            href={loginUrl}
-            className="mt-6 inline-flex rounded-xl bg-blue-900 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-blue-800"
-          >
-            Přihlásit se
-          </Link>
-        </section>
-      </main>
-    );
-  }
+  if (!user) return null;
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-12 text-slate-950">
+    <main className="min-h-screen bg-slate-950 px-4 py-12 font-sans text-slate-100">
       <div className="mx-auto max-w-3xl">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mb-8 flex items-center justify-between">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">Euvida účet</p>
-            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-950">
+            <p className="text-sm font-extrabold uppercase tracking-wide text-emerald-400">Euvida účet</p>
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-white">
               Můj profil
             </h1>
           </div>
           <Link
             href={`/${locale}`}
-            className="w-fit rounded-xl bg-white px-4 py-2 text-sm font-extrabold text-blue-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-blue-50"
+            className="rounded-xl bg-slate-900 border border-white/10 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-slate-800 shadow-sm"
           >
             Zpět na web
           </Link>
         </div>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="mb-6 rounded-xl bg-blue-50 p-4">
-            <p className="text-sm font-bold text-blue-950">Přihlášení</p>
-            <p className="mt-1 break-words text-sm text-blue-900">
-              {user?.email} · {providerLabel}
-            </p>
+        {/* 1. Profile Info Card */}
+        <section className="rounded-3xl border border-white/10 bg-slate-900 p-6 md:p-8 shadow-xl space-y-6">
+          <div className="rounded-2xl bg-slate-950 border border-white/5 p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">Přihlášený e-mail</p>
+              <p className="mt-0.5 break-all text-sm font-bold text-emerald-400">{user?.email}</p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-xs font-extrabold uppercase tracking-wide text-slate-400">Metoda přihlášení</p>
+              <span className="inline-block mt-0.5 rounded-full bg-slate-900 border border-white/10 px-3 py-1 text-xs font-bold text-slate-300">
+                {providerLabel}
+              </span>
+            </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleProfileSubmit} className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
-              <label className="grid gap-1 text-sm font-bold text-slate-700">
+              <label className="grid gap-1.5 text-sm font-extrabold text-slate-300">
                 <span>Jméno</span>
                 <input
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-slate-900 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-500 focus:bg-slate-950 focus:ring-2 focus:ring-emerald-500/10 placeholder-slate-600"
                   placeholder="Jak se máš zobrazovat u komentářů"
                 />
               </label>
 
-              <label className="grid gap-1 text-sm font-bold text-slate-700">
+              <label className="grid gap-1.5 text-sm font-extrabold text-slate-300">
                 <span>Uživatelské jméno</span>
                 <input
                   value={username}
                   onChange={(event) => setUsername(event.target.value)}
-                  className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-slate-900 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                  className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-500 focus:bg-slate-950 focus:ring-2 focus:ring-emerald-500/10 placeholder-slate-600"
                   placeholder="např. cestovatelka"
                 />
               </label>
             </div>
 
-            <label className="grid gap-1 text-sm font-bold text-slate-700">
+            <label className="grid gap-1.5 text-sm font-extrabold text-slate-300">
               <span>E-mail</span>
               <input
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-slate-900 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-500 focus:bg-slate-950 focus:ring-2 focus:ring-emerald-500/10"
               />
             </label>
 
-            <label className="grid gap-1 text-sm font-bold text-slate-700">
+            <label className="grid gap-1.5 text-sm font-extrabold text-slate-300">
               <span>Web nebo sociální profil</span>
               <input
                 value={website}
                 onChange={(event) => setWebsite(event.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-slate-900 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-500 focus:bg-slate-950 focus:ring-2 focus:ring-emerald-500/10 placeholder-slate-600"
                 placeholder="https://..."
               />
             </label>
 
-            <label className="grid gap-1 text-sm font-bold text-slate-700">
+            <label className="grid gap-1.5 text-sm font-extrabold text-slate-300">
               <span>Krátké bio</span>
               <textarea
                 value={bio}
                 onChange={(event) => setBio(event.target.value)}
                 rows={4}
                 maxLength={500}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-slate-900 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-500 focus:bg-slate-950 focus:ring-2 focus:ring-emerald-500/10 placeholder-slate-600 resize-none"
                 placeholder="Napiš pár slov o sobě."
               />
             </label>
 
-            <label className="grid gap-1 text-sm font-bold text-slate-700">
+            {profileStatus && (
+              <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-bold text-emerald-400">
+                {profileStatus}
+              </p>
+            )}
+
+            {profileError && (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-bold text-red-400">
+                {profileError}
+              </p>
+            )}
+
+            <div className="flex flex-col gap-3 border-t border-white/5 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <button
+                type="submit"
+                disabled={savingProfile}
+                className="rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60 shadow-lg shadow-emerald-500/10"
+              >
+                {savingProfile ? 'Ukládám...' : 'Uložit profil'}
+              </button>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="rounded-xl bg-slate-800 border border-white/10 px-6 py-3.5 text-sm font-extrabold text-slate-300 transition hover:bg-slate-700 hover:text-white"
+              >
+                Odhlásit se
+              </button>
+            </div>
+          </form>
+        </section>
+
+        {/* 2. Password Change Card */}
+        <section className="mt-8 rounded-3xl border border-white/10 bg-slate-900 p-6 md:p-8 shadow-xl">
+          <h2 className="text-xl font-black text-white mb-4">Změna hesla</h2>
+          
+          <form onSubmit={handlePasswordSubmit} className="space-y-6">
+            <label className="grid gap-1.5 text-sm font-extrabold text-slate-300">
               <span>Nové heslo</span>
               <input
                 type="password"
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
-                className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 text-slate-900 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
-                placeholder="Vyplň jen pokud ho chceš změnit"
+                className="rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-slate-100 outline-none transition focus:border-emerald-500 focus:bg-slate-950 focus:ring-2 focus:ring-emerald-500/10 placeholder-slate-600"
+                placeholder="Zadej nové heslo"
               />
             </label>
 
-            {status && (
-              <p className="rounded-xl border border-green-200 bg-green-50 p-3 text-sm font-semibold text-green-800">
-                {status}
+            {passwordStatus && (
+              <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-sm font-bold text-emerald-400">
+                {passwordStatus}
               </p>
             )}
 
-            {error && (
-              <p className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm font-semibold text-red-700">
-                {error}
+            {passwordError && (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm font-bold text-red-400">
+                {passwordError}
               </p>
             )}
 
-            <div className="flex flex-col gap-3 border-t border-slate-100 pt-5 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                type="submit"
-                disabled={saving}
-                className="rounded-xl bg-blue-900 px-5 py-3 text-sm font-extrabold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {saving ? 'Ukládám...' : 'Uložit profil'}
-              </button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="rounded-xl bg-slate-100 px-5 py-3 text-sm font-extrabold text-slate-700 transition hover:bg-slate-200"
-              >
-                Odhlásit se
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={savingPassword}
+              className="rounded-xl bg-emerald-500 px-6 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60 shadow-lg shadow-emerald-500/10"
+            >
+              {savingPassword ? 'Ukládám...' : 'Změnit heslo'}
+            </button>
           </form>
         </section>
       </div>
