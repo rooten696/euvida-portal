@@ -37,12 +37,12 @@ export default function DestinationHero({
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-90 dark:opacity-70"
-          fallbackClassName="opacity-90 dark:opacity-70"
+          className="object-cover opacity-100 dark:opacity-80"
+          fallbackClassName="opacity-100 dark:opacity-80"
           fallbackLabel={title}
         />
       )}
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/65 to-slate-950/20" />
+      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
       <div className="relative mx-auto flex min-h-[520px] max-w-6xl flex-col justify-between px-4 py-8 md:px-6">
         <div className="flex items-center justify-between gap-4">

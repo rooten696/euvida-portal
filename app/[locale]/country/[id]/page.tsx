@@ -295,14 +295,14 @@ export default async function CountryPage({ params }: CountryPageParams) {
             fill
             priority
             sizes="100vw"
-            className="object-cover opacity-90 dark:opacity-75"
-            fallbackClassName="opacity-90 dark:opacity-75"
+            className="object-cover opacity-100 dark:opacity-80"
+            fallbackClassName="opacity-100 dark:opacity-80"
             fallbackLabel={displayCountry.name}
           />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
         <div className="relative mx-auto flex min-h-[58vh] max-w-6xl flex-col px-4 pb-12 pt-8 md:px-6 md:pb-16">
           <div className="flex items-start justify-between gap-4">

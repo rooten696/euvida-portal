@@ -44,7 +44,7 @@ export default function ArticleHero({
   articleSlug,
 }: ArticleHeroProps) {
   return (
-    <header className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl min-h-[360px] md:min-h-[420px] flex flex-col justify-between p-6 md:p-10 mb-8">
+    <header className="relative w-full overflow-hidden rounded-3xl border border-[#f8fafc]/10 bg-[#0f172a] shadow-2xl min-h-[360px] md:min-h-[420px] flex flex-col justify-between p-6 md:p-10 mb-8">
       <SafeImage
         src={imageUrl ?? '/placeholder.png'}
         alt={imageAlt}
@@ -54,7 +54,7 @@ export default function ArticleHero({
         className="object-cover pointer-events-none"
         fallbackLabel={title}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-[#020617] via-[#020617]/70 to-[#020617]/40 pointer-events-none" />
 
       {/* Top Row: Breadcrumb & Badges */}
       <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 w-full">
@@ -78,7 +78,7 @@ export default function ArticleHero({
       {/* Bottom Row: Text content */}
       <div className="relative z-10 max-w-4xl space-y-4 mt-8 md:mt-16">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl flex-1">
+          <h1 className="break-words text-3xl font-black leading-tight text-[#f8fafc] sm:text-4xl md:text-5xl flex-1">
             {title}
           </h1>
           <div className="flex flex-wrap items-center gap-3 shrink-0 self-start md:self-center">
@@ -96,20 +96,20 @@ export default function ArticleHero({
         </div>
 
         {excerpt && (
-          <p className="max-w-3xl break-words text-lg font-medium leading-relaxed text-slate-300 md:text-xl">
+          <p className="max-w-3xl break-words text-lg font-medium leading-relaxed text-[#cbd5e1] md:text-xl">
             {excerpt}
           </p>
         )}
 
         {metaItems.length > 0 && (
-          <dl className="flex flex-wrap gap-2 text-sm text-slate-400">
+          <dl className="flex flex-wrap gap-2 text-sm text-[#cbd5e1]">
             {metaItems.map((item) => (
               <div
                 key={`${item.label}-${item.value}`}
-                className="flex max-w-full items-center gap-1 rounded-full border border-white/5 bg-slate-900/60 px-3 py-1.5 shadow-sm backdrop-blur"
+                className="flex max-w-full items-center gap-1 rounded-full border border-[#f8fafc]/5 bg-[#0f172a]/60 px-3 py-1.5 shadow-sm backdrop-blur"
               >
-                <dt className="font-semibold text-slate-300">{item.label}:</dt>
-                <dd className="break-words text-slate-400">{item.value}</dd>
+                <dt className="font-semibold text-[#cbd5e1]">{item.label}:</dt>
+                <dd className="break-words text-[#94a3b8]">{item.value}</dd>
               </div>
             ))}
           </dl>

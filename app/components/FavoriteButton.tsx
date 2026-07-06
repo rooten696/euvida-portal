@@ -17,7 +17,19 @@ const getLocalFavorites = (uid: string | null) => {
   const key = `euvida_favs_${uid || 'guest'}`;
   try {
     const data = localStorage.getItem(key);
-    return data ? JSON.parse(data) : { countries: [], regions: [], articles: [] };
+    if (!data) return { countries: [], regions: [], articles: [] };
+    const parsed = JSON.parse(data);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return {
+        countries: Array.isArray(parsed.countries) ? parsed.countries : [],
+        regions: Array.isArray(parsed.regions) ? parsed.regions : [],
+        articles: Array.isArray(parsed.articles) ? parsed.articles : [],
+      };
+    }
+    if (Array.isArray(parsed)) {
+      return { countries: parsed, regions: [], articles: [] };
+    }
+    return { countries: [], regions: [], articles: [] };
   } catch (e) {
     return { countries: [], regions: [], articles: [] };
   }
@@ -73,14 +85,19 @@ export default function FavoriteButton({
   );
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUserId(session.user.id);
-        checkFavorite(session.user.id);
-      } else {
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        if (session?.user) {
+          setUserId(session.user.id);
+          checkFavorite(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Supabase session error:', err);
         setLoading(false);
-      }
-    });
+      });
   }, [checkFavorite]);
 
   const toggleFavorite = async () => {
@@ -150,24 +167,26 @@ export default function FavoriteButton({
   };
 
   if (loading) {
-    return <div className="h-11 w-40 animate-pulse rounded-full bg-white/30" />;
+    return <div className="h-10 w-36 animate-pulse rounded-2xl bg-[#0f172a]/30" />;
   }
 
   return (
     <button
       onClick={toggleFavorite}
-      className={`inline-flex items-center justify-center gap-2 rounded-full border px-5 py-2.5 text-sm font-bold shadow-sm transition-all hover:shadow-md ${
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-2xl shadow-sm hover:scale-105 transition-all cursor-pointer border ${
         isFavorite
-          ? 'border-red-100 bg-red-50 text-red-700'
-          : 'border-white/40 bg-white/95 text-slate-700 hover:border-red-200'
+          ? 'bg-red-500/20 border-red-500/30 text-red-400 font-extrabold'
+          : 'bg-[#0f172a]/60 border-[#f8fafc]/10 text-[#f8fafc] font-extrabold hover:bg-[#0f172a]/80 backdrop-blur-sm'
       }`}
     >
-      <span className={isFavorite ? 'text-red-500' : 'text-slate-400'} aria-hidden>
+      <span className={isFavorite ? 'text-red-500 text-lg' : 'text-slate-400 text-lg'} aria-hidden>
         {isFavorite ? '♥' : '+'}
       </span>
-      {isFavorite
-        ? getDestinationLabel(locale, 'savedFavorite')
-        : getDestinationLabel(locale, 'addFavorite')}
+      <span>
+        {isFavorite
+          ? getDestinationLabel(locale, 'savedFavorite')
+          : getDestinationLabel(locale, 'addFavorite')}
+      </span>
     </button>
   );
 }

@@ -329,9 +329,9 @@ export default async function HomePage({ params }: PageProps) {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-90 dark:opacity-75"
+          className="object-cover opacity-100 dark:opacity-80"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
 
         <div className="relative mx-auto flex min-h-[54vh] max-w-6xl flex-col justify-end items-center px-4 pb-14 pt-20 md:min-h-[58vh] md:px-6 md:pt-24">
           <div className="max-w-4xl text-white flex flex-col items-center text-center">
