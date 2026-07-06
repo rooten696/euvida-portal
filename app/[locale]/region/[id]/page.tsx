@@ -1,5 +1,6 @@
 import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
+import FavoriteButton from '@/app/components/FavoriteButton';
 import RegionArticleExplorer from '@/app/components/region/RegionArticleExplorer';
 import SafeImage from '@/app/components/SafeImage';
 import {
@@ -435,8 +436,8 @@ export default async function RegionPage({ params }: RegionPageParams) {
             fill
             priority
             sizes="100vw"
-            className="object-cover opacity-75"
-            fallbackClassName="opacity-75"
+            className="object-cover opacity-90 dark:opacity-75"
+            fallbackClassName="opacity-90 dark:opacity-75"
             fallbackLabel={displayRegion.name}
           />
         ) : (
@@ -484,14 +485,17 @@ export default async function RegionPage({ params }: RegionPageParams) {
             <h1 className="break-words text-4xl font-black leading-tight tracking-tight md:text-6xl">
               {displayRegion.name}
             </h1>
-            {displayCountry && (
-              <Link
-                href={countryHref}
-                className="mt-4 inline-flex rounded-full bg-white/5 border border-white/10 px-4 py-2 text-sm font-extrabold text-slate-300 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white/10 hover:text-white"
-              >
-                {getDestinationLabel(locale, 'backToCountry')}: {displayCountry.name}
-              </Link>
-            )}
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                {displayCountry && (
+                  <Link
+                    href={countryHref}
+                    className="inline-flex rounded-full bg-white/5 border border-white/10 px-4 py-2 text-sm font-extrabold text-slate-300 shadow-lg shadow-slate-950/10 transition hover:-translate-y-0.5 hover:bg-white/10 hover:text-white"
+                  >
+                    {getDestinationLabel(locale, 'backToCountry')}: {displayCountry.name}
+                  </Link>
+                )}
+                <FavoriteButton regionId={displayRegion.id} locale={locale} />
+              </div>
             {displayRegion.description && (
               <p className="mt-6 max-w-3xl break-words text-lg font-medium leading-relaxed text-white/90 md:text-xl">
                 {displayRegion.description}

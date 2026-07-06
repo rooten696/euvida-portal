@@ -1,6 +1,7 @@
 import SafeImage from '@/app/components/SafeImage';
 import ImageCredit from './ImageCredit';
 import WeatherWidget from '@/app/components/WeatherWidget';
+import FavoriteButton from '@/app/components/FavoriteButton';
 import type { ImageCredit as ImageCreditData } from '@/lib/articleTypes';
 import { getArticleLabel } from '@/lib/articleLabels';
 
@@ -23,6 +24,7 @@ type ArticleHeroProps = {
   weatherLocation?: string | null;
   regionName?: string | null;
   countryName?: string | null;
+  articleSlug?: string | null;
 };
 
 export default function ArticleHero({
@@ -39,6 +41,7 @@ export default function ArticleHero({
   weatherLocation,
   regionName,
   countryName,
+  articleSlug,
 }: ArticleHeroProps) {
   return (
     <header className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl min-h-[360px] md:min-h-[420px] flex flex-col justify-between p-6 md:p-10 mb-8">
@@ -78,15 +81,18 @@ export default function ArticleHero({
           <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl flex-1">
             {title}
           </h1>
-          {weatherLocation && (
-            <div className="shrink-0 self-start md:self-center">
+          <div className="flex flex-wrap items-center gap-3 shrink-0 self-start md:self-center">
+            {weatherLocation && (
               <WeatherWidget 
                 locationName={weatherLocation} 
                 fallbackLocations={[regionName, countryName].filter((item): item is string => Boolean(item))}
                 dark 
               />
-            </div>
-          )}
+            )}
+            {articleSlug && (
+              <FavoriteButton articleSlug={articleSlug} locale={locale} />
+            )}
+          </div>
         </div>
 
         {excerpt && (

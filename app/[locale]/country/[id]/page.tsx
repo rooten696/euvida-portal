@@ -295,8 +295,8 @@ export default async function CountryPage({ params }: CountryPageParams) {
             fill
             priority
             sizes="100vw"
-            className="object-cover opacity-75"
-            fallbackClassName="opacity-75"
+            className="object-cover opacity-90 dark:opacity-75"
+            fallbackClassName="opacity-90 dark:opacity-75"
             fallbackLabel={displayCountry.name}
           />
         ) : (

@@ -37,8 +37,8 @@ export default function DestinationHero({
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-70"
-          fallbackClassName="opacity-70"
+          className="object-cover opacity-90 dark:opacity-70"
+          fallbackClassName="opacity-90 dark:opacity-70"
           fallbackLabel={title}
         />
       )}

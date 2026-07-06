@@ -149,7 +149,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <div className="mb-6 grid gap-3 sm:grid-cols-2">
+        {/* <div className="mb-6 grid gap-3 sm:grid-cols-2">
           <button
             type="button"
             onClick={() => handleOAuth('google')}
@@ -186,7 +186,7 @@ export default function LoginPage() {
           <span className="h-px flex-1 bg-gray-100" />
           nebo e-mailem
           <span className="h-px flex-1 bg-gray-100" />
-        </div>
+        </div> */}
 
         <form onSubmit={handleAuth} className="space-y-5">
           <label className="block text-sm font-bold text-gray-700">
