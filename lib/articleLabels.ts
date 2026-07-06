@@ -241,6 +241,10 @@ export const practicalLabels: Record<SupportedLocale, Record<PracticalInfoKey, s
     nearby_prices: 'Ceny v okolí',
     watch_out: 'Na co si dát pozor',
     accessibility: 'Přístupnost',
+    lift: 'Lanovky & vleky',
+    rental_service: 'Půjčovna & servis',
+    trail_stats: 'Statistiky trailů',
+    trail_map_url: 'Mapa trailů',
   },
   en: {
     best_time: 'Best time',
@@ -251,6 +255,10 @@ export const practicalLabels: Record<SupportedLocale, Record<PracticalInfoKey, s
     nearby_prices: 'Nearby prices',
     watch_out: 'Watch out for',
     accessibility: 'Accessibility',
+    lift: 'Lifts & cable cars',
+    rental_service: 'Rental & service',
+    trail_stats: 'Trail statistics',
+    trail_map_url: 'Trail map',
   },
   de: {
     best_time: 'Beste Zeit',
@@ -261,6 +269,10 @@ export const practicalLabels: Record<SupportedLocale, Record<PracticalInfoKey, s
     nearby_prices: 'Preise in der Umgebung',
     watch_out: 'Worauf achten',
     accessibility: 'Barrierefreiheit',
+    lift: 'Lifte & Bahnen',
+    rental_service: 'Verleih & Service',
+    trail_stats: 'Trail-Statistiken',
+    trail_map_url: 'Trailkarte',
   },
   fr: {
     best_time: 'Meilleur moment',
@@ -271,6 +283,10 @@ export const practicalLabels: Record<SupportedLocale, Record<PracticalInfoKey, s
     nearby_prices: 'Prix aux alentours',
     watch_out: 'À surveiller',
     accessibility: 'Accessibilité',
+    lift: 'Remontées mécaniques',
+    rental_service: 'Location & service',
+    trail_stats: 'Statistiques des pistes',
+    trail_map_url: 'Plan des pistes',
   },
   es: {
     best_time: 'Mejor momento',
@@ -281,6 +297,10 @@ export const practicalLabels: Record<SupportedLocale, Record<PracticalInfoKey, s
     nearby_prices: 'Precios cercanos',
     watch_out: 'A tener en cuenta',
     accessibility: 'Accesibilidad',
+    lift: 'Remontes',
+    rental_service: 'Alquiler y servicio',
+    trail_stats: 'Estadísticas de pistas',
+    trail_map_url: 'Mapa de pistas',
   },
 };
 

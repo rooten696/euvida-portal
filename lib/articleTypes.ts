@@ -26,7 +26,11 @@ export type PracticalInfoKey =
   | 'transport'
   | 'nearby_prices'
   | 'watch_out'
-  | 'accessibility';
+  | 'accessibility'
+  | 'lift'
+  | 'rental_service'
+  | 'trail_stats'
+  | 'trail_map_url';
 
 export type PracticalInfo =
   Partial<Record<PracticalInfoKey, string>> &

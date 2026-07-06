@@ -63,9 +63,20 @@ export default function ArticlePracticalInfo({
         {rows.map((row) => (
           <div key={row.key} className="rounded-xl border border-white/5 bg-slate-800/50 p-3">
             <h3 className="text-sm font-bold text-white">{row.label}</h3>
-            <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-300">
-              {row.value}
-            </p>
+            {row.key.toLowerCase().endsWith('_url') ? (
+              <a
+                href={row.value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 block text-sm font-semibold text-emerald-400 hover:text-emerald-300 underline break-all"
+              >
+                {row.value}
+              </a>
+            ) : (
+              <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-slate-300">
+                {row.value}
+              </p>
+            )}
           </div>
         ))}
       </div>

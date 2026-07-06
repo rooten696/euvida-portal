@@ -109,7 +109,23 @@ function accessItemLabel(item: AccessItem, locale: string): string | null {
   return label ?? modeLabel;
 }
 
-function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
+function extractCoordinates(gps: string): string | null {
+  const match = gps.match(/(-?\d+\.\d+)[^\d-]+(-?\d+\.\d+)/);
+  if (match) {
+    return `${match[1]},${match[2]}`;
+  }
+  return gps.replace(/°/g, '').replace(/\s+/g, '').trim();
+}
+
+function AccessRow({
+  item,
+  locale,
+  gpsCoords,
+}: {
+  item: AccessItem;
+  locale: string;
+  gpsCoords?: string | null;
+}) {
   const label = accessItemLabel(item, locale);
   const modeLabel = getModeLabel(item.mode, locale);
   const description = getLocalizedValue(item.description, locale);
@@ -161,6 +177,19 @@ function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
               <p className={`break-words text-sm leading-relaxed text-slate-300 ${label ? 'mt-1' : ''}`}>
                 {description}
               </p>
+            )}
+            {item.mode === 'address' && gpsCoords && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-white/10 shadow-inner">
+                <iframe
+                  title="Google Maps Location"
+                  width="100%"
+                  height="220"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(extractCoordinates(gpsCoords) || gpsCoords)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                  className="border-0 opacity-85 hover:opacity-100 transition-opacity duration-300"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
             )}
           </div>
         </div>
@@ -240,6 +269,23 @@ export default function ArticleAccess({ locale, accessInfo }: ArticleAccessProps
     }
   }
 
+  // Get GPS coordinate string if any
+  let gpsCoords: string | null = null;
+  if (accessInfo) {
+    const localeData = (accessInfo as any)[currentLocale] || (accessInfo as any)['cs'] || (accessInfo as any)['en'];
+    if (localeData && typeof localeData === 'object' && typeof localeData.gps === 'string') {
+      gpsCoords = localeData.gps;
+    }
+  }
+
+  // Fallback to searching inside items
+  if (!gpsCoords && items.length > 0) {
+    const itemWithGps = items.find((item) => item.gps);
+    if (itemWithGps?.gps) {
+      gpsCoords = itemWithGps.gps;
+    }
+  }
+
   if (!accessInfo || items.length === 0) {
     return null;
   }
@@ -275,7 +321,7 @@ export default function ArticleAccess({ locale, accessInfo }: ArticleAccessProps
 
       <ul className="mt-4 space-y-4">
         {visibleItems.map((item, index) => (
-          <AccessRow key={item.id ?? `${item.mode ?? 'access'}-${index}`} item={item} locale={currentLocale} />
+          <AccessRow key={item.id ?? `${item.mode ?? 'access'}-${index}`} item={item} locale={currentLocale} gpsCoords={item.gps || gpsCoords} />
         ))}
       </ul>
 
