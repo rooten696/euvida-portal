@@ -329,7 +329,7 @@ export default async function HomePage({ params }: PageProps) {
           fill
           priority
           sizes="100vw"
-          className="object-cover opacity-75"
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
 

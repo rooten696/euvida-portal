@@ -360,6 +360,7 @@ export default async function ArticlePage({ params }: PageProps) {
           weatherLocation={weatherLocation}
           regionName={regionName}
           countryName={countryName}
+          articleSlug={slug}
         />
 
         {/* <div className="mt-8">

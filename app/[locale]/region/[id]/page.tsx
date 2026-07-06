@@ -436,8 +436,8 @@ export default async function RegionPage({ params }: RegionPageParams) {
             fill
             priority
             sizes="100vw"
-            className="object-cover opacity-75"
-            fallbackClassName="opacity-75"
+            className="object-cover"
+            fallbackClassName=""
             fallbackLabel={displayRegion.name}
           />
         ) : (
