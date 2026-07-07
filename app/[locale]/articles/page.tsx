@@ -239,14 +239,14 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
     : getDestinationLabel(locale, 'allArticles');
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
-        <nav className="mb-8 text-sm font-bold text-blue-800">
-          <Link href={`/${locale}`} className="hover:text-blue-950">
+        <nav className="mb-8 text-sm font-bold text-slate-400">
+          <Link href={`/${locale}`} className="hover:text-emerald-500 transition-colors">
             {getDestinationLabel(locale, 'home')}
           </Link>
-          <span className="mx-2 text-slate-400">/</span>
-          <span className="text-slate-600">
+          <span className="mx-2 text-slate-600">/</span>
+          <span className="text-slate-300">
             {query
               ? getDestinationLabel(locale, 'searchResults')
               : getDestinationLabel(locale, 'allArticles')}
@@ -255,22 +255,22 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
           <div>
-            <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+            <p className="text-sm font-bold uppercase tracking-wide text-emerald-500">
               {query
                 ? getDestinationLabel(locale, 'searchResults')
                 : getDestinationLabel(locale, 'latestArticles')}
             </p>
-            <h1 className="mt-2 break-words text-4xl font-black tracking-tight text-slate-950 md:text-6xl">
+            <h1 className="mt-2 break-words text-4xl font-black tracking-tight text-white md:text-6xl">
               {heading}
             </h1>
-            <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-600">
+            <p className="mt-5 max-w-3xl text-lg leading-relaxed text-slate-400">
               {getDestinationLabel(locale, 'allArticlesIntro')}
             </p>
           </div>
 
           <form
             action={`/${locale}/articles`}
-            className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm"
+            className="rounded-2xl border border-white/10 bg-slate-900 p-3 shadow-xl"
           >
             <label htmlFor="article-search" className="sr-only">
               {getDestinationLabel(locale, 'articleSearchPlaceholder')}
@@ -282,11 +282,11 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
                 type="search"
                 defaultValue={query}
                 placeholder={getDestinationLabel(locale, 'articleSearchPlaceholder')}
-                className="min-h-11 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm font-semibold text-slate-950 outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
+                className="min-h-11 min-w-0 flex-1 rounded-xl border border-white/10 bg-slate-950 px-3 text-sm font-semibold text-white outline-none transition focus:border-emerald-500/30 focus:ring-2 focus:ring-emerald-500/10 placeholder-slate-400"
               />
               <button
                 type="submit"
-                className="rounded-xl bg-blue-900 px-4 text-sm font-extrabold text-white transition hover:bg-blue-800"
+                className="rounded-xl bg-emerald-500 px-4 text-sm font-extrabold text-slate-950 transition hover:bg-emerald-400 cursor-pointer"
               >
                 {getDestinationLabel(locale, 'articleSearchButton')}
               </button>
@@ -303,7 +303,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
             categories={categories}
           />
         ) : (
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
+          <div className="rounded-2xl border border-white/10 bg-slate-900 p-8 text-center text-sm font-medium text-slate-400 shadow-md">
             {query
               ? getDestinationLabel(locale, 'noSearchResults')
               : getDestinationLabel(locale, 'noArticles')}

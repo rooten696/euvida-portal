@@ -155,24 +155,24 @@ export default async function RegionsPage({ params }: RegionsPageProps) {
     });
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="mx-auto max-w-6xl px-4 py-12 md:px-6 md:py-16">
-        <nav className="mb-8 text-sm font-bold text-blue-800">
-          <Link href={`/${locale}`} className="hover:text-blue-950">
+        <nav className="mb-8 text-sm font-bold text-slate-400">
+          <Link href={`/${locale}`} className="hover:text-emerald-500 transition-colors">
             {getDestinationLabel(locale, 'home')}
           </Link>
-          <span className="mx-2 text-slate-400">/</span>
-          <span className="text-slate-600">{getDestinationLabel(locale, 'allRegions')}</span>
+          <span className="mx-2 text-slate-600">/</span>
+          <span className="text-slate-300">{getDestinationLabel(locale, 'allRegions')}</span>
         </nav>
 
         <div className="max-w-3xl">
-          <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+          <p className="text-sm font-bold uppercase tracking-wide text-emerald-500">
             {getDestinationLabel(locale, 'routes')}
           </p>
-          <h1 className="mt-2 text-4xl font-black tracking-tight text-slate-950 md:text-6xl">
+          <h1 className="mt-2 text-4xl font-black tracking-tight text-white md:text-6xl">
             {getDestinationLabel(locale, 'allRegions')}
           </h1>
-          <p className="mt-5 text-lg leading-relaxed text-slate-600">
+          <p className="mt-5 text-lg leading-relaxed text-slate-400">
             {getDestinationLabel(locale, 'destinationsIntro')}
           </p>
         </div>
@@ -205,7 +205,7 @@ export default async function RegionsPage({ params }: RegionsPageProps) {
             ))}
           </div>
         ) : (
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
+          <div className="rounded-2xl border border-white/10 bg-slate-900 p-8 text-center text-sm font-medium text-slate-400 shadow-md">
             {getDestinationLabel(locale, 'noData')}
           </div>
         )}
