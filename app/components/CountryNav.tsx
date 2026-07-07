@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 
@@ -33,24 +33,43 @@ export default function CountryNav({ locale, countries }: CountryNavProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const segments = pathname.split('/').filter(Boolean);
-  const isCountryPage = segments.length >= 2 && segments[1] === 'country';
-  const pathCountryId = isCountryPage ? segments[2] : null;
-
-  const isHomepage = pathname === `/${locale}` || pathname === `/${locale}/` || pathname === '/' || pathname === '';
-  const countryParam = isHomepage ? searchParams.get('country') : null;
+  const countryParam = searchParams.get('country') || '';
   
-  const activeCountries = pathCountryId 
-    ? [pathCountryId] 
-    : (countryParam ? countryParam.split(',') : []);
+  const activeCountries = useMemo(() => {
+    if (countryParam) {
+      return countryParam.split(',').map(c => c.toUpperCase());
+    }
+    const segments = pathname.split('/').filter(Boolean);
+    const langIdx = segments.length > 0 && segments[0].length === 2 ? 1 : 0;
+    if (segments[langIdx] === 'country' && segments[langIdx + 1]) {
+      return [segments[langIdx + 1].toUpperCase()];
+    }
+    return [];
+  }, [pathname, countryParam]);
 
   const handleToggleCountry = (countryId: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
     if (countryId === 'all') {
-      router.push(`/${locale}/countries`);
+      params.delete('country');
     } else {
-      router.push(`/${locale}/country/${countryId}`);
+      let newCountries = [...activeCountries].filter(c => c !== 'all');
+      
+      if (newCountries.includes(countryId)) {
+        newCountries = newCountries.filter(c => c !== countryId);
+      } else {
+        newCountries.push(countryId);
+      }
+      
+      if (newCountries.length === 0) {
+        params.delete('country');
+      } else {
+        params.set('country', newCountries.join(','));
+      }
     }
-    setIsOpen(false);
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    router.push(`/${locale}${queryString}`);
   };
 
   let activeIcon = '🌍';
@@ -134,6 +153,17 @@ export default function CountryNav({ locale, countries }: CountryNavProps) {
                     </span>
                     <span className="truncate">{country.name}</span>
                   </span>
+
+                  {/* Custom Checkbox */}
+                  <div className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 transition-all ${
+                    isSelected
+                      ? 'bg-emerald-500 border-emerald-500 text-slate-950'
+                      : 'border-white/20 text-transparent'
+                  }`}>
+                    <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 20 20">
+                      <path d="M0 11l2-2 5 5L18 3l2 2L7 18z" />
+                    </svg>
+                  </div>
                 </button>
               );
             })}

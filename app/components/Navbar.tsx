@@ -10,6 +10,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import ThemeSwitcher from './ThemeSwitcher';
 import CountryNav from './CountryNav';
 import ArticleCategoryNav from './ArticleCategoryNav';
+import HeaderCountryDropdown from './HeaderCountryDropdown';
 
 type Country = {
   id: string;
@@ -106,11 +107,14 @@ export default function Navbar() {
     <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-md transition-all duration-300">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
-        {/* LEVÁ ČÁST: Logo */}
-        <div className="flex items-center gap-8">
-          <Link href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center">
+        {/* LEVÁ ČÁST: Logo a výběr obecných info o státech */}
+        <div className="flex items-center gap-6">
+          <Link href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0">
             EU<span className="text-emerald-400 transition-colors duration-200">VIDA</span><span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">.EU</span>
           </Link>
+          <div className="hidden md:block">
+            <HeaderCountryDropdown locale={locale} countries={countries} />
+          </div>
         </div>
 
         {/* STŘEDNÍ ČÁST: Hlavní navigace (Desktop) */}
