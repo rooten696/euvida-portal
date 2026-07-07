@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
 const CATEGORIES: { id: string; name: string; icon: string }[] = [
@@ -35,13 +35,30 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const isHomepage = pathname === `/${locale}` || pathname === `/${locale}/` || pathname === '/' || pathname === '';
-  const categoryParam = isHomepage ? searchParams.get('category') : null;
+  const categoryParam = searchParams.get('category') || '';
   const activeCategories = categoryParam ? categoryParam.split(',') : [];
+
+  const countryParam = searchParams.get('country') || '';
+  const activeCountries = useMemo(() => {
+    if (countryParam) {
+      return countryParam.split(',').map(c => c.toUpperCase());
+    }
+    const segments = pathname.split('/').filter(Boolean);
+    const langIdx = segments.length > 0 && segments[0].length === 2 ? 1 : 0;
+    if (segments[langIdx] === 'country' && segments[langIdx + 1]) {
+      return [segments[langIdx + 1].toUpperCase()];
+    }
+    return [];
+  }, [pathname, countryParam]);
 
   const handleToggleCategory = (categoryId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     
+    // Zachování zástupného filtrování zemí z cesty
+    if (activeCountries.length > 0 && !params.has('country')) {
+      params.set('country', activeCountries.join(','));
+    }
+
     if (categoryId === 'all') {
       params.delete('category');
     } else {
