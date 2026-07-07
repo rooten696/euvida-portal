@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { supabase } from '@/lib/supabaseBrowserClient';
 
 const CATEGORIES: { id: string; name: string; icon: string }[] = [
   { id: 'all',                name: 'Vše',                     icon: '✨' },
@@ -24,6 +25,7 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
   
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [resolvedPathCountryId, setResolvedPathCountryId] = useState<string | null>(null);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -35,21 +37,52 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Rozpoznání aktivní země z cesty (stejně jako v CountryNav a HeaderCountryDropdown)
+  useEffect(() => {
+    const segments = pathname.split('/').filter(Boolean);
+    const langIdx = segments.length > 0 && segments[0].length === 2 ? 1 : 0;
+    const typeSegment = segments[langIdx];
+    const idSegment = segments[langIdx + 1];
+
+    if (typeSegment === 'country' && idSegment) {
+      setResolvedPathCountryId(idSegment.toUpperCase());
+    } else if (typeSegment === 'region' && idSegment) {
+      const fetchRegionCountry = async () => {
+        try {
+          const { data } = await supabase
+            .from('regions')
+            .select('country_id')
+            .eq('id', idSegment)
+            .maybeSingle();
+          if (data?.country_id) {
+            setResolvedPathCountryId(data.country_id.toUpperCase());
+          } else {
+            setResolvedPathCountryId(null);
+          }
+        } catch {
+          setResolvedPathCountryId(null);
+        }
+      };
+      fetchRegionCountry();
+    } else {
+      setResolvedPathCountryId(null);
+    }
+  }, [pathname]);
+
   const categoryParam = searchParams.get('category') || '';
   const activeCategories = categoryParam ? categoryParam.split(',') : [];
 
   const countryParam = searchParams.get('country') || '';
+  
   const activeCountries = useMemo(() => {
     if (countryParam) {
       return countryParam.split(',').map(c => c.toUpperCase());
     }
-    const segments = pathname.split('/').filter(Boolean);
-    const langIdx = segments.length > 0 && segments[0].length === 2 ? 1 : 0;
-    if (segments[langIdx] === 'country' && segments[langIdx + 1]) {
-      return [segments[langIdx + 1].toUpperCase()];
+    if (resolvedPathCountryId) {
+      return [resolvedPathCountryId];
     }
     return [];
-  }, [pathname, countryParam]);
+  }, [countryParam, resolvedPathCountryId]);
 
   const handleToggleCategory = (categoryId: string) => {
     const params = new URLSearchParams(searchParams.toString());
