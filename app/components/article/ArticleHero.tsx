@@ -22,6 +22,7 @@ type ArticleHeroProps = {
   imageCredit?: ImageCreditData | null;
   breadcrumb?: React.ReactNode;
   weatherLocation?: string | null;
+  gpsCoords?: string | null;
   regionName?: string | null;
   countryName?: string | null;
   articleSlug?: string | null;
@@ -39,34 +40,38 @@ export default function ArticleHero({
   imageCredit,
   breadcrumb,
   weatherLocation,
+  gpsCoords,
   regionName,
   countryName,
   articleSlug,
 }: ArticleHeroProps) {
   return (
-    <header className="relative w-full overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl min-h-[360px] md:min-h-[420px] flex flex-col justify-between p-6 md:p-10 mb-8">
-      <SafeImage
-        src={imageUrl ?? '/placeholder.png'}
-        alt={imageAlt}
-        fill
-        priority
-        sizes="(max-width: 1200px) 100vw, 1360px"
-        className="object-cover pointer-events-none"
-        fallbackLabel={title}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/70 to-slate-950/40 pointer-events-none" />
+    <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 shadow-2xl p-6 md:p-10 mb-8">
+      {/* Background Image / Gradient */}
+      <div className="absolute inset-0 z-0">
+        {imageUrl ? (
+          <>
+            <SafeImage
+              src={imageUrl}
+              alt={imageAlt}
+              fill
+              priority
+              sizes="100vw"
+              className="object-cover opacity-35"
+              fallbackClassName=""
+              fallbackLabel={categoryLabel ?? 'Euvida'}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+          </>
+        ) : (
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,#064e3b_0%,#0f766e_38%,#042f2e_100%)] opacity-30" />
+        )}
+      </div>
 
-      {/* Top Row: Breadcrumb & Badges */}
-      <div className="relative z-10 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 w-full">
-        <div className="min-w-0">
-          {breadcrumb}
-        </div>
-        <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {categoryLabel && (
-            <span className="rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-              {categoryLabel}
-            </span>
-          )}
+      {/* Top Row: Breadcrumb & Featured */}
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
+        {breadcrumb}
+        <div className="flex items-center gap-2">
           {featured && (
             <span className="rounded-full bg-yellow-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-yellow-400">
               {getArticleLabel(locale, 'featured')}
@@ -82,9 +87,10 @@ export default function ArticleHero({
             {title}
           </h1>
           <div className="flex flex-wrap items-center gap-3 shrink-0 self-start md:self-center">
-            {weatherLocation && (
+            {(weatherLocation || gpsCoords) && (
               <WeatherWidget 
                 locationName={weatherLocation} 
+                gps={gpsCoords}
                 fallbackLocations={[regionName, countryName].filter((item): item is string => Boolean(item))}
                 dark 
               />
@@ -115,6 +121,6 @@ export default function ArticleHero({
           </dl>
         )}
       </div>
-    </header>
+    </div>
   );
 }

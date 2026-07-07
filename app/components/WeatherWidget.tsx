@@ -2,12 +2,33 @@
 
 import { useState, useEffect } from 'react';
 
+function extractCoordinates(gps: string): { latitude: number; longitude: number } | null {
+  const match = gps.match(/(-?\d+\.\d+)[^\d-]+(-?\d+\.\d+)/);
+  if (match) {
+    return {
+      latitude: parseFloat(match[1]),
+      longitude: parseFloat(match[2]),
+    };
+  }
+  const parts = gps.replace(/°/g, '').split(',');
+  if (parts.length === 2) {
+    const lat = parseFloat(parts[0]);
+    const lon = parseFloat(parts[1]);
+    if (!isNaN(lat) && !isNaN(lon)) {
+      return { latitude: lat, longitude: lon };
+    }
+  }
+  return null;
+}
+
 export default function WeatherWidget({ 
   locationName, 
+  gps,
   fallbackLocations = [],
   dark = false 
 }: { 
-  locationName: string; 
+  locationName?: string | null; 
+  gps?: string | null;
   fallbackLocations?: string[];
   dark?: boolean 
 }) {
@@ -20,61 +41,74 @@ export default function WeatherWidget({
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        const candidates = new Set<string>();
-        
-        // 1. Cleaned address
-        const cleanName = locationName.replace(/\s*\(.*?\)\s*/g, '').trim();
-        if (cleanName) {
-          candidates.add(cleanName);
+        let latitude: number | null = null;
+        let longitude: number | null = null;
+
+        // 1. Zkusit získat souřadnice přímo z GPS
+        if (gps) {
+          const coords = extractCoordinates(gps);
+          if (coords) {
+            latitude = coords.latitude;
+            longitude = coords.longitude;
+          }
+        }
+
+        // 2. Pokud nemáme GPS, zkusit geokódování lokace
+        if ((latitude === null || longitude === null) && locationName) {
+          const candidates = new Set<string>();
           
-          // Split by comma
-          const commaParts = cleanName.split(',').map(p => p.trim()).filter(Boolean);
-          for (const part of commaParts) {
-            let cleaned = part.replace(/\b\d{3}\s?\d{2}\b/g, '');
-            cleaned = cleaned.replace(/\b\d+\b/g, '');
-            cleaned = cleaned.trim();
-            if (cleaned) {
-              candidates.add(cleaned);
-              
-              if (cleaned.includes('-')) {
-                const hyphenParts = cleaned.split('-').map(h => h.trim()).filter(Boolean);
-                for (const hp of hyphenParts) {
-                  candidates.add(hp);
+          // Cleaned address
+          const cleanName = locationName.replace(/\s*\(.*?\)\s*/g, '').trim();
+          if (cleanName) {
+            candidates.add(cleanName);
+            
+            // Split by comma
+            const commaParts = cleanName.split(',').map(p => p.trim()).filter(Boolean);
+            for (const part of commaParts) {
+              let cleaned = part.replace(/\b\d{3}\s?\d{2}\b/g, '');
+              cleaned = cleaned.replace(/\b\d+\b/g, '');
+              cleaned = cleaned.trim();
+              if (cleaned) {
+                candidates.add(cleaned);
+                
+                if (cleaned.includes('-')) {
+                  const hyphenParts = cleaned.split('-').map(h => h.trim()).filter(Boolean);
+                  for (const hp of hyphenParts) {
+                    candidates.add(hp);
+                  }
                 }
               }
             }
           }
-        }
 
-        // 2. Fallback region or country names
-        for (const fallback of fallbackLocations) {
-          if (fallback) {
-            const cleanFallback = fallback.replace(/\s*\(.*?\)\s*/g, '').trim();
-            if (cleanFallback) candidates.add(cleanFallback);
-          }
-        }
-
-        const candidateList = Array.from(candidates);
-        let latitude: number | null = null;
-        let longitude: number | null = null;
-
-        for (const candidate of candidateList) {
-          try {
-            const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1`);
-            const geoData = await geoRes.json();
-            
-            if (geoData.results && geoData.results.length > 0) {
-              latitude = geoData.results[0].latitude;
-              longitude = geoData.results[0].longitude;
-              break;
+          // Fallback region or country names
+          for (const fallback of fallbackLocations) {
+            if (fallback) {
+              const cleanFallback = fallback.replace(/\s*\(.*?\)\s*/g, '').trim();
+              if (cleanFallback) candidates.add(cleanFallback);
             }
-          } catch (e) {
-            console.error(`Error geocoding candidate "${candidate}":`, e);
+          }
+
+          const candidateList = Array.from(candidates);
+
+          for (const candidate of candidateList) {
+            try {
+              const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(candidate)}&count=1`);
+              const geoData = await geoRes.json();
+              
+              if (geoData.results && geoData.results.length > 0) {
+                latitude = geoData.results[0].latitude;
+                longitude = geoData.results[0].longitude;
+                break;
+              }
+            } catch (e) {
+              console.error(`Error geocoding candidate "${candidate}":`, e);
+            }
           }
         }
 
         if (latitude === null || longitude === null) {
-          console.warn(`🌤️ Meteo API nenašlo žádnou lokaci z kandidátů: ${candidateList.join(', ')}`);
+          console.warn(`🌤️ Meteo API nenašlo žádné souřadnice.`);
           setError(true);
           setLoading(false);
           return;
@@ -92,7 +126,7 @@ export default function WeatherWidget({
     };
 
     fetchWeather();
-  }, [locationName, fallbackKey]);
+  }, [locationName, gps, fallbackKey]);
 
   if (loading) {
     return <div className={`animate-pulse ${dark ? 'bg-slate-800/50' : 'bg-blue-100/50'} h-12 w-32 rounded-2xl`}></div>;

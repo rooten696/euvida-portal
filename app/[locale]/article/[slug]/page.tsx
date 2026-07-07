@@ -298,6 +298,7 @@ export default async function ArticlePage({ params }: PageProps) {
   const countryName = getLocationName(country, locale);
   const regionName = getLocationName(region, locale);
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
+  const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
 
   // Merge booking_url from practical_info into prices_info
   const dbPricesInfo = article.prices_info || {};
@@ -358,6 +359,7 @@ export default async function ArticlePage({ params }: PageProps) {
           imageCredit={article.image_url ? article.source_info?.images?.[0] : null}
           breadcrumb={<Breadcrumb locale={locale} country={country} region={region} />}
           weatherLocation={weatherLocation}
+          gpsCoords={gpsCoords}
           regionName={regionName}
           countryName={countryName}
           articleSlug={slug}
