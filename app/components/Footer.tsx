@@ -16,7 +16,7 @@ export default function Footer({ locale = 'cs' }: FooterProps) {
               EU<span className="text-emerald-400">VIDA</span><span className="text-xs text-emerald-500 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">.EU</span>
             </div>
             <p className="mt-2 text-sm text-slate-400 max-w-md text-center md:text-left">
-              Váš ultimátní průvodce pro cestování, stěhování a plnohodnotný život v těch nejkrásnějších evropských destinacích.
+              Váš ultimátní průvodce pro cestování po Evropě.
             </p>
           </div>
 
