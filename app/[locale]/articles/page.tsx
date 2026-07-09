@@ -150,6 +150,10 @@ function articleMatchesQuery(
 
 export const revalidate = 1800;
 
+export async function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
+}
+
 export async function generateMetadata({ params }: ArticlesPageProps): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);

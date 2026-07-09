@@ -31,6 +31,24 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+export async function generateStaticParams() {
+  const { data: regions } = await supabase
+    .from('regions')
+    .select('id');
+
+  if (!regions) return [];
+
+  const params: { locale: string; id: string }[] = [];
+  for (const locale of supportedLocales) {
+    for (const region of regions) {
+      if (region.id) {
+        params.push({ locale, id: region.id });
+      }
+    }
+  }
+  return params;
+}
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
   'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';

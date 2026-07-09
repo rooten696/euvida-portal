@@ -17,7 +17,7 @@ import {
   getRegionDisplay,
 } from '@/lib/destinationTypes';
 import { createClient } from '@supabase/supabase-js';
-import { getTranslations } from 'next-intl/server';
+import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 
@@ -167,10 +167,15 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export const revalidate = 3600;
 
+export async function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
+}
+
 export default async function HomePage({ params }: PageProps) {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);
-  const t = await getTranslations('HomePage');
+  setRequestLocale(locale);
+  const t = await getTranslations({ locale, namespace: 'HomePage' });
 
   let articlesQuery = supabase
     .from('articles')

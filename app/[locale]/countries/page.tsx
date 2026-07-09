@@ -72,6 +72,10 @@ function countBy<T>(items: T[], getKey: (item: T) => string | null | undefined):
 
 export const revalidate = 3600;
 
+export async function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
+}
+
 export async function generateMetadata({ params }: CountriesPageProps): Promise<Metadata> {
   const { locale: rawLocale } = await params;
   const locale = normalizeLocale(rawLocale);

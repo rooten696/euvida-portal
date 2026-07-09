@@ -3,7 +3,7 @@
 import ArticleCard from '@/app/components/article/ArticleCard';
 import type { ArticleCardData } from '@/lib/articleCards';
 import { getDestinationLabel } from '@/lib/destinationLabels';
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 
 export type ArticleCategoryOption = {
@@ -46,7 +46,7 @@ function getCategoryRank(category: string): number {
   return index === -1 ? categoryOrder.length : index;
 }
 
-export default function ArticleCategoryExplorer({
+function ArticleCategoryExplorerInner({
   locale,
   articles,
   categories,
@@ -147,5 +147,13 @@ export default function ArticleCategoryExplorer({
         </div>
       )}
     </section>
+  );
+}
+
+export default function ArticleCategoryExplorer(props: ArticleCategoryExplorerProps) {
+  return (
+    <Suspense fallback={<div className="h-40 animate-pulse bg-slate-900/40 rounded-3xl" />}>
+      <ArticleCategoryExplorerInner {...props} />
+    </Suspense>
   );
 }

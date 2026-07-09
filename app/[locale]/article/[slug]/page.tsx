@@ -33,6 +33,27 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
+export const revalidate = 3600; // Cache on edge for 1 hour
+
+export async function generateStaticParams() {
+  const { data: articles } = await supabase
+    .from('articles')
+    .select('slug')
+    .eq('published', true);
+
+  if (!articles) return [];
+
+  const params: { locale: string; slug: string }[] = [];
+  for (const locale of supportedLocales) {
+    for (const article of articles) {
+      if (article.slug) {
+        params.push({ locale, slug: article.slug });
+      }
+    }
+  }
+  return params;
+}
+
 type PageProps = {
   params: Promise<{ locale: string; slug: string }>;
 };

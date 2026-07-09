@@ -5,8 +5,13 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import banneru
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { supportedLocales } from '@/lib/articleTypes';
+
+export async function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
+}
 
 import { Analytics } from '@vercel/analytics/next';
 
@@ -34,10 +39,13 @@ export default async function LocaleLayout({
   // Pokud se jazyk ztratí, vnutíme 'cs' ať web nepadá
   const locale = resolvedParams?.locale || 'cs'; 
 
+  // Nastavíme locale pro static rendering na serveru
+  setRequestLocale(locale);
+
   // Tohle se nám vypíše dole v terminálu!
   console.log("➡️ LAYOUT VIDÍ JAZYK:", resolvedParams?.locale); 
 
-  const messages = await getMessages();
+  const messages = await getMessages({ locale });
 
   return (
     <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>

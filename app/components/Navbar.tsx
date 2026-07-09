@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabaseBrowserClient';
 import Image from 'next/image';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
 import ThemeSwitcher from './ThemeSwitcher';
@@ -242,9 +242,13 @@ export default function Navbar() {
       <div className="border-t border-white/5 bg-slate-950/40 py-2.5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-0 bg-slate-900/90 border border-white/10 rounded-2xl p-1.5 shadow-xl max-w-4xl w-full sm:w-auto z-40">
-            <ArticleCategoryNav locale={locale} />
+            <Suspense fallback={<div className="h-9 w-48 bg-slate-900/50 animate-pulse rounded-xl" />}>
+              <ArticleCategoryNav locale={locale} />
+            </Suspense>
             <div className="h-6 w-[1px] bg-white/10 shrink-0 hidden sm:block mx-1.5" />
-            <CountryNav locale={locale} countries={countries} />
+            <Suspense fallback={<div className="h-9 w-48 bg-slate-900/50 animate-pulse rounded-xl" />}>
+              <CountryNav locale={locale} countries={countries} />
+            </Suspense>
           </div>
         </div>
       </div>
