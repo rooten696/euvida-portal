@@ -8,6 +8,8 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://euvida.eu';
 const locales = ['cs', 'en', 'de', 'fr', 'es'];
 
+export const revalidate = 86400; // Kešování sitemapy na 24 hodin
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch dynamic data from database
   const { data: articles } = await supabase
