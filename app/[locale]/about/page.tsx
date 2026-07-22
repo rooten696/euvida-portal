@@ -6,6 +6,8 @@ export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
 }
 
+export const revalidate = 86400;
+
 type PageProps = {
   params: Promise<{ locale: string }>;
 };

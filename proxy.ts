@@ -12,11 +12,8 @@ export default createMiddleware({
 });
 
 export const config = {
-  // Tento matcher říká, které cesty má tento "překladač" hlídat
+  // Tento matcher říká, které cesty má tento "překladač" hlídat - filtrovat pouze stránkové cesty
   matcher: [
-    '/', 
-    '/(cs|en|de|es|fr)/:path*',
-    // Ignorujeme systémové věci a obrázky
-    '/((?!api|_next|_vercel|.*\\..*).*)'
+    '/((?!api|_next|_vercel|flags|.*\\..*).*)'
   ]
 };
