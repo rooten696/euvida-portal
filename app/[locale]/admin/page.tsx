@@ -162,6 +162,8 @@ export default function AdminPage() {
   const [articles, setArticles] = useState<ArticleImageData[]>([]);
   const [articleImageForm, setArticleImageForm] = useState<ArticleImageData | null>(null);
   const [isArticleImageActive, setIsArticleImageActive] = useState(false);
+  const [revalidateSlug, setRevalidateSlug] = useState('');
+  const [isRevalidating, setIsRevalidating] = useState(false);
 
   const [status, setStatus] = useState('');
 
@@ -441,6 +443,50 @@ export default function AdminPage() {
     fetchArticles();
   };
 
+  const handleRevalidate = async () => {
+    setIsRevalidating(true);
+    setStatus('Obnovuji cache webu...');
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error('Nejsi přihlášený.');
+      }
+
+      const response = await fetch('/api/revalidate', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ slug: cleanString(revalidateSlug) }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? `HTTP ${response.status}`);
+      }
+
+      setStatus(
+        revalidateSlug.trim()
+          ? `✅ Cache obnovena včetně článku: ${revalidateSlug.trim()}`
+          : '✅ Cache hlavních výpisů obnovena.'
+      );
+    } catch (error) {
+      setStatus(
+        `❌ Cache se nepodařilo obnovit: ${
+          error instanceof Error ? error.message : 'neznámá chyba'
+        }`
+      );
+    } finally {
+      setIsRevalidating(false);
+    }
+  };
+
   if (!session) {
     return (
       <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -505,6 +551,34 @@ export default function AdminPage() {
           </div>
 
           <AdminCommentsPanel />
+
+          <section className="rounded-2xl border border-emerald-100 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-emerald-900">Cache webu</h2>
+                <p className="mt-1 text-sm font-medium text-gray-500">
+                  Po ručním vložení článku obnoví homepage, výpisy, sitemapu a volitelně detail článku.
+                </p>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-[minmax(0,260px)_auto]">
+                <input
+                  type="text"
+                  value={revalidateSlug}
+                  onChange={(event) => setRevalidateSlug(event.target.value)}
+                  placeholder="slug článku volitelně"
+                  className="rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-100"
+                />
+                <button
+                  type="button"
+                  onClick={handleRevalidate}
+                  disabled={isRevalidating}
+                  className="rounded-xl bg-emerald-600 px-5 py-2 text-sm font-black text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:bg-gray-300"
+                >
+                  {isRevalidating ? 'Obnovuji...' : 'Obnovit cache'}
+                </button>
+              </div>
+            </div>
+          </section>
 
           <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
             <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
