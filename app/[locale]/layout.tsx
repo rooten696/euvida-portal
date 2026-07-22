@@ -8,6 +8,7 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { supportedLocales } from '@/lib/articleTypes';
+import Script from 'next/script';
 
 export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
@@ -47,8 +48,16 @@ export default async function LocaleLayout({
   return (
     <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
       <head>
-        <script
+        <Script
+          id="adsense-loader"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2225812723448265"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        <Script
           id="theme-switcher-inline"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               try {

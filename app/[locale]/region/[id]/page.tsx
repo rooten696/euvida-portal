@@ -141,7 +141,7 @@ const regionMetadata: Record<
   },
 };
 
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 function hasSeasonData(seasons: SeasonTemperature[]): boolean {
   return seasons.some((season) => hasTemperature(season.air) || hasTemperature(season.sea));
@@ -281,7 +281,7 @@ async function getWeatherData(
       `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
         queryName
       )}&appid=${weatherApiKey}&units=metric&lang=${locale}`,
-      { next: { revalidate: 1800 } }
+      { next: { revalidate: 86400 } }
     );
 
     if (!weatherRes.ok) {
