@@ -12,6 +12,7 @@ export default function robots(): MetadataRoute.Robots {
         '/*/login',
         '/*/oblibene',
         '/*/profile',
+        '/*/articles?*',
       ],
     },
     sitemap: `${siteUrl}/sitemap.xml`,

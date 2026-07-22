@@ -29,6 +29,10 @@ const supabase = createClient(
 const heroImage =
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
+const homepageArticleLimit = 120;
+const homepageArticleSelect =
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+const articleCountSelect = 'country_id, region_id';
 
 const homeMetadata: Record<SupportedLocale, { title: string; description: string }> = {
   cs: {
@@ -179,17 +183,21 @@ export default async function HomePage({ params }: PageProps) {
 
   let articlesQuery = supabase
     .from('articles')
-    .select(
-      'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes'
-    )
+    .select(homepageArticleSelect)
+    .eq('published', true);
+  let articleCountsQuery = supabase
+    .from('articles')
+    .select(articleCountSelect)
     .eq('published', true);
 
   if (process.env.NEXT_PUBLIC_SITE_MODE === 'cz') {
     articlesQuery = articlesQuery.eq('country_id', 'CZE');
+    articleCountsQuery = articleCountsQuery.eq('country_id', 'CZE');
   }
 
-  const [articlesResult, countriesResult, regionsResult] = await Promise.all([
-    articlesQuery.order('created_at', { ascending: false }),
+  const [articlesResult, articleCountsResult, countriesResult, regionsResult] = await Promise.all([
+    articlesQuery.order('created_at', { ascending: false }).limit(homepageArticleLimit),
+    articleCountsQuery,
     supabase
       .from('countries')
       .select('id, name, flag, description, image_url, translations')
@@ -204,6 +212,10 @@ export default async function HomePage({ params }: PageProps) {
     warnHomepageLoadError('články', articlesResult.error);
   }
 
+  if (articleCountsResult.error) {
+    warnHomepageLoadError('počty článků', articleCountsResult.error);
+  }
+
   if (countriesResult.error) {
     warnHomepageLoadError('země', countriesResult.error);
   }
@@ -213,6 +225,10 @@ export default async function HomePage({ params }: PageProps) {
   }
 
   const articles = (articlesResult.data ?? []) as Article[];
+  const articleCountRows = (articleCountsResult.data ?? []) as Pick<
+    Article,
+    'country_id' | 'region_id'
+  >[];
   const countries = ((countriesResult.data ?? []) as CountryDestination[]).map((country) =>
     getCountryDisplay(country, locale)
   );
@@ -220,8 +236,8 @@ export default async function HomePage({ params }: PageProps) {
     getRegionDisplay(region, locale)
   );
 
-  const articleCountByCountry = countBy(articles, (article) => article.country_id);
-  const articleCountByRegion = countBy(articles, (article) => article.region_id);
+  const articleCountByCountry = countBy(articleCountRows, (article) => article.country_id);
+  const articleCountByRegion = countBy(articleCountRows, (article) => article.region_id);
   const regionCountByCountry = countBy(regions, (region) => region.country_id);
   const countryNameById = new Map(countries.map((country) => [country.id, country.name]));
   const regionNameById = new Map(regions.map((region) => [region.id, region.name]));

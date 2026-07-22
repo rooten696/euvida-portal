@@ -31,6 +31,10 @@ const supabase = createClient(
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
   'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+const articleListSelect =
+  'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+const maxSearchQueryLength = 80;
+const maxSearchTerms = 6;
 
 type ArticlesPageProps = {
   params: Promise<{ locale: string }>;
@@ -111,7 +115,17 @@ function getSearchQuery(
   const value = searchParams?.q ?? searchParams?.query ?? '';
   const firstValue = Array.isArray(value) ? value[0] : value;
 
-  return typeof firstValue === 'string' ? firstValue.trim() : '';
+  if (typeof firstValue !== 'string') {
+    return '';
+  }
+
+  const query = firstValue.replace(/\s+/g, ' ').trim();
+
+  if (query.length > maxSearchQueryLength) {
+    return '';
+  }
+
+  return query;
 }
 
 function articleMatchesQuery(
@@ -125,7 +139,10 @@ function articleMatchesQuery(
     return true;
   }
 
-  const terms = normalizeSearchText(query).split(/\s+/).filter(Boolean);
+  const terms = normalizeSearchText(query)
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, maxSearchTerms);
 
   if (terms.length === 0) {
     return true;
@@ -180,11 +197,12 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   const locale = normalizeLocale(rawLocale);
   const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const query = getSearchQuery(resolvedSearchParams);
+  const articleColumns: string = query ? articleSelect : articleListSelect;
 
   const [articlesResult, countriesResult, regionsResult] = await Promise.all([
     supabase
       .from('articles')
-      .select(articleSelect)
+      .select(articleColumns)
       .eq('published', true)
       .order('created_at', { ascending: false }),
     supabase
@@ -218,7 +236,7 @@ export default async function ArticlesPage({ params, searchParams }: ArticlesPag
   const countryNameById = new Map(countries.map((country) => [country.id, country.name]));
   const regionNameById = new Map(regions.map((region) => [region.id, region.name]));
 
-  const articles = (articlesResult.data ?? []) as Article[];
+  const articles = ((articlesResult.data ?? []) as unknown) as Article[];
   const visibleArticles = query
     ? articles.filter((article) =>
         articleMatchesQuery(

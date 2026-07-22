@@ -42,9 +42,6 @@ export default async function LocaleLayout({
   // Nastavíme locale pro static rendering na serveru
   setRequestLocale(locale);
 
-  // Tohle se nám vypíše dole v terminálu!
-  console.log("➡️ LAYOUT VIDÍ JAZYK:", resolvedParams?.locale); 
-
   const messages = await getMessages({ locale });
 
   return (
