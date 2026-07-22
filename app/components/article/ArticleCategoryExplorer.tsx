@@ -91,8 +91,10 @@ function ArticleCategoryExplorerInner({
     }
 
     if (country) {
-      const activeCountries = country.split(',');
-      result = result.filter((article) => article.countryId && activeCountries.includes(article.countryId));
+      const activeCountries = country.split(',').map((countryId) => countryId.toUpperCase());
+      result = result.filter(
+        (article) => article.countryId && activeCountries.includes(article.countryId.toUpperCase())
+      );
     }
 
     return result;

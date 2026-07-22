@@ -64,6 +64,7 @@ const homeMetadata: Record<SupportedLocale, { title: string; description: string
 
 type PageProps = {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 type CountMap = Map<string, number>;
@@ -76,6 +77,19 @@ type FilterOption = {
 
 function presentValues(values: Array<string | null | undefined>): string[] {
   return values.filter((value): value is string => Boolean(value?.trim()));
+}
+
+function searchParamValues(
+  searchParams: Record<string, string | string[] | undefined> | undefined,
+  key: string
+): string[] {
+  const value = searchParams?.[key];
+  const values = Array.isArray(value) ? value : value ? [value] : [];
+
+  return values
+    .flatMap((item) => item.split(','))
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function countMeta(value: number, label: string, locale: SupportedLocale): string {
@@ -175,11 +189,17 @@ export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
 }
 
-export default async function HomePage({ params }: PageProps) {
+export default async function HomePage({ params, searchParams }: PageProps) {
   const { locale: rawLocale } = await params;
+  const resolvedSearchParams = searchParams ? await searchParams : undefined;
   const locale = normalizeLocale(rawLocale);
   setRequestLocale(locale);
   const t = await getTranslations({ locale, namespace: 'HomePage' });
+  const countryFilters = searchParamValues(resolvedSearchParams, 'country').map((country) =>
+    country.toUpperCase()
+  );
+  const categoryFilters = searchParamValues(resolvedSearchParams, 'category');
+  const hasArticleFilters = countryFilters.length > 0 || categoryFilters.length > 0;
 
   let articlesQuery = supabase
     .from('articles')
@@ -195,8 +215,21 @@ export default async function HomePage({ params }: PageProps) {
     articleCountsQuery = articleCountsQuery.eq('country_id', 'CZE');
   }
 
+  if (countryFilters.length > 0) {
+    articlesQuery = articlesQuery.in('country_id', countryFilters);
+  }
+
+  if (categoryFilters.length > 0) {
+    articlesQuery = articlesQuery.in('category', categoryFilters);
+  }
+
+  const orderedArticlesQuery = articlesQuery.order('created_at', { ascending: false });
+  const homepageArticlesQuery = hasArticleFilters
+    ? orderedArticlesQuery
+    : orderedArticlesQuery.limit(homepageArticleLimit);
+
   const [articlesResult, articleCountsResult, countriesResult, regionsResult] = await Promise.all([
-    articlesQuery.order('created_at', { ascending: false }).limit(homepageArticleLimit),
+    homepageArticlesQuery,
     articleCountsQuery,
     supabase
       .from('countries')
