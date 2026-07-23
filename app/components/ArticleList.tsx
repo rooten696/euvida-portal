@@ -59,11 +59,12 @@ export default async function ArticleList({
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-      {(articles as Article[]).map((article) => (
+      {(articles as Article[]).map((article, index) => (
         <ArticleCard
           key={article.id ?? article.slug}
           article={toArticleCardData(article, currentLocale)}
           locale={currentLocale}
+          fallbackIndex={index}
         />
       ))}
     </div>

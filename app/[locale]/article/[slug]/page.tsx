@@ -6,6 +6,11 @@ import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
 import QuickOverview from '@/app/components/article/QuickOverview';
 import SourcesSection from '@/app/components/article/SourcesSection';
+import {
+  getArticleFallbackImage,
+  getArticleImageWithFallback,
+  isMissingArticleImage,
+} from '@/lib/articleFallbackImages';
 import { getArticleLabel } from '@/lib/articleLabels';
 import { getCategoryLabel, getLocalizedArticle } from '@/lib/articleDisplay';
 import { formatDate } from '@/lib/articleFormatting';
@@ -121,6 +126,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     localizedArticle.excerpt ??
     descriptionFromContent(localizedArticle.content) ??
     'Přečtěte si článek na Euvida.eu';
+  const metadataImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
 
   return {
     metadataBase: new URL(siteUrl),
@@ -140,10 +146,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       type: 'article',
       url: `/${locale}/article/${slug}`,
-      images: article.image_url
+      images: metadataImageUrl
         ? [
             {
-              url: article.image_url,
+              url: metadataImageUrl,
               alt: localizedArticle.imageAlt,
             },
           ]
@@ -318,6 +324,9 @@ export default async function ArticlePage({ params }: PageProps) {
   const updatedDate = formatDate(article.updated_at ?? article.created_at, locale);
   const countryName = getLocationName(country, locale);
   const regionName = getLocationName(region, locale);
+  const articleHasRealImage = !isMissingArticleImage(article.image_url);
+  const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug);
+  const articleImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
   const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
 
@@ -375,9 +384,10 @@ export default async function ArticlePage({ params }: PageProps) {
           categoryLabel={categoryLabel}
           featured={article.featured}
           metaItems={metaItems}
-          imageUrl={article.image_url}
-          imageAlt={imageAlt}
-          imageCredit={article.image_url ? article.source_info?.images?.[0] : null}
+          imageUrl={articleImageUrl}
+          fallbackImageUrl={fallbackImageUrl}
+          imageAlt={articleHasRealImage ? imageAlt : categoryLabel ?? 'Euvida'}
+          imageCredit={articleHasRealImage ? article.source_info?.images?.[0] : null}
           breadcrumb={<Breadcrumb locale={locale} country={country} region={region} />}
           weatherLocation={weatherLocation}
           gpsCoords={gpsCoords}

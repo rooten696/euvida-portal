@@ -96,10 +96,6 @@ export default function Navbar() {
     router.push(`/${locale}`);
   };
 
-  if (pathname.includes('/admin')) {
-    return null;
-  }
-
   const switchLanguage = (newLocale: string) => {
     if (!pathname) return `/${newLocale}`;
     return pathname.replace(`/${locale}`, `/${newLocale}`);

@@ -6,6 +6,11 @@ import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SafeImage from '@/app/components/SafeImage';
+import {
+  getArticleFallbackImage,
+  getArticleImageWithFallback,
+  isMissingArticleImage,
+} from '@/lib/articleFallbackImages';
 import { getCountryDisplay, getRegionDisplay } from '@/lib/destinationTypes';
 import { getLocalizedArticle } from '@/lib/articleLocalization';
 
@@ -329,15 +334,23 @@ export default function FavoritesClient() {
             <EmptyState tab="articles" locale={locale} />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {articles.map((article) => (
+              {articles.map((article, index) => {
+                const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug, index);
+                const imageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug, index);
+                const imageAlt = isMissingArticleImage(article.image_url)
+                  ? article.category || 'Euvida'
+                  : article.title;
+
+                return (
                 <div key={article.slug} className="relative group bg-slate-900/40 rounded-3xl overflow-hidden border border-white/10 hover:border-emerald-500/30 shadow-xl hover:shadow-2xl transition-all duration-300 flex flex-col min-h-[380px]">
                   <div className="h-48 relative overflow-hidden bg-slate-950">
                     <SafeImage
-                      src={article.image_url ?? '/placeholder.png'}
-                      alt={article.title}
+                      src={imageUrl}
+                      alt={imageAlt}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
                       fallbackLabel={article.title}
+                      fallbackSrc={fallbackImageUrl}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />
                     
@@ -367,7 +380,8 @@ export default function FavoritesClient() {
                     </Link>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )
         )}

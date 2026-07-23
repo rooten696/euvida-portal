@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Outdoor swimming pool illustration">
+  <defs><linearGradient id="p" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f766e"/><stop offset=".5" stop-color="#0284c7"/><stop offset="1" stop-color="#0f172a"/></linearGradient></defs>
+  <rect width="1600" height="1000" fill="url(#p)"/>
+  <rect x="185" y="205" width="1230" height="620" rx="76" fill="#e2e8f0" opacity=".94"/>
+  <rect x="270" y="290" width="1060" height="450" rx="42" fill="#38bdf8"/>
+  <path d="M320 390c150 38 295 38 435 0 168-45 310-44 485 0M320 520c150 38 295 38 435 0 168-45 310-44 485 0M320 650c150 38 295 38 435 0 168-45 310-44 485 0" stroke="#ecfeff" stroke-width="14" opacity=".42" fill="none"/>
+  <g fill="#fef3c7" opacity=".86"><rect x="210" y="850" width="210" height="34" rx="17"/><rect x="1180" y="850" width="210" height="34" rx="17"/><path d="M210 850l58-115h210l-58 115zM1180 850l58-115h210l-58 115z"/></g>
+</svg>

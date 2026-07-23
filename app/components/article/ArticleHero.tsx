@@ -18,6 +18,7 @@ type ArticleHeroProps = {
   featured?: boolean | null;
   metaItems: MetaItem[];
   imageUrl?: string | null;
+  fallbackImageUrl?: string | null;
   imageAlt: string;
   imageCredit?: ImageCreditData | null;
   breadcrumb?: React.ReactNode;
@@ -36,6 +37,7 @@ export default function ArticleHero({
   featured,
   metaItems,
   imageUrl,
+  fallbackImageUrl,
   imageAlt,
   imageCredit,
   breadcrumb,
@@ -49,10 +51,10 @@ export default function ArticleHero({
     <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 shadow-2xl p-6 md:p-10 mb-8">
       {/* Background Image / Gradient */}
       <div className="absolute inset-0 z-0">
-        {imageUrl ? (
+        {imageUrl || fallbackImageUrl ? (
           <>
             <SafeImage
-              src={imageUrl}
+              src={imageUrl ?? fallbackImageUrl ?? '/placeholder.png'}
               alt={imageAlt}
               fill
               priority
@@ -60,6 +62,7 @@ export default function ArticleHero({
               className="object-cover opacity-35"
               fallbackClassName=""
               fallbackLabel={categoryLabel ?? 'Euvida'}
+              fallbackSrc={fallbackImageUrl ?? '/placeholder.png'}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
           </>

@@ -232,6 +232,7 @@ function ArticleCategoryExplorerInner({
                 locale={locale}
                 priority={index < 3}
                 showFeaturedBadge={showFeaturedBadges}
+                fallbackIndex={index}
               />
             ))}
           </div>

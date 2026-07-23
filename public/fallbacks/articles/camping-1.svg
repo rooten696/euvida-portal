@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Tent by a mountain lake illustration">
+  <defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#0f172a"/><stop offset=".55" stop-color="#115e59"/><stop offset="1" stop-color="#022c22"/></linearGradient><linearGradient id="w" x1="0" x2="1"><stop stop-color="#67e8f9"/><stop offset="1" stop-color="#14b8a6"/></linearGradient></defs>
+  <rect width="1600" height="1000" fill="url(#s)"/>
+  <g fill="#f8fafc" opacity=".75"><circle cx="210" cy="130" r="5"/><circle cx="430" cy="95" r="4"/><circle cx="850" cy="145" r="5"/><circle cx="1190" cy="105" r="4"/><circle cx="1390" cy="170" r="5"/></g>
+  <path d="M0 475l250-220 230 220 210-190 240 190 255-260 315 260v525H0z" fill="#064e3b" opacity=".88"/>
+  <path d="M0 690c280-60 530-58 780 0 235 55 490 55 820-28v338H0z" fill="url(#w)" opacity=".55"/>
+  <path d="M525 795l245-300 245 300z" fill="#f59e0b"/><path d="M770 495v300H525z" fill="#fde68a" opacity=".35"/><path d="M770 495v300h245z" fill="#92400e" opacity=".5"/>
+  <path d="M160 810c160 35 290 35 455 0M930 822c180 42 335 38 510-10" stroke="#ecfeff" stroke-width="10" opacity=".25" fill="none"/>
+</svg>
