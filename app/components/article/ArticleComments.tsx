@@ -265,10 +265,10 @@ export default function ArticleComments({ articleSlug, locale }: ArticleComments
   };
 
   return (
-    <section className="mt-8 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+    <section className="mt-8 rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-xl backdrop-blur">
       <div className="mb-5">
-        <h2 className="text-xl font-extrabold text-slate-950">{labels.title}</h2>
-        <p className="mt-2 text-sm leading-relaxed text-slate-600">{labels.intro}</p>
+        <h2 className="text-xl font-extrabold text-white">{labels.title}</h2>
+        <p className="mt-2 text-sm leading-relaxed text-slate-300">{labels.intro}</p>
       </div>
 
       {setupMissing && (
@@ -278,35 +278,35 @@ export default function ArticleComments({ articleSlug, locale }: ArticleComments
       )}
 
       {session?.user ? (
-        <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4">
-          <label htmlFor="article-comment" className="text-sm font-extrabold text-blue-950">
+        <form onSubmit={handleSubmit} className="mb-6 rounded-2xl border border-white/5 bg-slate-800/50 p-4">
+          <label htmlFor="article-comment" className="text-sm font-extrabold text-slate-200">
             {labels.formLabel}
           </label>
-          <textarea
+            <textarea
             id="article-comment"
             value={content}
             onChange={(event) => setContent(event.target.value)}
             rows={4}
             maxLength={2000}
-            className="mt-2 w-full resize-y rounded-xl border border-blue-100 bg-white p-3 text-sm leading-relaxed text-slate-900 outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100"
+            className="mt-2 w-full resize-y rounded-xl border border-white/10 bg-slate-900/50 p-3 text-sm leading-relaxed text-white outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20"
           />
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs font-medium text-blue-800">
+            <p className="text-xs font-medium text-slate-400">
               {content.trim().length}/2000
             </p>
             <button
               type="submit"
               disabled={submitting || content.trim().length < 3}
-              className="inline-flex justify-center rounded-xl bg-blue-900 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-60"
+              className="inline-flex justify-center rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-emerald-500 disabled:cursor-not-allowed disabled:opacity-60"
             >
               {submitting ? labels.submitting : labels.submit}
             </button>
           </div>
         </form>
       ) : (
-        <div className="mb-6 rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm leading-relaxed text-blue-950">
+        <div className="mb-6 rounded-2xl border border-white/5 bg-slate-800/50 p-4 text-sm leading-relaxed text-slate-300">
           <span className="font-semibold">{labels.loginPrompt}</span>{' '}
-          <Link href={`/${locale}/login`} className="font-extrabold underline underline-offset-2">
+          <Link href={`/${locale}/login`} className="font-extrabold text-emerald-400 underline underline-offset-2 hover:text-emerald-300">
             {labels.loginLink}
           </Link>
         </div>
@@ -326,40 +326,40 @@ export default function ArticleComments({ articleSlug, locale }: ArticleComments
 
       {loading ? (
         <div className="space-y-3">
-          <div className="h-20 animate-pulse rounded-xl bg-slate-100" />
-          <div className="h-20 animate-pulse rounded-xl bg-slate-100" />
+          <div className="h-20 animate-pulse rounded-xl bg-slate-800/50" />
+          <div className="h-20 animate-pulse rounded-xl bg-slate-800/50" />
         </div>
       ) : comments.length > 0 ? (
         <ol className="space-y-3">
           {comments.map((comment) => (
-            <li key={comment.id} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+            <li key={comment.id} className="rounded-xl border border-white/5 bg-slate-800/50 p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="font-extrabold text-slate-950">
+                  <p className="font-extrabold text-white">
                     {comment.author_name || 'Euvida user'}
                   </p>
-                  <p className="text-xs font-medium text-slate-500">
+                  <p className="text-xs font-medium text-slate-400">
                     {formatCommentDate(comment.created_at, locale)}
                   </p>
                 </div>
                 {comment.status !== 'approved' && comment.user_id === session?.user.id && (
                   <span className={`rounded-full px-2.5 py-1 text-xs font-extrabold ${
                     comment.status === 'pending'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-red-100 text-red-700'
+                      ? 'bg-amber-500/20 text-amber-400'
+                      : 'bg-red-500/20 text-red-400'
                   }`}>
                     {comment.status === 'pending' ? labels.pendingBadge : labels.rejectedBadge}
                   </span>
                 )}
               </div>
-              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700">
+              <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-300">
                 {comment.content}
               </p>
             </li>
           ))}
         </ol>
       ) : (
-        <p className="rounded-xl bg-slate-50 p-4 text-sm font-medium text-slate-500">
+        <p className="rounded-xl bg-slate-800/50 p-4 text-sm font-medium text-slate-400">
           {labels.empty}
         </p>
       )}

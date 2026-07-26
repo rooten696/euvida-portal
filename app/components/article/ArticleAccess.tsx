@@ -49,7 +49,7 @@ function ModeIcon({ mode }: { mode?: string | null }) {
 
   return (
     <span
-      className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-yellow-900 shadow-sm ring-1 ring-yellow-100"
+      className="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-800 text-emerald-400 shadow-sm ring-1 ring-white/10"
       aria-hidden="true"
     >
       <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
@@ -109,7 +109,23 @@ function accessItemLabel(item: AccessItem, locale: string): string | null {
   return label ?? modeLabel;
 }
 
-function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
+function extractCoordinates(gps: string): string | null {
+  const match = gps.match(/(-?\d+\.\d+)[^\d-]+(-?\d+\.\d+)/);
+  if (match) {
+    return `${match[1]},${match[2]}`;
+  }
+  return gps.replace(/°/g, '').replace(/\s+/g, '').trim();
+}
+
+function AccessRow({
+  item,
+  locale,
+  gpsCoords,
+}: {
+  item: AccessItem;
+  locale: string;
+  gpsCoords?: string | null;
+}) {
   const label = accessItemLabel(item, locale);
   const modeLabel = getModeLabel(item.mode, locale);
   const description = getLocalizedValue(item.description, locale);
@@ -142,54 +158,133 @@ function AccessRow({ item, locale }: { item: AccessItem; locale: string }) {
   }
 
   return (
-    <li className="border-b border-yellow-100 pb-4 last:border-b-0 last:pb-0">
+    <li className="border-b border-white/5 pb-4 last:border-b-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-start gap-3">
           <ModeIcon mode={item.mode} />
           <div className="min-w-0">
             {label && (
-              <h3 className="break-words text-sm font-bold leading-snug text-slate-950">
+              <h3 className="break-words text-sm font-bold leading-snug text-white">
                 {label}
               </h3>
             )}
             {modeLabel && modeLabel !== label && (
-              <span className="mt-1 inline-flex rounded-full bg-white px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-yellow-800 shadow-sm">
+              <span className="mt-1 inline-flex rounded-full bg-slate-800 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-emerald-400 shadow-sm">
                 {modeLabel}
               </span>
             )}
             {description && (
-              <p className={`break-words text-sm leading-relaxed text-slate-700 ${label ? 'mt-1' : ''}`}>
+              <p className={`break-words text-sm leading-relaxed text-slate-300 ${label ? 'mt-1' : ''}`}>
                 {description}
               </p>
+            )}
+            {item.mode === 'address' && gpsCoords && (
+              <div className="mt-3 overflow-hidden rounded-xl border border-white/10 shadow-inner">
+                <iframe
+                  title="Google Maps Location"
+                  width="100%"
+                  height="220"
+                  src={`https://maps.google.com/maps?q=${encodeURIComponent(extractCoordinates(gpsCoords) || gpsCoords)}&t=&z=13&ie=UTF8&iwloc=&output=embed`}
+                  className="border-0 opacity-85 hover:opacity-100 transition-opacity duration-300"
+                  allowFullScreen
+                  loading="lazy"
+                />
+              </div>
             )}
           </div>
         </div>
         {item.recommended && (
-          <span className="shrink-0 rounded-full bg-yellow-300 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-yellow-950">
+          <span className="shrink-0 rounded-full bg-emerald-500/20 px-2.5 py-1 text-[11px] font-extrabold uppercase tracking-wide text-emerald-400">
             {recommendedLabels[normalizeLocale(locale)]}
           </span>
         )}
       </div>
 
       {details.length > 0 && (
-        <dl className="mt-3 grid gap-2 rounded-xl bg-white/70 p-3 text-sm text-slate-700">
+        <dl className="mt-3 grid gap-2 rounded-xl bg-slate-800/50 p-3 text-sm text-slate-300">
           {details.map((detail) => (
             <div key={`${detail.label}-${detail.value}`} className="grid grid-cols-[auto_minmax(0,1fr)] gap-2">
-              <dt className="font-bold text-slate-950">{detail.label}:</dt>
+              <dt className="font-bold text-slate-400">{detail.label}:</dt>
               <dd className="break-words">{detail.value}</dd>
             </div>
           ))}
         </dl>
       )}
 
-      {note && <p className="mt-2 break-words text-sm leading-relaxed text-yellow-900/85">{note}</p>}
+      {note && <p className="mt-2 break-words text-sm leading-relaxed text-slate-400">{note}</p>}
     </li>
   );
 }
 
 export default function ArticleAccess({ locale, accessInfo }: ArticleAccessProps) {
   const currentLocale = normalizeLocale(locale);
-  const items = sortBySortOrder(accessInfo?.items ?? []);
+  let items = sortBySortOrder(accessInfo?.items ?? []);
+
+  // Simple format fallback (where keys are locale names e.g. 'cs', 'en')
+  if ((!items || items.length === 0) && accessInfo) {
+    const localeData = (accessInfo as any)[currentLocale] || (accessInfo as any)['cs'] || (accessInfo as any)['en'];
+    if (localeData && typeof localeData === 'object') {
+      const parsedItems: AccessItem[] = [];
+      
+      if (localeData.address) {
+        parsedItems.push({
+          mode: 'address',
+          label: {
+            cs: 'Address',
+            en: 'Address',
+            de: 'Adresse',
+            fr: 'Adresse',
+            es: 'Dirección'
+          },
+          description: { [currentLocale]: localeData.address }
+        });
+      }
+      if (localeData.parking) {
+        parsedItems.push({
+          mode: 'parking',
+          label: {
+            cs: 'Parkování',
+            en: 'Parking',
+            de: 'Parken',
+            fr: 'Stationnement',
+            es: 'Aparcamiento'
+          },
+          description: { [currentLocale]: localeData.parking }
+        });
+      }
+      if (localeData.public_transport) {
+        parsedItems.push({
+          mode: 'public_transport',
+          label: {
+            cs: 'Doprava a MHD',
+            en: 'Public transport',
+            de: 'ÖPNV',
+            fr: 'Transports publics',
+            es: 'Transporte público'
+          },
+          description: { [currentLocale]: localeData.public_transport }
+        });
+      }
+      items = parsedItems;
+    }
+  }
+
+  // Get GPS coordinate string if any
+  let gpsCoords: string | null = null;
+  if (accessInfo) {
+    const localeData = (accessInfo as any)[currentLocale] || (accessInfo as any)['cs'] || (accessInfo as any)['en'];
+    if (localeData && typeof localeData === 'object' && typeof localeData.gps === 'string') {
+      gpsCoords = localeData.gps;
+    }
+  }
+
+  // Fallback to searching inside items
+  if (!gpsCoords && items.length > 0) {
+    const itemWithGps = items.find((item) => item.gps);
+    if (itemWithGps?.gps) {
+      gpsCoords = itemWithGps.gps;
+    }
+  }
 
   if (!accessInfo || items.length === 0) {
     return null;
@@ -217,22 +312,22 @@ export default function ArticleAccess({ locale, accessInfo }: ArticleAccessProps
   const notes = getLocalizedValue(accessInfo.notes, currentLocale);
 
   return (
-    <section className="rounded-2xl border border-yellow-100 bg-yellow-50/70 p-5 shadow-sm">
-      <h2 className="text-lg font-extrabold text-yellow-950">
+    <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
+      <h2 className="text-lg font-extrabold text-emerald-400">
         {getArticleLabel(currentLocale, 'access')}
       </h2>
 
-      {summary && <p className="mt-2 text-sm leading-relaxed text-slate-700">{summary}</p>}
+      {summary && <p className="mt-2 text-sm leading-relaxed text-slate-300">{summary}</p>}
 
       <ul className="mt-4 space-y-4">
         {visibleItems.map((item, index) => (
-          <AccessRow key={item.id ?? `${item.mode ?? 'access'}-${index}`} item={item} locale={currentLocale} />
+          <AccessRow key={item.id ?? `${item.mode ?? 'access'}-${index}`} item={item} locale={currentLocale} gpsCoords={item.gps || gpsCoords} />
         ))}
       </ul>
 
       {notes && (
-        <p className="mt-4 border-t border-yellow-100 pt-4 text-xs leading-relaxed text-slate-600">
-          <span className="font-semibold text-slate-800">
+        <p className="mt-4 border-t border-white/10 pt-4 text-xs leading-relaxed text-slate-400">
+          <span className="font-semibold text-slate-300">
             {getArticleLabel(currentLocale, 'note')}:
           </span>{' '}
           {notes}

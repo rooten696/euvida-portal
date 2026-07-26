@@ -28,14 +28,14 @@ export default function RegionArticleExplorer({
 }: RegionArticleExplorerProps) {
   if (articles.length === 0) {
     return (
-      <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-        <p className="text-base font-semibold text-slate-600">
+      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-8 text-center shadow-xl backdrop-blur">
+        <p className="text-base font-semibold text-slate-400">
           {getDestinationLabel(locale, 'noRegionArticles')}
         </p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
           <Link
             href={countryHref}
-            className="inline-flex rounded-full bg-blue-900 px-5 py-2.5 text-sm font-extrabold text-white transition hover:bg-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="inline-flex rounded-full bg-emerald-500/20 border border-emerald-500/30 px-5 py-2.5 text-sm font-extrabold text-emerald-400 transition hover:bg-emerald-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
           >
             {countryName
               ? `${getDestinationLabel(locale, 'backToCountry')}: ${countryName}`
@@ -43,7 +43,7 @@ export default function RegionArticleExplorer({
           </Link>
           <Link
             href={`/${locale}`}
-            className="inline-flex rounded-full border border-slate-200 bg-white px-5 py-2.5 text-sm font-extrabold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="inline-flex rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-extrabold text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
           >
             {getDestinationLabel(locale, 'backToHome')}
           </Link>

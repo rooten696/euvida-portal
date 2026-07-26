@@ -1,9 +1,12 @@
 'use client';
 
 import ArticleCard from '@/app/components/article/ArticleCard';
-import type { ArticleCardData } from '@/lib/articleCards';
+import { toArticleCardData, type ArticleCardData } from '@/lib/articleCards';
+import type { Article } from '@/lib/articleTypes';
 import { getDestinationLabel } from '@/lib/destinationLabels';
-import { useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabaseBrowserClient';
+import { useMemo, useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
 export type ArticleCategoryOption = {
   value: string;
@@ -18,6 +21,8 @@ type ArticleCategoryExplorerProps = {
   defaultVisibleCount?: number;
   showMoreLabel?: string;
   showFeaturedBadges?: boolean;
+  countryNamesById?: Record<string, string>;
+  regionNamesById?: Record<string, string>;
 };
 
 const categoryOrder = [
@@ -40,21 +45,131 @@ const categoryOrder = [
   'nature',
 ];
 
+const filteredArticleSelect =
+  'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+const maxFilteredArticles = 1000;
+
+function splitParam(value: string): string[] {
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 function getCategoryRank(category: string): number {
   const index = categoryOrder.indexOf(category);
   return index === -1 ? categoryOrder.length : index;
 }
 
-export default function ArticleCategoryExplorer({
+function ArticleCategoryExplorerInner({
   locale,
   articles,
   categories,
   defaultVisibleCount,
   showMoreLabel,
   showFeaturedBadges = true,
+  countryNamesById,
+  regionNamesById,
 }: ArticleCategoryExplorerProps) {
-  const [category, setCategory] = useState('');
+  const searchParams = useSearchParams();
+  const urlCategory = searchParams.get('category') || '';
+  const urlCountry = searchParams.get('country') || '';
+  
+  const [category, setCategory] = useState(urlCategory);
+  const [country, setCountry] = useState(urlCountry);
   const [visiblePageCount, setVisiblePageCount] = useState(1);
+  const [remoteArticles, setRemoteArticles] = useState<ArticleCardData[] | null>(null);
+  const [isLoadingRemoteArticles, setIsLoadingRemoteArticles] = useState(false);
+  const [remoteArticlesError, setRemoteArticlesError] = useState(false);
+
+  // Zajištění interaktivity s URL (např. z Navbar sub-baru)
+  useEffect(() => {
+    setCategory(searchParams.get('category') || '');
+    setCountry(searchParams.get('country') || '');
+  }, [searchParams]);
+
+  const activeCategories = useMemo(() => splitParam(category), [category]);
+  const activeCountries = useMemo(
+    () => splitParam(country).map((countryId) => countryId.toUpperCase()),
+    [country]
+  );
+  const hasActiveFilters = activeCategories.length > 0 || activeCountries.length > 0;
+  const activeCategoryKey = activeCategories.join(',');
+  const activeCountryKey = activeCountries.join(',');
+
+  useEffect(() => {
+    setVisiblePageCount(1);
+  }, [activeCategoryKey, activeCountryKey]);
+
+  useEffect(() => {
+    if (!hasActiveFilters) {
+      setRemoteArticles(null);
+      setIsLoadingRemoteArticles(false);
+      setRemoteArticlesError(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    async function loadFilteredArticles() {
+      setIsLoadingRemoteArticles(true);
+      setRemoteArticlesError(false);
+
+      let query = supabase
+        .from('articles')
+        .select(filteredArticleSelect)
+        .eq('published', true)
+        .order('created_at', { ascending: false })
+        .limit(maxFilteredArticles);
+
+      if (activeCountries.length > 0) {
+        query = query.in('country_id', activeCountries);
+      }
+
+      if (activeCategories.length > 0) {
+        query = query.in('category', activeCategories);
+      }
+
+      const { data, error } = await query;
+
+      if (cancelled) {
+        return;
+      }
+
+      if (error) {
+        console.error('Chyba při načítání filtrovaných článků:', error);
+        setRemoteArticles(null);
+        setRemoteArticlesError(true);
+        setIsLoadingRemoteArticles(false);
+        return;
+      }
+
+      setRemoteArticles(
+        ((data ?? []) as Article[]).map((article) =>
+          toArticleCardData(article, locale, {
+            countryName: article.country_id ? countryNamesById?.[article.country_id] : null,
+            regionName: article.region_id ? regionNamesById?.[article.region_id] : null,
+          })
+        )
+      );
+      setIsLoadingRemoteArticles(false);
+    }
+
+    loadFilteredArticles();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeCategoryKey,
+    activeCountryKey,
+    activeCategories,
+    activeCountries,
+    countryNamesById,
+    hasActiveFilters,
+    locale,
+    regionNamesById,
+  ]);
 
   const sortedCategories = useMemo(
     () =>
@@ -71,14 +186,22 @@ export default function ArticleCategoryExplorer({
   );
 
   const filteredArticles = useMemo(() => {
-    if (category) {
-      return articles.filter((article) => article.category === category);
+    let result = remoteArticles ?? articles;
+
+    if (activeCategories.length > 0) {
+      result = result.filter((article) => article.category && activeCategories.includes(article.category));
     }
 
-    return articles;
-  }, [articles, category]);
+    if (activeCountries.length > 0) {
+      result = result.filter(
+        (article) => article.countryId && activeCountries.includes(article.countryId.toUpperCase())
+      );
+    }
 
-  const shouldLimitArticles = !category && typeof defaultVisibleCount === 'number';
+    return result;
+  }, [activeCategories, activeCountries, articles, remoteArticles]);
+
+  const shouldLimitArticles = !hasActiveFilters && typeof defaultVisibleCount === 'number';
   const visibleCount = shouldLimitArticles
     ? defaultVisibleCount * visiblePageCount
     : filteredArticles.length;
@@ -90,53 +213,16 @@ export default function ArticleCategoryExplorer({
 
   return (
     <section className="space-y-6">
-      <nav
-        className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm md:p-4"
-        aria-label={getDestinationLabel(locale, 'articleCategories')}
-      >
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <button
-            type="button"
-            onClick={() => {
-              setCategory('');
-              setVisiblePageCount(1);
-            }}
-            aria-pressed={category === ''}
-            className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
-              category === ''
-                ? 'bg-blue-900 text-white shadow-sm'
-                : 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-blue-50'
-            }`}
-          >
-            {getDestinationLabel(locale, 'allArticles')}
-            <span className="ml-2 text-xs opacity-70">{articles.length}</span>
-          </button>
+      {/* 
+        Menu "Nejnovější články" bylo odstraněno dle požadavku, 
+        protože filtrace probíhá z hlavního Sub-baru navigace.
+      */}
 
-          {sortedCategories.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => {
-                setCategory(option.value);
-                setVisiblePageCount(1);
-              }}
-              aria-pressed={category === option.value}
-              className={`shrink-0 rounded-full px-4 py-2 text-sm font-extrabold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 ${
-                category === option.value
-                  ? 'bg-blue-900 text-white shadow-sm'
-                  : 'border border-slate-200 bg-slate-50 text-slate-700 hover:border-blue-200 hover:bg-blue-50'
-              }`}
-            >
-              {option.label}
-              {typeof option.count === 'number' && (
-                <span className="ml-2 text-xs opacity-70">{option.count}</span>
-              )}
-            </button>
-          ))}
+      {isLoadingRemoteArticles && hasActiveFilters && !remoteArticles ? (
+        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm">
+          {getDestinationLabel(locale, 'loading')}
         </div>
-      </nav>
-
-      {visibleArticles.length > 0 ? (
+      ) : visibleArticles.length > 0 ? (
         <>
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
             {visibleArticles.map((article, index) => (
@@ -146,6 +232,7 @@ export default function ArticleCategoryExplorer({
                 locale={locale}
                 priority={index < 3}
                 showFeaturedBadge={showFeaturedBadges}
+                fallbackIndex={index}
               />
             ))}
           </div>
@@ -155,7 +242,7 @@ export default function ArticleCategoryExplorer({
               <button
                 type="button"
                 onClick={() => setVisiblePageCount((currentCount) => currentCount + 1)}
-                className="inline-flex rounded-full border border-blue-200 bg-white px-5 py-3 text-sm font-extrabold text-blue-900 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-lg hover:shadow-blue-950/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
                 {showMoreLabel}
               </button>
@@ -163,10 +250,20 @@ export default function ArticleCategoryExplorer({
           )}
         </>
       ) : (
-        <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-sm font-medium text-slate-500 shadow-sm">
-          {getDestinationLabel(locale, 'noFilteredArticles')}
+        <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm">
+          {remoteArticlesError
+            ? getDestinationLabel(locale, 'loadError')
+            : getDestinationLabel(locale, 'noFilteredArticles')}
         </div>
       )}
     </section>
+  );
+}
+
+export default function ArticleCategoryExplorer(props: ArticleCategoryExplorerProps) {
+  return (
+    <Suspense fallback={<div className="h-40 animate-pulse bg-slate-900/40 rounded-3xl" />}>
+      <ArticleCategoryExplorerInner {...props} />
+    </Suspense>
   );
 }

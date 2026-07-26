@@ -1,18 +1,27 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Outfit } from 'next/font/google';
 import '../globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import banneru
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
+import { supportedLocales } from '@/lib/articleTypes';
+import Script from 'next/script';
+
+export async function generateStaticParams() {
+  return supportedLocales.map((locale) => ({ locale }));
+}
 
 import { Analytics } from '@vercel/analytics/next';
 
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
-const inter = Inter({ subsets: ['latin'] });
+const outfit = Outfit({
+  subsets: ['latin'],
+  variable: '--font-outfit',
+});
 
 export const metadata: Metadata = {
   title: 'Euvida | Vše o životě a cestování v Evropě',
@@ -31,23 +40,52 @@ export default async function LocaleLayout({
   // Pokud se jazyk ztratí, vnutíme 'cs' ať web nepadá
   const locale = resolvedParams?.locale || 'cs'; 
 
-  // Tohle se nám vypíše dole v terminálu!
-  console.log("➡️ LAYOUT VIDÍ JAZYK:", resolvedParams?.locale); 
+  // Nastavíme locale pro static rendering na serveru
+  setRequestLocale(locale);
 
-  const messages = await getMessages();
+  const messages = await getMessages({ locale });
 
   return (
-    <html lang={locale}>
-      <body className={`${inter.className} flex flex-col min-h-screen`}>
+    <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
+      <head>
+        <Script
+          id="adsense-loader"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2225812723448265"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="theme-switcher-inline"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.getItem('theme') === 'light') {
+                  document.documentElement.classList.add('light');
+                } else {
+                  document.documentElement.classList.remove('light');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
         <NextIntlClientProvider messages={messages} locale={locale}>
-          <Navbar /> 
-          <div className="flex-grow flex flex-col">
+          <div className="flex min-h-screen flex-col relative overflow-hidden">
+            {/* Subtle Ambient Background Gradients */}
+            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-[150px] pointer-events-none" />
+            
+            <Navbar /> 
+            <div className="flex-grow flex flex-col z-10">
             {children}
           </div>
-          <Footer locale={locale} />
-          
-          {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
-          <CookieBanner />
+            <Footer locale={locale} />
+            {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
+            <CookieBanner />
+          </div>
         </NextIntlClientProvider>
 
         {/* 🚀 GOOGLE ANALYTICS (přesunuto dovnitř body pro validní HTML) */}

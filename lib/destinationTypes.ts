@@ -97,6 +97,14 @@ export function getRegionDisplay(region: RegionDestination, locale: string) {
     nature_and_landscapes: getTranslatedField(region, 'nature_and_landscapes', locale),
     history_and_culture: getTranslatedField(region, 'history_and_culture', locale),
     transport_and_life: getTranslatedField(region, 'transport_and_life', locale),
+    temp_spring_air: getTranslatedField(region, 'temp_spring_air', locale),
+    temp_summer_air: getTranslatedField(region, 'temp_summer_air', locale),
+    temp_autumn_air: getTranslatedField(region, 'temp_autumn_air', locale),
+    temp_winter_air: getTranslatedField(region, 'temp_winter_air', locale),
+    temp_spring_sea: getTranslatedField(region, 'temp_spring_sea', locale),
+    temp_summer_sea: getTranslatedField(region, 'temp_summer_sea', locale),
+    temp_autumn_sea: getTranslatedField(region, 'temp_autumn_sea', locale),
+    temp_winter_sea: getTranslatedField(region, 'temp_winter_sea', locale),
   };
 }
 

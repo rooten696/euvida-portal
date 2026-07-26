@@ -23,9 +23,9 @@ const statusLabels: Record<CommentStatus, string> = {
 };
 
 const statusStyles: Record<CommentStatus, string> = {
-  pending: 'bg-amber-100 text-amber-800',
-  approved: 'bg-green-100 text-green-800',
-  rejected: 'bg-red-100 text-red-700',
+  pending: 'bg-amber-500/10 text-amber-200 ring-1 ring-amber-500/20',
+  approved: 'bg-emerald-500/10 text-emerald-300 ring-1 ring-emerald-500/20',
+  rejected: 'bg-rose-500/10 text-rose-300 ring-1 ring-rose-500/20',
 };
 
 function isMissingTableError(message: string): boolean {
@@ -135,26 +135,26 @@ export default function AdminCommentsPanel() {
   };
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-      <div className="flex flex-col gap-4 border-b border-slate-100 pb-4 lg:flex-row lg:items-center lg:justify-between">
+    <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20">
+      <div className="flex flex-col gap-4 border-b border-white/10 pb-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wide text-blue-700">Moderace</p>
-          <h2 className="mt-1 text-2xl font-black text-slate-950">Komentáře pod články</h2>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-xs font-bold uppercase tracking-wide text-blue-300">Moderace</p>
+          <h2 className="mt-1 text-2xl font-black text-white">Komentáře pod články</h2>
+          <p className="mt-1 text-sm text-slate-400">
             Schvaluj, zamítej nebo maž komentáře od registrovaných uživatelů.
           </p>
         </div>
         <button
           type="button"
           onClick={loadComments}
-          className="w-fit rounded-xl bg-slate-100 px-4 py-2 text-sm font-extrabold text-slate-700 transition hover:bg-slate-200"
+          className="w-fit rounded-xl bg-slate-800 px-4 py-2 text-sm font-extrabold text-slate-200 transition hover:bg-slate-700"
         >
           Obnovit
         </button>
       </div>
 
       {setupMissing ? (
-        <p className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-relaxed text-amber-900">
+        <p className="mt-4 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm font-semibold leading-relaxed text-amber-100">
           Tabulka article_comments zatím v Supabase neexistuje. Připravený SQL skript je v repozitáři v souboru supabase/article_comments.sql.
         </p>
       ) : (
@@ -167,8 +167,8 @@ export default function AdminCommentsPanel() {
                 onClick={() => setFilter(value)}
                 className={`rounded-full px-3 py-1.5 text-xs font-extrabold transition ${
                   filter === value
-                    ? 'bg-blue-900 text-white'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
                 }`}
               >
                 {value === 'all' ? 'Vše' : statusLabels[value]}
@@ -177,27 +177,27 @@ export default function AdminCommentsPanel() {
           </div>
 
           {status && (
-            <p className="mt-4 rounded-xl bg-slate-50 p-3 text-sm font-semibold text-slate-700">
+            <p className="mt-4 rounded-xl bg-slate-900 p-3 text-sm font-semibold text-slate-300 ring-1 ring-white/10">
               {status}
             </p>
           )}
 
           {loading ? (
             <div className="mt-4 space-y-3">
-              <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
-              <div className="h-24 animate-pulse rounded-xl bg-slate-100" />
+              <div className="h-24 animate-pulse rounded-xl bg-slate-900" />
+              <div className="h-24 animate-pulse rounded-xl bg-slate-900" />
             </div>
           ) : filteredComments.length > 0 ? (
             <div className="mt-4 space-y-3">
               {filteredComments.map((comment) => (
-                <article key={comment.id} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
+                <article key={comment.id} className="rounded-xl border border-white/10 bg-slate-900/80 p-4">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
                         <span className={`rounded-full px-2.5 py-1 text-xs font-extrabold ${statusStyles[comment.status]}`}>
                           {statusLabels[comment.status]}
                         </span>
-                        <p className="break-words text-sm font-extrabold text-slate-950">
+                        <p className="break-words text-sm font-extrabold text-white">
                           {comment.author_name || 'Uživatel'}
                         </p>
                       </div>
@@ -210,7 +210,7 @@ export default function AdminCommentsPanel() {
                         type="button"
                         onClick={() => updateCommentStatus(comment.id, 'approved')}
                         disabled={comment.status === 'approved'}
-                        className="rounded-lg bg-green-100 px-3 py-1.5 text-xs font-extrabold text-green-800 transition hover:bg-green-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-emerald-500/10 px-3 py-1.5 text-xs font-extrabold text-emerald-300 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Schválit
                       </button>
@@ -218,27 +218,27 @@ export default function AdminCommentsPanel() {
                         type="button"
                         onClick={() => updateCommentStatus(comment.id, 'rejected')}
                         disabled={comment.status === 'rejected'}
-                        className="rounded-lg bg-amber-100 px-3 py-1.5 text-xs font-extrabold text-amber-800 transition hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="rounded-lg bg-amber-500/10 px-3 py-1.5 text-xs font-extrabold text-amber-200 transition hover:bg-amber-500/20 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Zamítnout
                       </button>
                       <button
                         type="button"
                         onClick={() => deleteComment(comment.id)}
-                        className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-extrabold text-red-700 transition hover:bg-red-200"
+                        className="rounded-lg bg-rose-500/10 px-3 py-1.5 text-xs font-extrabold text-rose-300 transition hover:bg-rose-500/20"
                       >
                         Smazat
                       </button>
                     </div>
                   </div>
-                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-700">
+                  <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-relaxed text-slate-300">
                     {comment.content}
                   </p>
                 </article>
               ))}
             </div>
           ) : (
-            <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm font-semibold text-slate-500">
+            <p className="mt-4 rounded-xl bg-slate-900 p-4 text-sm font-semibold text-slate-500 ring-1 ring-white/10">
               Žádné komentáře pro vybraný filtr.
             </p>
           )}

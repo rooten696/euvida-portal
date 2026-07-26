@@ -206,7 +206,7 @@ export default function SmartSearch({ items, locale }: SmartSearchProps) {
         <label htmlFor="site-search" className="sr-only">
           {copy.label}
         </label>
-        <div className="flex flex-col gap-2 rounded-3xl border border-white/35 bg-white p-2 shadow-2xl shadow-slate-950/25 sm:flex-row">
+        <div className="flex flex-col gap-2 rounded-3xl border border-slate-800 bg-slate-900 p-2 shadow-2xl sm:flex-row">
           <input
             id="site-search"
             type="search"
@@ -218,7 +218,7 @@ export default function SmartSearch({ items, locale }: SmartSearchProps) {
             onFocus={() => setIsOpen(true)}
             placeholder={copy.placeholder}
             autoComplete="off"
-            className="min-h-12 flex-1 rounded-2xl border border-transparent bg-slate-50 px-4 text-base font-semibold text-slate-950 outline-none transition placeholder:text-slate-500 focus:border-blue-200 focus:bg-white focus:ring-2 focus:ring-blue-100"
+            className="min-h-12 flex-1 rounded-2xl border border-transparent bg-slate-950 px-4 text-base font-semibold text-slate-100 outline-none transition placeholder:text-slate-400 focus:border-emerald-500/50 focus:bg-slate-950"
           />
           <button
             type="submit"
@@ -233,9 +233,9 @@ export default function SmartSearch({ items, locale }: SmartSearchProps) {
       {isOpen && (
         <div
           id="site-search-results"
-          className="absolute left-0 right-0 top-full mt-3 overflow-hidden rounded-3xl border border-slate-200 bg-white text-slate-950 shadow-2xl shadow-slate-950/20"
+          className="absolute left-0 right-0 top-full mt-3 overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 text-slate-100 shadow-2xl"
         >
-          <div className="border-b border-slate-100 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-500">
+          <div className="border-b border-slate-800 px-4 py-3 text-xs font-bold uppercase tracking-wide text-slate-400">
             {hasQuery ? copy.hint : copy.suggested}
           </div>
           {results.length > 0 ? (
@@ -245,19 +245,19 @@ export default function SmartSearch({ items, locale }: SmartSearchProps) {
                   key={`${item.href}-${item.id}`}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
-                  className="block rounded-2xl px-4 py-3 transition hover:bg-blue-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                  className="block rounded-2xl px-4 py-3 transition hover:bg-slate-800 focus-visible:outline-none focus-visible:ring-emerald-500"
                 >
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-blue-800">
+                    <span className="rounded-full bg-slate-800 px-2.5 py-1 text-[11px] font-black uppercase tracking-wide text-slate-300">
                       {item.typeLabel}
                     </span>
                     {item.meta && (
-                      <span className="text-xs font-bold text-slate-500">{item.meta}</span>
+                      <span className="text-xs font-bold text-slate-400">{item.meta}</span>
                     )}
                   </div>
-                  <div className="mt-1 text-sm font-black text-slate-950">{item.title}</div>
+                  <div className="mt-1 text-sm font-black text-slate-100">{item.title}</div>
                   {item.description && (
-                    <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-600">
+                    <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-slate-400">
                       {item.description}
                     </p>
                   )}

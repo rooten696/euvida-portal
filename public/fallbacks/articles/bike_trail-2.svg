@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Bike at forest trail sign illustration">
+  <defs><linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#022c22"/><stop offset=".55" stop-color="#047857"/><stop offset="1" stop-color="#0f172a"/></linearGradient></defs>
+  <rect width="1600" height="1000" fill="url(#b)"/>
+  <path d="M0 620c220-125 442-130 663-15 170 89 330 96 510 8 150-73 260-83 427-40v427H0z" fill="#064e3b" opacity=".76"/>
+  <g fill="#14532d" opacity=".85"><path d="M90 705l90-300 92 300z"/><path d="M260 680l82-245 84 245z"/><path d="M1230 700l100-330 102 330z"/><path d="M1410 720l82-260 84 260z"/></g>
+  <rect x="760" y="385" width="38" height="410" rx="14" fill="#7c2d12"/><path d="M690 420h350l70 65-70 65H690z" fill="#92400e"/><path d="M690 560h300l70 65-70 65H690z" fill="#a16207"/>
+  <g fill="none" stroke="#020617" stroke-width="26" stroke-linecap="round" stroke-linejoin="round"><circle cx="575" cy="735" r="82"/><circle cx="860" cy="735" r="82"/><path d="M575 735l122-160 163 160M697 575h110l-58 160M696 575l-70-74"/></g>
+</svg>

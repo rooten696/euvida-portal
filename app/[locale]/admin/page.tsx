@@ -1,10 +1,10 @@
 'use client';
 
-import { supabase } from '@/lib/supabaseBrowserClient';
-import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useLocale } from 'next-intl';
 import type { Session } from '@supabase/supabase-js';
-// ODEBRÁNO: translateCountryData (už ho nepoužíváme, jedeme po částech)
-import { translateRegionData, translateSingleText } from '../../actions/translate';
+import { supabase } from '@/lib/supabaseBrowserClient';
 import ImageManager from '@/app/components/admin/ImageManager';
 import AdminCommentsPanel from '../../components/admin/AdminCommentsPanel';
 import type {
@@ -13,49 +13,6 @@ import type {
   SourceInfo,
   SupportedLocale,
 } from '@/lib/articleTypes';
-
-type CountryData = {
-  id: string;
-  name: string;
-  flag: string;
-  description: string;
-  general_info: string;
-  travel_tourism: string;
-  life_work: string;
-  culture_food: string;
-  image_url: string;
-  translations?: Record<string, Record<string, string>>;
-};
-
-type RegionData = {
-  id?: string;
-  country_id: string;
-  name: string;
-  language: string;
-  description: string;
-  image_url: string;
-  general_info?: string;
-  nature_and_landscapes?: string;
-  history_and_culture?: string;
-  transport_and_life?: string;
-  temp_spring_air?: string;
-  temp_summer_air?: string;
-  temp_autumn_air?: string;
-  temp_winter_air?: string;
-  temp_spring_sea?: string;
-  temp_summer_sea?: string;
-  temp_autumn_sea?: string;
-  temp_winter_sea?: string;
-  translations?: Record<string, Record<string, string>>;
-};
-
-type PlaceData = {
-  id?: string;
-  region_id: string;
-  name: string;
-  description: string;
-  image_url: string;
-};
 
 type ArticleImageData = {
   id: string;
@@ -67,13 +24,34 @@ type ArticleImageData = {
   source_info?: SourceInfo | null;
   published?: boolean | null;
   featured?: boolean | null;
+  country_id?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 };
 
-const emptyRegion: RegionData = {
-  country_id: '', name: '', language: '', description: '', image_url: '',
-  general_info: '', nature_and_landscapes: '', history_and_culture: '', transport_and_life: '',
-  temp_spring_air: '', temp_summer_air: '', temp_autumn_air: '', temp_winter_air: '',
-  temp_spring_sea: '', temp_summer_sea: '', temp_autumn_sea: '', temp_winter_sea: ''
+type ArticleImageFilter = 'all' | 'missing' | 'has_image' | 'unpublished';
+type LocationImageFilter = 'all' | 'missing' | 'has_image';
+type ImageAdminTab = 'articles' | 'regions' | 'countries';
+
+type ArticleImageDraft = {
+  image_url: string;
+  image_alt: LocalizedText;
+  source_info: SourceInfo;
+};
+
+type RegionImageData = {
+  id: string;
+  country_id?: string | null;
+  name: string;
+  language?: string | null;
+  image_url?: string | null;
+};
+
+type CountryImageData = {
+  id: string;
+  name: string;
+  flag?: string | null;
+  image_url?: string | null;
 };
 
 function cleanString(value: string | null | undefined): string | null {
@@ -127,65 +105,55 @@ function withPrimaryImageCredit(
   };
 }
 
+function hasRealArticleImage(article: ArticleImageData): boolean {
+  return Boolean(article.image_url && !article.image_url.includes('/default_'));
+}
+
+function hasRealImageUrl(imageUrl: string | null | undefined): boolean {
+  return Boolean(imageUrl?.trim() && !imageUrl.includes('/default_') && !imageUrl.includes('/placeholder.png'));
+}
+
+function normalizedCategory(category: string | null | undefined): string {
+  return category === 'camp' ? 'camping' : category || 'bez kategorie';
+}
+
+function createImageDraft(article: ArticleImageData): ArticleImageDraft {
+  return {
+    image_url: article.image_url ?? '',
+    image_alt: article.image_alt ?? {},
+    source_info: article.source_info ?? {},
+  };
+}
+
 export default function AdminPage() {
+  const locale = useLocale();
   const [session, setSession] = useState<Session | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [authError, setAuthError] = useState('');
-  
-  // ZMĚNA: Výchozí jazyk je nyní angličtina
-  const [sourceLang, setSourceLang] = useState<'cs' | 'en'>('en');
-  
-  const [countries, setCountries] = useState<CountryData[]>([]);
-  const [formData, setFormData] = useState<CountryData>({
-    id: '', name: '', flag: '', description: '', general_info: '', travel_tourism: '', life_work: '', culture_food: '', image_url: ''
-  });
-  const [isEditing, setIsEditing] = useState(false);
-  const [isCountryActive, setIsCountryActive] = useState(true);
-  const [countryToDelete, setCountryToDelete] = useState(false);
-
-  // STAV PRO PŘEKLAD KONKRÉTNÍHO POLE
-  const [translatingField, setTranslatingField] = useState<string | null>(null);
-
-  const [regions, setRegions] = useState<RegionData[]>([]);
-  const [regionFormData, setRegionFormData] = useState<RegionData>(emptyRegion);
-  const [isEditingRegion, setIsEditingRegion] = useState(false);
-  const [isRegionActive, setIsRegionActive] = useState(false);
-  const [regionToDelete, setRegionToDelete] = useState<string | null>(null);
-
-  const [places, setPlaces] = useState<PlaceData[]>([]);
-  const [placeFormData, setPlaceFormData] = useState<PlaceData>({
-    region_id: '', name: '', description: '', image_url: ''
-  });
-  const [isEditingPlace, setIsEditingPlace] = useState(false);
-  const [isPlaceActive, setIsPlaceActive] = useState(false);
-  const [placeToDelete, setPlaceToDelete] = useState<string | null>(null);
-
   const [articles, setArticles] = useState<ArticleImageData[]>([]);
-  const [articleImageForm, setArticleImageForm] = useState<ArticleImageData | null>(null);
-  const [isArticleImageActive, setIsArticleImageActive] = useState(false);
-
+  const [regions, setRegions] = useState<RegionImageData[]>([]);
+  const [countries, setCountries] = useState<CountryImageData[]>([]);
+  const [articleDrafts, setArticleDrafts] = useState<Record<string, ArticleImageDraft>>({});
+  const [regionImageDrafts, setRegionImageDrafts] = useState<Record<string, string>>({});
+  const [savingArticleId, setSavingArticleId] = useState<string | null>(null);
+  const [savingRegionId, setSavingRegionId] = useState<string | null>(null);
+  const [activeImageTab, setActiveImageTab] = useState<ImageAdminTab>('articles');
+  const [articleImageFilter, setArticleImageFilter] = useState<ArticleImageFilter>('all');
+  const [regionImageFilter, setRegionImageFilter] = useState<LocationImageFilter>('all');
+  const [countryImageFilter, setCountryImageFilter] = useState<LocationImageFilter>('all');
+  const [articleImageQuery, setArticleImageQuery] = useState('');
+  const [regionImageQuery, setRegionImageQuery] = useState('');
+  const [countryImageQuery, setCountryImageQuery] = useState('');
+  const [revalidateSlug, setRevalidateSlug] = useState('');
+  const [isRevalidating, setIsRevalidating] = useState(false);
   const [status, setStatus] = useState('');
-
-  const fetchCountries = useCallback(async () => {
-    const { data } = await supabase.from('countries').select('*').order('name');
-    if (data) setCountries(data as CountryData[]);
-  }, []);
-
-  const fetchRegions = useCallback(async (countryId: string) => {
-    const { data } = await supabase.from('regions').select('*').eq('country_id', countryId).order('name');
-    if (data) setRegions(data as RegionData[]);
-  }, []);
-
-  const fetchPlaces = useCallback(async (regionId: string) => {
-    const { data } = await supabase.from('places').select('*').eq('region_id', regionId).order('name');
-    if (data) setPlaces(data as PlaceData[]);
-  }, []);
 
   const fetchArticles = useCallback(async () => {
     const { data } = await supabase
       .from('articles')
-      .select('id, slug, title, category, image_url, image_alt, source_info, published, featured, created_at')
+      .select('id, slug, title, category, image_url, image_alt, source_info, published, featured, country_id, created_at, updated_at')
+      .order('updated_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
 
     if (data) {
@@ -193,317 +161,104 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchRegions = useCallback(async () => {
+    const { data } = await supabase
+      .from('regions')
+      .select('id, country_id, name, language, image_url')
+      .order('country_id', { ascending: true })
+      .order('name', { ascending: true });
+
+    if (data) {
+      setRegions(data as RegionImageData[]);
+    }
+  }, []);
+
+  const fetchCountries = useCallback(async () => {
+    const { data } = await supabase
+      .from('countries')
+      .select('id, name, flag, image_url')
+      .order('name', { ascending: true });
+
+    if (data) {
+      setCountries(data as CountryImageData[]);
+    }
+  }, []);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-    fetchCountries();
     fetchArticles();
+    fetchRegions();
+    fetchCountries();
     return () => subscription.unsubscribe();
-  }, [fetchArticles, fetchCountries]);
+  }, [fetchArticles, fetchCountries, fetchRegions]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setAuthError('');
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setAuthError('❌ Špatný e-mail nebo heslo.');
+    if (error) setAuthError('Špatný e-mail nebo heslo.');
   };
 
-  const handleLogout = async () => { await supabase.auth.signOut(); };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
   };
 
-  const selectCountry = (country: CountryData) => {
-    setFormData(country);
-    setIsEditing(true);
-    setIsCountryActive(false);
-    setCountryToDelete(false);
-    
-    setRegionFormData({ ...emptyRegion, country_id: country.id });
-    setIsEditingRegion(false);
-    setIsRegionActive(false);
-    setRegionToDelete(null);
+  const getArticleDraft = (article: ArticleImageData): ArticleImageDraft =>
+    articleDrafts[article.id] ?? createImageDraft(article);
 
-    setPlaces([]);
-    setPlaceFormData({ region_id: '', name: '', description: '', image_url: '' });
-    setIsEditingPlace(false);
-    setIsPlaceActive(false);
-    setPlaceToDelete(null);
-
-    fetchRegions(country.id);
-    setStatus('');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  const updateArticleDraft = (
+    article: ArticleImageData,
+    updater: (draft: ArticleImageDraft) => ArticleImageDraft
+  ) => {
+    setArticleDrafts((current) => ({
+      ...current,
+      [article.id]: updater(current[article.id] ?? createImageDraft(article)),
+    }));
   };
 
-  const resetForm = () => {
-    setFormData({ id: '', name: '', flag: '', description: '', general_info: '', travel_tourism: '', life_work: '', culture_food: '', image_url: '' });
-    setIsEditing(false);
-    setIsCountryActive(true);
-    setCountryToDelete(false);
-    setRegions([]);
-    setPlaces([]);
-    setStatus('');
+  const updateArticleImageUrl = (article: ArticleImageData, value: string) => {
+    updateArticleDraft(article, (draft) => ({ ...draft, image_url: value }));
   };
 
-  // ULOŽENÍ ZEMĚ (Bez masivního překladu, jen ukládáme base data)
-  const handleSubmit = async (e: React.FormEvent) => {
+  const updateArticleAlt = (article: ArticleImageData, locale: SupportedLocale, value: string) => {
+    updateArticleDraft(article, (draft) => ({
+      ...draft,
+      image_alt: {
+        ...(draft.image_alt ?? {}),
+        [locale]: value,
+      },
+    }));
+  };
+
+  const updateArticleCredit = (article: ArticleImageData, credit: ImageCredit) => {
+    updateArticleDraft(article, (draft) => ({
+      ...draft,
+      source_info: withPrimaryImageCredit(draft.source_info, credit),
+    }));
+  };
+
+  const getRegionImageDraft = (region: RegionImageData): string =>
+    regionImageDrafts[region.id] ?? region.image_url ?? '';
+
+  const updateRegionImageUrl = (region: RegionImageData, value: string) => {
+    setRegionImageDrafts((current) => ({
+      ...current,
+      [region.id]: value,
+    }));
+  };
+
+  const handleArticleImageSubmit = async (e: React.FormEvent, article: ArticleImageData) => {
     e.preventDefault();
-    setStatus('Ukládám do databáze...');
-    try {
-      const { error } = await supabase.from('countries').upsert([formData]);
-      if (error) throw error;
-      
-      setStatus('✅ Země uložena!');
-      setIsCountryActive(false);
-      fetchCountries();
-    } catch (err: unknown) {
-      if (err instanceof Error) setStatus('❌ Chyba: ' + err.message);
-      else setStatus('❌ Neočekávaná chyba při ukládání.');
-    }
-  };
-
-  // FUNKCE PRO PŘEKLAD KONKRÉTNÍHO POLE
-  const handleTranslateSingle = async (field: keyof CountryData) => {
-    if (!formData.id) {
-      setStatus('❌ Nejdřív musíš zemi uložit do databáze!');
-      return;
-    }
-    
-    setTranslatingField(field);
-    setStatus(`🤖 Překládám pole: ${field}...`);
-
-    try {
-      const textToTranslate = formData[field] as string;
-      const newTranslations = await translateSingleText(textToTranslate, sourceLang);
-
-      const updatedTranslations = { ...(formData.translations || {}) };
-      
-      // Sloučení nových překladů s těmi stávajícími v JSONu
-      Object.entries(newTranslations).forEach(([lang, translatedText]) => {
-        if (!updatedTranslations[lang]) updatedTranslations[lang] = {};
-        updatedTranslations[lang][field] = translatedText;
-      });
-
-      // Uložení rovnou do databáze (updatujeme jen JSON)
-      const { error } = await supabase
-        .from('countries')
-        .update({ translations: updatedTranslations })
-        .eq('id', formData.id);
-
-      if (error) throw error;
-
-      // Aktualizace lokálního stavu (aby se hned vybarvily vlaječky)
-      setFormData(prev => ({ ...prev, translations: updatedTranslations }));
-      setStatus(`✅ Pole bylo úspěšně přeloženo a uloženo!`);
-      
-      // Aktualizovat i seznam zemí vlevo
-      fetchCountries();
-    } catch (err: unknown) {
-      if (err instanceof Error) setStatus('❌ Chyba překladu: ' + err.message);
-    } finally {
-      setTranslatingField(null);
-    }
-  };
-
-  const deleteCountry = async (id: string) => {
-    const { error } = await supabase.from('countries').delete().eq('id', id);
-    if (!error) {
-      resetForm();
-      fetchCountries();
-      setStatus('🗑️ Země byla kompletně smazána.');
-    }
-  };
-
-  // NÁPOVĚDNÉ VLAJEČKY PRO JEDNOTLIVÁ POLE
-  const renderFlags = (field: keyof CountryData) => {
-    const targets = sourceLang === 'en' ? ['cs', 'de', 'es', 'fr'] : ['en', 'de', 'es', 'fr'];
-    const flags: Record<string, string> = { cs: '🇨🇿', en: '🇬🇧', de: '🇩🇪', es: '🇪🇸', fr: '🇫🇷' };
-    
-    return (
-      <div className="flex gap-1 mr-3">
-        {targets.map(lang => {
-          const isTranslated = !!formData.translations?.[lang]?.[field];
-          return (
-            <span 
-              key={lang} 
-              className={`text-sm transition-all ${isTranslated ? 'opacity-100 grayscale-0' : 'opacity-30 grayscale'}`} 
-              title={isTranslated ? `Přeloženo do ${lang.toUpperCase()}` : `Chybí překlad do ${lang.toUpperCase()}`}
-            >
-              {flags[lang]}
-            </span>
-          );
-        })}
-      </div>
-    );
-  };
-
-  const handleRegionChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setRegionFormData({ ...regionFormData, [e.target.name]: e.target.value });
-  };
-
-  const selectRegion = (region: RegionData) => {
-    setRegionFormData(region);
-    setIsEditingRegion(true);
-    setIsRegionActive(false);
-    setRegionToDelete(null);
-
-    setPlaceFormData({ region_id: region.id!, name: '', description: '', image_url: '' });
-    setIsEditingPlace(false);
-    setIsPlaceActive(false);
-    setPlaceToDelete(null);
-
-    fetchPlaces(region.id!);
-    setStatus('');
-  };
-
-  const handleNewRegion = () => {
-    setRegionFormData({ ...emptyRegion, country_id: formData.id });
-    setIsEditingRegion(false);
-    setIsRegionActive(true);
-    setRegionToDelete(null);
-    setPlaces([]);
-  };
-
-  const handleRegionSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('🤖 DeepL překládá region...');
-    
-    try {
-      const allTexts = await translateRegionData({
-        name: regionFormData.name,
-        description: regionFormData.description,
-        general_info: regionFormData.general_info || '',
-        nature_and_landscapes: regionFormData.nature_and_landscapes || '',
-        history_and_culture: regionFormData.history_and_culture || '',
-        transport_and_life: regionFormData.transport_and_life || ''
-      }, sourceLang);
-
-      const { cs, ...translations } = allTexts;
-
-      const dataToSave = {
-        ...regionFormData,
-        name: cs.name,
-        description: cs.description,
-        general_info: cs.general_info,
-        nature_and_landscapes: cs.nature_and_landscapes,
-        history_and_culture: cs.history_and_culture,
-        transport_and_life: cs.transport_and_life,
-        translations: translations
-      };
-
-      setStatus('Ukládám region...');
-      const { error } = await supabase.from('regions').upsert([dataToSave]);
-      if (error) throw error;
-      
-      setStatus('✅ Region přeložen a uložen!');
-      fetchRegions(formData.id);
-      setIsRegionActive(false);
-
-    } catch (err: unknown) {
-      if (err instanceof Error) setStatus('❌ Chyba: ' + err.message);
-      else setStatus('❌ Neočekávaná chyba.');
-    }
-  };
-
-  const deleteRegion = async (id: string) => {
-    await supabase.from('regions').delete().eq('id', id);
-    fetchRegions(formData.id);
-    handleNewRegion();
-    setStatus('🗑️ Region smazán.');
-  };
-
-  const handlePlaceChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setPlaceFormData({ ...placeFormData, [e.target.name]: e.target.value });
-  };
-
-  const selectPlace = (place: PlaceData) => {
-    setPlaceFormData(place);
-    setIsEditingPlace(true);
-    setIsPlaceActive(false);
-    setPlaceToDelete(null);
-    setStatus('');
-  };
-
-  const handleNewPlace = () => {
-    setPlaceFormData({ region_id: regionFormData.id!, name: '', description: '', image_url: '' });
-    setIsEditingPlace(false);
-    setIsPlaceActive(true);
-    setPlaceToDelete(null);
-  };
-
-  const handlePlaceSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus('Ukládám místo...');
-    const { error } = await supabase.from('places').upsert([placeFormData]);
-    if (error) setStatus('❌ Chyba místa: ' + error.message);
-    else {
-      setStatus('✅ Místo uloženo!');
-      fetchPlaces(regionFormData.id!);
-      setIsPlaceActive(false);
-    }
-  };
-
-  const deletePlace = async (id: string) => {
-    await supabase.from('places').delete().eq('id', id);
-    fetchPlaces(regionFormData.id!);
-    handleNewPlace();
-    setStatus('🗑️ Místo smazáno.');
-  };
-
-  const selectArticleImage = (article: ArticleImageData) => {
-    setArticleImageForm({
-      ...article,
-      image_url: article.image_url ?? '',
-      image_alt: article.image_alt ?? {},
-      source_info: article.source_info ?? {},
-    });
-    setIsArticleImageActive(false);
-    setStatus('');
-  };
-
-  const updateArticleImageUrl = (value: string) => {
-    setArticleImageForm((prev) => (prev ? { ...prev, image_url: value } : prev));
-  };
-
-  const updateArticleAlt = (locale: SupportedLocale, value: string) => {
-    setArticleImageForm((prev) =>
-      prev
-        ? {
-            ...prev,
-            image_alt: {
-              ...(prev.image_alt ?? {}),
-              [locale]: value,
-            },
-          }
-        : prev
-    );
-  };
-
-  const updateArticleCredit = (credit: ImageCredit) => {
-    setArticleImageForm((prev) =>
-      prev
-        ? {
-            ...prev,
-            source_info: withPrimaryImageCredit(prev.source_info, credit),
-          }
-        : prev
-    );
-  };
-
-  const handleArticleImageSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!articleImageForm) {
-      return;
-    }
 
     setStatus('Ukládám obrázek článku...');
+    setSavingArticleId(article.id);
+    const draft = getArticleDraft(article);
 
-    const primaryCredit = cleanImageCredit(articleImageForm.source_info?.images?.[0]);
-    const remainingImages = articleImageForm.source_info?.images?.slice(1) ?? [];
+    const primaryCredit = cleanImageCredit(draft.source_info?.images?.[0]);
+    const remainingImages = draft.source_info?.images?.slice(1) ?? [];
     const sourceInfoToSave: SourceInfo = {
-      ...(articleImageForm.source_info ?? {}),
+      ...(draft.source_info ?? {}),
       images: primaryCredit
         ? [primaryCredit, ...remainingImages]
         : remainingImages.length > 0
@@ -511,502 +266,692 @@ export default function AdminPage() {
           : null,
     };
 
-    const { error } = await supabase
-      .from('articles')
-      .update({
-        image_url: cleanString(articleImageForm.image_url),
-        image_alt: cleanLocalizedText(articleImageForm.image_alt),
-        source_info: sourceInfoToSave,
-      })
-      .eq('id', articleImageForm.id);
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
 
-    if (error) {
-      setStatus('Chyba obrázku článku: ' + error.message);
+    if (!accessToken) {
+      setStatus('Nejsi přihlášený.');
+      setSavingArticleId(null);
+      return;
+    }
+
+    const response = await fetch('/api/admin/article-image', {
+      method: 'PATCH',
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: article.id,
+        slug: article.slug,
+        image_url: cleanString(draft.image_url),
+        image_alt: cleanLocalizedText(draft.image_alt),
+        source_info: sourceInfoToSave,
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; error?: string }
+      | null;
+
+    if (!response.ok || !payload?.ok) {
+      setStatus('Chyba obrázku článku: ' + (payload?.error ?? `HTTP ${response.status}`));
+      setSavingArticleId(null);
       return;
     }
 
     setStatus('Obrázek článku uložen.');
-    setIsArticleImageActive(false);
-    fetchArticles();
+    setArticleDrafts((current) => {
+      const next = { ...current };
+      delete next[article.id];
+      return next;
+    });
+    await fetchArticles();
+    setSavingArticleId(null);
   };
+
+  const handleRegionImageSubmit = async (e: React.FormEvent, region: RegionImageData) => {
+    e.preventDefault();
+
+    setStatus('Ukládám obrázek regionu...');
+    setSavingRegionId(region.id);
+    const imageUrl = getRegionImageDraft(region);
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      setStatus('Nejsi přihlášený.');
+      setSavingRegionId(null);
+      return;
+    }
+
+    const response = await fetch('/api/admin/region-image', {
+      method: 'PATCH',
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        id: region.id,
+        image_url: cleanString(imageUrl),
+      }),
+    });
+    const payload = (await response.json().catch(() => null)) as
+      | { ok?: boolean; error?: string }
+      | null;
+
+    if (!response.ok || !payload?.ok) {
+      setStatus('Chyba obrázku regionu: ' + (payload?.error ?? `HTTP ${response.status}`));
+      setSavingRegionId(null);
+      return;
+    }
+
+    setStatus('Obrázek regionu uložen.');
+    setRegionImageDrafts((current) => {
+      const next = { ...current };
+      delete next[region.id];
+      return next;
+    });
+    await fetchRegions();
+    setSavingRegionId(null);
+  };
+
+  const handleRevalidate = async () => {
+    setIsRevalidating(true);
+    setStatus('Obnovuji cache webu...');
+
+    try {
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
+
+      if (!accessToken) {
+        throw new Error('Nejsi přihlášený.');
+      }
+
+      const response = await fetch('/api/revalidate', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({ slug: cleanString(revalidateSlug) }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok) {
+        throw new Error(payload?.error ?? `HTTP ${response.status}`);
+      }
+
+      setStatus(
+        revalidateSlug.trim()
+          ? `Cache obnovena včetně článku: ${revalidateSlug.trim()}`
+          : 'Cache hlavních výpisů obnovena.'
+      );
+    } catch (error) {
+      setStatus(
+        `Cache se nepodařilo obnovit: ${
+          error instanceof Error ? error.message : 'neznámá chyba'
+        }`
+      );
+    } finally {
+      setIsRevalidating(false);
+    }
+  };
+
+  const articleImageCounts = useMemo(() => ({
+    all: articles.length,
+    missing: articles.filter((article) => !hasRealArticleImage(article)).length,
+    has_image: articles.filter(hasRealArticleImage).length,
+    unpublished: articles.filter((article) => !article.published).length,
+  }), [articles]);
+
+  const regionImageCounts = useMemo(() => ({
+    all: regions.length,
+    missing: regions.filter((region) => !hasRealImageUrl(region.image_url)).length,
+    has_image: regions.filter((region) => hasRealImageUrl(region.image_url)).length,
+  }), [regions]);
+
+  const countryImageCounts = useMemo(() => ({
+    all: countries.length,
+    missing: countries.filter((country) => !hasRealImageUrl(country.image_url)).length,
+    has_image: countries.filter((country) => hasRealImageUrl(country.image_url)).length,
+  }), [countries]);
+
+  const filteredArticles = useMemo(() => articles.filter((article) => {
+    if (articleImageFilter === 'missing' && hasRealArticleImage(article)) return false;
+    if (articleImageFilter === 'has_image' && !hasRealArticleImage(article)) return false;
+    if (articleImageFilter === 'unpublished' && article.published) return false;
+
+    const query = articleImageQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    return [article.title, article.slug, article.category, article.country_id]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query));
+  }), [articleImageFilter, articleImageQuery, articles]);
+
+  const filteredRegions = useMemo(() => regions.filter((region) => {
+    if (regionImageFilter === 'missing' && hasRealImageUrl(region.image_url)) return false;
+    if (regionImageFilter === 'has_image' && !hasRealImageUrl(region.image_url)) return false;
+
+    const query = regionImageQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    return [region.name, region.id, region.country_id, region.language]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query));
+  }), [regionImageFilter, regionImageQuery, regions]);
+
+  const filteredCountries = useMemo(() => countries.filter((country) => {
+    if (countryImageFilter === 'missing' && hasRealImageUrl(country.image_url)) return false;
+    if (countryImageFilter === 'has_image' && !hasRealImageUrl(country.image_url)) return false;
+
+    const query = countryImageQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    return [country.name, country.id]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(query));
+  }), [countries, countryImageFilter, countryImageQuery]);
+
+  const articleImageFilterOptions: { id: ArticleImageFilter; label: string; count: number }[] = [
+    { id: 'all', label: 'Vše', count: articleImageCounts.all },
+    { id: 'missing', label: 'Bez reálného obrázku', count: articleImageCounts.missing },
+    { id: 'has_image', label: 'S obrázkem', count: articleImageCounts.has_image },
+    { id: 'unpublished', label: 'Skryté', count: articleImageCounts.unpublished },
+  ];
+
+  const regionImageFilterOptions: { id: LocationImageFilter; label: string; count: number }[] = [
+    { id: 'all', label: 'Vše', count: regionImageCounts.all },
+    { id: 'missing', label: 'Bez obrázku', count: regionImageCounts.missing },
+    { id: 'has_image', label: 'S obrázkem', count: regionImageCounts.has_image },
+  ];
+
+  const countryImageFilterOptions: { id: LocationImageFilter; label: string; count: number }[] = [
+    { id: 'all', label: 'Vše', count: countryImageCounts.all },
+    { id: 'missing', label: 'Bez obrázku', count: countryImageCounts.missing },
+    { id: 'has_image', label: 'S obrázkem', count: countryImageCounts.has_image },
+  ];
+
+  const imageAdminTabs: { id: ImageAdminTab; label: string; count: number }[] = [
+    { id: 'articles', label: 'Obrázky článků', count: articleImageCounts.missing },
+    { id: 'regions', label: 'Obr. regionů', count: regionImageCounts.missing },
+    { id: 'countries', label: 'Obr. zemí', count: countryImageCounts.missing },
+  ];
 
   if (!session) {
     return (
-      <main className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-        <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-lg max-w-sm w-full">
-          <h1 className="text-2xl font-bold text-blue-900 mb-6 text-center">Přihlášení</h1>
+      <main className="min-h-screen bg-slate-950 px-4 py-16 text-slate-100">
+        <form onSubmit={handleLogin} className="mx-auto max-w-sm rounded-2xl border border-white/10 bg-slate-900/80 p-8 shadow-2xl">
+          <h1 className="mb-6 text-center text-2xl font-black text-white">Přihlášení do administrace</h1>
           <div className="space-y-4">
-            <input type="email" placeholder="E-mail" value={email} onChange={(e) => setEmail(e.target.value)} required className="w-full border rounded-lg p-3" />
-            <input type="password" placeholder="Heslo" value={password} onChange={(e) => setPassword(e.target.value)} required className="w-full border rounded-lg p-3" />
-            {authError && <p className="text-red-600 text-sm text-center">{authError}</p>}
-            <button type="submit" className="w-full bg-blue-900 text-white font-bold py-3 rounded-xl">Vstoupit</button>
+            <input
+              type="email"
+              placeholder="E-mail"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none focus:border-emerald-400/70"
+            />
+            <input
+              type="password"
+              placeholder="Heslo"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full rounded-xl border border-white/10 bg-slate-950 px-4 py-3 text-sm text-slate-100 outline-none focus:border-emerald-400/70"
+            />
+            {authError && <p className="text-center text-sm text-rose-300">{authError}</p>}
+            <button type="submit" className="w-full rounded-xl bg-emerald-500 py-3 font-black text-slate-950 hover:bg-emerald-400">
+              Vstoupit
+            </button>
           </div>
         </form>
       </main>
     );
   }
 
-  const inputClass = "w-full border rounded-lg p-3 text-sm transition-colors disabled:bg-transparent disabled:border-transparent disabled:text-gray-800 disabled:font-medium disabled:px-0 bg-white focus:ring-2 focus:ring-blue-200 outline-none";
-
   return (
-    <main className="min-h-screen bg-gray-50 text-gray-900 py-12 px-4">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
-        
-        {/* LEVÝ PANEL: Země */}
-        <div className="lg:col-span-1 space-y-4">
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 sticky top-24">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-bold text-xl text-blue-900">Země</h2>
-              <button onClick={resetForm} className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-bold">+ Nová</button>
+    <main className="min-h-screen bg-slate-950 px-4 py-10 text-slate-100">
+      <div className="mx-auto max-w-7xl space-y-8">
+        <section className="rounded-3xl border border-white/10 bg-slate-950/70 p-6 shadow-2xl md:p-8">
+          <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-400">Administrace</p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
+                Správa obrázků a komentářů
+              </h1>
+              <p className="mt-2 text-sm font-medium text-slate-400">
+                Přihlášen jako: {session.user.email}
+              </p>
             </div>
-            <div className="space-y-2 max-h-[70vh] overflow-y-auto pr-2">
-              {countries.map(c => (
-                <div key={c.id} onClick={() => selectCountry(c)} className={`p-3 rounded-xl border cursor-pointer transition-all flex items-center gap-3 ${formData.id === c.id ? 'border-blue-500 bg-blue-50 shadow-sm' : 'border-gray-100 hover:bg-gray-50'}`}>
-                  <span className="text-2xl">{c.flag}</span>
-                  <span className="font-medium flex-grow truncate">{c.name}</span>
-                </div>
-              ))}
-            </div>
-            <button onClick={handleLogout} className="w-full mt-6 text-gray-400 text-xs hover:underline">Odhlásit se</button>
-          </div>
-        </div>
 
-        {/* PRAVÝ PANEL: Formuláře */}
-        <div className="lg:col-span-3 space-y-8">
-          
-          {/* PŘEPÍNAČ JAZYKA */}
-          <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="font-bold text-blue-900">V jakém jazyce vkládáš texty?</div>
-            <div className="flex bg-gray-100 rounded-lg p-1 w-full sm:w-auto">
-              <button
-                onClick={() => setSourceLang('en')}
-                className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-colors ${sourceLang === 'en' ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-              >
-                🇬🇧 Angličtina
-              </button>
-              <button
-                onClick={() => setSourceLang('cs')}
-                className={`flex-1 sm:flex-none px-6 py-2 rounded-md font-bold text-sm transition-colors ${sourceLang === 'cs' ? 'bg-white text-blue-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
-              >
-                🇨🇿 Čeština
-              </button>
-            </div>
-          </div>
-
-          <AdminCommentsPanel />
-
-          <section className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-            <div className="flex flex-col gap-3 border-b pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-2xl font-bold text-blue-900">Obrázky článků</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Náhled, externí URL, upload, alt texty a licence pro detail článku.
-                </p>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <div className="flex rounded-2xl border border-white/10 bg-slate-900 p-1">
+                <input
+                  type="text"
+                  value={revalidateSlug}
+                  onChange={(event) => setRevalidateSlug(event.target.value)}
+                  placeholder="slug článku volitelně"
+                  className="min-w-0 rounded-xl bg-slate-950 px-4 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-600"
+                />
+                <button
+                  type="button"
+                  onClick={handleRevalidate}
+                  disabled={isRevalidating}
+                  className="rounded-xl bg-slate-800 px-4 py-2 text-sm font-black text-white transition hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isRevalidating ? 'Obnovuji...' : 'Obnovit cache'}
+                </button>
               </div>
+
+              <Link
+                href={`/${locale}/admin/data`}
+                className="rounded-2xl border border-white/10 bg-slate-900 px-5 py-3 text-center text-sm font-black text-slate-200 transition hover:bg-slate-800"
+              >
+                Správa obsahu
+              </Link>
+
               <button
                 type="button"
-                onClick={fetchArticles}
-                className="rounded-full bg-blue-50 px-4 py-2 text-sm font-bold text-blue-700 hover:bg-blue-100"
+                onClick={handleLogout}
+                className="rounded-2xl bg-white px-5 py-3 text-sm font-black text-slate-950 transition hover:bg-slate-200"
               >
-                Obnovit články
+                Odhlásit se
               </button>
             </div>
+          </div>
+        </section>
 
-            <div className="grid gap-5 xl:grid-cols-[280px_1fr]">
-              <div className="max-h-[34rem] space-y-2 overflow-y-auto rounded-2xl border border-gray-100 bg-gray-50 p-2">
-                {articles.length > 0 ? (
-                  articles.map((article) => (
-                    <button
-                      key={article.id}
-                      type="button"
-                      onClick={() => selectArticleImage(article)}
-                      className={`w-full rounded-xl border p-3 text-left transition-all ${
-                        articleImageForm?.id === article.id
-                          ? 'border-blue-500 bg-white shadow-sm'
-                          : 'border-transparent hover:bg-white hover:shadow-sm'
-                      }`}
-                    >
-                      <span className="block truncate text-sm font-black text-gray-900">
-                        {article.title}
-                      </span>
-                      <span className="mt-1 block truncate text-xs font-medium text-gray-500">
-                        /article/{article.slug}
-                      </span>
-                      <span className="mt-2 inline-flex rounded-full bg-gray-100 px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-gray-600">
-                        {article.image_url ? 'má obrázek' : 'bez obrázku'}
-                      </span>
-                    </button>
-                  ))
-                ) : (
-                  <p className="p-4 text-sm font-medium text-gray-500">
-                    Zatím nejsou načtené žádné články.
-                  </p>
-                )}
+        <AdminCommentsPanel />
+
+        <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl shadow-slate-950/20">
+          <div className="grid gap-2 md:grid-cols-3">
+            {imageAdminTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveImageTab(tab.id)}
+                className={`rounded-2xl px-4 py-3 text-left text-sm font-black transition ${
+                  activeImageTab === tab.id
+                    ? 'bg-emerald-500 text-slate-950'
+                    : 'bg-slate-950 text-slate-300 hover:bg-slate-800'
+                }`}
+              >
+                {tab.label}
+                <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">
+                  bez obr.: {tab.count}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {activeImageTab === 'articles' && (
+        <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20 md:p-8">
+          <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-blue-300">Obrázky článků</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Náhled, externí URL, upload, alt texty a licence pro detail článku.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={fetchArticles}
+              className="rounded-full bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-50"
+            >
+              Obnovit články
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-900/70 p-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {articleImageFilterOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setArticleImageFilter(option.id)}
+                  className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
+                    articleImageFilter === option.id
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {option.label} <span className="opacity-75">({option.count})</span>
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="search"
+              value={articleImageQuery}
+              onChange={(event) => setArticleImageQuery(event.target.value)}
+              placeholder="Hledat podle názvu, slug, země nebo kategorie"
+              className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-emerald-400/70 focus:ring-2 focus:ring-emerald-500/20 xl:w-96"
+            />
+          </div>
+
+          <p className="mt-5 text-sm text-slate-500">
+            Zobrazeno {filteredArticles.length} z {articles.length}. Články bez URL používají fallback a v DB nemají uložený reálný obrázek.
+          </p>
+
+          <div className="mt-6 grid gap-4">
+            {filteredArticles.length > 0 ? (
+              filteredArticles.map((article) => {
+                const draft = getArticleDraft(article);
+                const isSaving = savingArticleId === article.id;
+
+                return (
+                  <article
+                    key={article.id}
+                    className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 transition"
+                  >
+                    <form onSubmit={(event) => handleArticleImageSubmit(event, article)} className="space-y-4">
+                      <div className="flex min-w-0 flex-col text-left">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-black text-white">{article.title.trim()}</h3>
+                          <span className="rounded-full bg-slate-800 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-slate-300">
+                            {normalizedCategory(article.category)}
+                          </span>
+                          {article.country_id && (
+                            <span className="rounded-full bg-blue-500/10 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-blue-300">
+                              {article.country_id}
+                            </span>
+                          )}
+                          {!hasRealArticleImage(article) && (
+                            <span className="rounded-full bg-amber-500/10 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-amber-200">
+                              Bez reálného obrázku
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-2 truncate text-xs font-semibold text-blue-400">
+                          /article/{article.slug}
+                        </p>
+                      </div>
+
+                      <ImageManager
+                        title="Hlavní obrázek článku"
+                        entityType="articles"
+                        entityId={article.slug}
+                        imageUrl={draft.image_url}
+                        compact
+                        altValues={draft.image_alt ?? {}}
+                        credit={draft.source_info?.images?.[0] ?? null}
+                        onImageUrlChange={(value) => updateArticleImageUrl(article, value)}
+                        onAltChange={(locale, value) => updateArticleAlt(article, locale, value)}
+                        onCreditChange={(credit) => updateArticleCredit(article, credit)}
+                        onStatus={setStatus}
+                      />
+
+                      <div className="flex gap-3">
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="flex-grow rounded-xl bg-emerald-500 py-3 font-black text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isSaving ? 'Ukládám...' : 'Uložit URL'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isSaving}
+                          onClick={() =>
+                            setArticleDrafts((current) => ({
+                              ...current,
+                              [article.id]: createImageDraft(article),
+                            }))
+                          }
+                          className="rounded-xl bg-slate-800 px-5 font-bold text-slate-300 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Vrátit
+                        </button>
+                      </div>
+                    </form>
+                  </article>
+                );
+              })
+            ) : (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900 p-8 text-center text-sm font-medium text-slate-500">
+                Pro vybraný filtr nejsou žádné články.
               </div>
+            )}
+          </div>
+        </section>
+        )}
 
-              {articleImageForm ? (
-                <form onSubmit={handleArticleImageSubmit} className="space-y-4">
-                  <div className="flex flex-col gap-3 rounded-2xl bg-blue-50/60 p-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div>
-                      <h3 className="text-lg font-black text-blue-950">
-                        {articleImageForm.title}
+        {activeImageTab === 'regions' && (
+        <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20 md:p-8">
+          <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-blue-300">Obrázky regionů</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Samostatná správa hlavních obrázků regionů. Nemíchá se s obrázky článků.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={fetchRegions}
+              className="rounded-full bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-50"
+            >
+              Obnovit regiony
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-900/70 p-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {regionImageFilterOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setRegionImageFilter(option.id)}
+                  className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
+                    regionImageFilter === option.id
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {option.label} <span className="opacity-75">({option.count})</span>
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="search"
+              value={regionImageQuery}
+              onChange={(event) => setRegionImageQuery(event.target.value)}
+              placeholder="Hledat podle názvu, ID, země nebo jazyka"
+              className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-emerald-400/70 focus:ring-2 focus:ring-emerald-500/20 xl:w-96"
+            />
+          </div>
+
+          <p className="mt-5 text-sm text-slate-500">
+            Zobrazeno {filteredRegions.length} z {regions.length}. U regionů se ukládá jen `image_url`.
+          </p>
+
+          <div className="mt-6 grid gap-4">
+            {filteredRegions.length > 0 ? (
+              filteredRegions.map((region) => {
+                const draftImageUrl = getRegionImageDraft(region);
+                const isSaving = savingRegionId === region.id;
+
+                return (
+                  <article
+                    key={region.id}
+                    className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 transition"
+                  >
+                    <form onSubmit={(event) => handleRegionImageSubmit(event, region)} className="space-y-4">
+                      <div className="flex min-w-0 flex-col text-left">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="text-lg font-black text-white">{region.name.trim()}</h3>
+                          {region.country_id && (
+                            <span className="rounded-full bg-blue-500/10 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-blue-300">
+                              {region.country_id}
+                            </span>
+                          )}
+                          {region.language && (
+                            <span className="rounded-full bg-slate-800 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-slate-300">
+                              {region.language}
+                            </span>
+                          )}
+                          {!hasRealImageUrl(region.image_url) && (
+                            <span className="rounded-full bg-amber-500/10 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-amber-200">
+                              Bez obrázku
+                            </span>
+                          )}
+                        </div>
+                        <p className="mt-2 truncate text-xs font-semibold text-blue-400">
+                          /region/{region.id}
+                        </p>
+                      </div>
+
+                      <ImageManager
+                        title="Hlavní obrázek regionu"
+                        entityType="regions"
+                        entityId={region.id}
+                        imageUrl={draftImageUrl}
+                        compact
+                        onImageUrlChange={(value) => updateRegionImageUrl(region, value)}
+                        onStatus={setStatus}
+                      />
+
+                      <div className="flex gap-3">
+                        <button
+                          type="submit"
+                          disabled={isSaving}
+                          className="flex-grow rounded-xl bg-emerald-500 py-3 font-black text-slate-950 hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {isSaving ? 'Ukládám...' : 'Uložit URL regionu'}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={isSaving}
+                          onClick={() =>
+                            setRegionImageDrafts((current) => ({
+                              ...current,
+                              [region.id]: region.image_url ?? '',
+                            }))
+                          }
+                          className="rounded-xl bg-slate-800 px-5 font-bold text-slate-300 hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          Vrátit
+                        </button>
+                      </div>
+                    </form>
+                  </article>
+                );
+              })
+            ) : (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900 p-8 text-center text-sm font-medium text-slate-500">
+                Pro vybraný filtr nejsou žádné regiony.
+              </div>
+            )}
+          </div>
+        </section>
+        )}
+
+        {activeImageTab === 'countries' && (
+        <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20 md:p-8">
+          <div className="flex flex-col gap-3 border-b border-white/10 pb-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-black text-blue-300">Obrázky zemí</h2>
+              <p className="mt-1 text-sm text-slate-400">
+                Zatím jen přehledové okno bez úprav a ukládání.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={fetchCountries}
+              className="rounded-full bg-white px-4 py-2 text-sm font-bold text-blue-800 hover:bg-blue-50"
+            >
+              Obnovit země
+            </button>
+          </div>
+
+          <div className="mt-6 flex flex-col gap-3 rounded-xl border border-white/10 bg-slate-900/70 p-4 xl:flex-row xl:items-center xl:justify-between">
+            <div className="flex flex-wrap gap-2">
+              {countryImageFilterOptions.map((option) => (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setCountryImageFilter(option.id)}
+                  className={`rounded-lg px-3 py-2 text-sm font-bold transition ${
+                    countryImageFilter === option.id
+                      ? 'bg-emerald-500 text-slate-950'
+                      : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                  }`}
+                >
+                  {option.label} <span className="opacity-75">({option.count})</span>
+                </button>
+              ))}
+            </div>
+
+            <input
+              type="search"
+              value={countryImageQuery}
+              onChange={(event) => setCountryImageQuery(event.target.value)}
+              placeholder="Hledat podle názvu nebo ISO kódu"
+              className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-emerald-400/70 focus:ring-2 focus:ring-emerald-500/20 xl:w-96"
+            />
+          </div>
+
+          <p className="mt-5 text-sm text-slate-500">
+            Zobrazeno {filteredCountries.length} z {countries.length}. Editace zemí je záměrně vypnutá.
+          </p>
+
+          <div className="mt-6 grid gap-4">
+            {filteredCountries.length > 0 ? (
+              filteredCountries.map((country) => (
+                <article
+                  key={country.id}
+                  className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 transition"
+                >
+                  <div className="mb-4 flex min-w-0 flex-col text-left">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-lg font-black text-white">
+                        {country.flag ? `${country.flag} ` : ''}{country.name.trim()}
                       </h3>
-                      <p className="mt-1 text-xs font-semibold text-blue-700">
-                        {articleImageForm.category || 'bez kategorie'} · {articleImageForm.slug}
-                      </p>
+                      <span className="rounded-full bg-blue-500/10 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-blue-300">
+                        {country.id}
+                      </span>
+                      {!hasRealImageUrl(country.image_url) && (
+                        <span className="rounded-full bg-amber-500/10 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-amber-200">
+                          Bez obrázku
+                        </span>
+                      )}
                     </div>
-                    {!isArticleImageActive && (
-                      <button
-                        type="button"
-                        onClick={() => setIsArticleImageActive(true)}
-                        className="rounded-xl bg-blue-900 px-4 py-2 text-sm font-bold text-white hover:bg-blue-800"
-                      >
-                        Upravit obrázek článku
-                      </button>
-                    )}
+                    <p className="mt-2 truncate text-xs font-semibold text-blue-400">
+                      /country/{country.id}
+                    </p>
                   </div>
 
                   <ImageManager
-                    title="Hlavní obrázek článku"
-                    entityType="articles"
-                    entityId={articleImageForm.slug}
-                    imageUrl={articleImageForm.image_url}
-                    disabled={!isArticleImageActive}
-                    altValues={articleImageForm.image_alt ?? {}}
-                    credit={articleImageForm.source_info?.images?.[0] ?? null}
-                    onImageUrlChange={updateArticleImageUrl}
-                    onAltChange={updateArticleAlt}
-                    onCreditChange={updateArticleCredit}
+                    title="Hlavní obrázek země"
+                    entityType="countries"
+                    entityId={country.id}
+                    imageUrl={country.image_url ?? ''}
+                    compact
+                    disabled
+                    onImageUrlChange={() => undefined}
                     onStatus={setStatus}
                   />
-
-                  {isArticleImageActive && (
-                    <div className="flex gap-3">
-                      <button
-                        type="submit"
-                        className="flex-grow rounded-xl bg-blue-900 py-3 font-bold text-white hover:bg-blue-800"
-                      >
-                        Uložit obrázek článku
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const original = articles.find(
-                            (article) => article.id === articleImageForm.id
-                          );
-                          if (original) selectArticleImage(original);
-                          setIsArticleImageActive(false);
-                        }}
-                        className="rounded-xl bg-gray-100 px-5 font-bold text-gray-700 hover:bg-gray-200"
-                      >
-                        Zrušit
-                      </button>
-                    </div>
-                  )}
-                </form>
-              ) : (
-                <div className="flex min-h-72 items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-8 text-center text-sm font-medium text-gray-500">
-                  Vyber článek vlevo a uprav jeho obrázek, popisek a licenci.
-                </div>
-              )}
-            </div>
-          </section>
-
-          {/* FORMULÁŘ ZEMĚ */}
-          <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-            <div className="flex justify-between items-center border-b pb-4">
-              <h2 className="text-2xl font-bold text-blue-900">
-                {isEditing ? formData.name : 'Přidat novou zemi'}
-              </h2>
-              {isEditing && !isCountryActive && (
-                <button type="button" onClick={() => setIsCountryActive(true)} className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-blue-100">
-                  ✏️ Upravit zemi
-                </button>
-              )}
-            </div>
-            
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 bg-gray-50/50 p-4 rounded-xl">
-              <div className="col-span-2 lg:col-span-1">
-                <label className="text-xs font-bold text-gray-400 uppercase">ID (ESP)</label>
-                <input required disabled={isEditing} name="id" value={formData.id} onChange={handleChange} className={inputClass} />
-              </div>
-              <div className="col-span-2 lg:col-span-1">
-                <div className="flex justify-between items-end mb-1">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Název</label>
-                  {isEditing && (
-                    <div className="flex items-center">
-                      {renderFlags('name')}
-                      <button type="button" onClick={() => handleTranslateSingle('name')} disabled={translatingField === 'name'} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200">
-                        {translatingField === 'name' ? '...' : '🤖'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <input required disabled={!isCountryActive} name="name" value={formData.name} onChange={handleChange} className={inputClass} />
-              </div>
-              <div className="col-span-2 lg:col-span-1">
-                <label className="text-xs font-bold text-gray-400 uppercase">Vlajka</label>
-                <input required disabled={!isCountryActive} name="flag" value={formData.flag} onChange={handleChange} className={inputClass} />
-              </div>
-              <div className="col-span-2 lg:col-span-4">
-                <ImageManager
-                  title="Obrázek země"
-                  entityType="countries"
-                  entityId={formData.id}
-                  imageUrl={formData.image_url}
-                  disabled={!isCountryActive}
-                  onImageUrlChange={(value) =>
-                    setFormData((prev) => ({ ...prev, image_url: value }))
-                  }
-                  onStatus={setStatus}
-                />
-              </div>
-              
-              <div className="col-span-2 lg:col-span-4">
-                <div className="flex justify-between items-end mb-1">
-                  <label className="text-xs font-bold text-gray-400 uppercase">Popis</label>
-                  {isEditing && (
-                    <div className="flex items-center">
-                      {renderFlags('description')}
-                      <button type="button" onClick={() => handleTranslateSingle('description')} disabled={translatingField === 'description' || !formData.description} className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 disabled:opacity-50">
-                        {translatingField === 'description' ? 'Překládám...' : '🤖 Přeložit'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-                <input required disabled={!isCountryActive} name="description" value={formData.description} onChange={handleChange} className={inputClass} />
-              </div>
-
-              {['general_info', 'travel_tourism', 'life_work', 'culture_food'].map(field => {
-                const key = field as keyof CountryData;
-                return (
-                  <div key={field} className="col-span-2 lg:col-span-2 mt-4 border-t border-gray-100 pt-4">
-                    <div className="flex justify-between items-end mb-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase">{field.replace('_', ' ')}</label>
-                      {/* ZDE JE KOUZLO: Vlaječky a nezávislé tlačítko přeložit */}
-                      {isEditing && (
-                        <div className="flex items-center">
-                          {renderFlags(key)}
-                          <button 
-                            type="button" 
-                            onClick={() => handleTranslateSingle(key)} 
-                            disabled={translatingField === key || !formData[key]} 
-                            className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200 disabled:opacity-50 font-bold"
-                          >
-                            {translatingField === key ? 'Překládám...' : '🤖 Přeložit'}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    <textarea disabled={!isCountryActive} name={field} value={formData[key] as string} onChange={handleChange} rows={6} className={inputClass} />
-                  </div>
-                );
-              })}
-            </div>
-            
-            {isCountryActive && (
-              <div className="flex gap-4 pt-4">
-                <button type="submit" className="flex-grow bg-blue-900 text-white font-bold py-4 rounded-xl hover:bg-blue-800">Uložit základní texty</button>
-                {isEditing && (
-                  !countryToDelete ? (
-                    <button type="button" onClick={() => setCountryToDelete(true)} className="bg-gray-100 text-gray-600 px-6 rounded-xl font-bold hover:bg-gray-200">Smazat</button>
-                  ) : (
-                    <button type="button" onClick={() => deleteCountry(formData.id)} className="bg-red-500 text-white px-6 rounded-xl font-bold hover:bg-red-600 animate-pulse">Opravdu?</button>
-                  )
-                )}
+                </article>
+              ))
+            ) : (
+              <div className="rounded-2xl border border-dashed border-white/10 bg-slate-900 p-8 text-center text-sm font-medium text-slate-500">
+                Pro vybraný filtr nejsou žádné země.
               </div>
             )}
-          </form>
+          </div>
+        </section>
+        )}
 
-          {/* DRUHÉ PATRO: REGIONY */}
-          {isEditing && (
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-              <div className="flex justify-between items-center border-b pb-4">
-                <h2 className="text-2xl font-bold text-yellow-600 flex items-center gap-2"><span>🗺️</span> Regiony</h2>
-                <button onClick={handleNewRegion} className="bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full font-bold text-sm hover:bg-yellow-200">+ Nový region</button>
-              </div>
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {regions.map(r => (
-                  <div key={r.id} onClick={() => selectRegion(r)} className={`p-3 rounded-xl border cursor-pointer flex justify-between items-center transition-all ${regionFormData.id === r.id ? 'border-yellow-500 bg-yellow-50 shadow-sm' : 'border-gray-100 hover:bg-gray-50'}`}>
-                    <div>
-                      <div className="font-bold truncate">{r.name}</div>
-                      <div className="text-xs text-gray-500">{r.language}</div>
-                    </div>
-                    {regionToDelete === r.id ? (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); deleteRegion(r.id!); }} className="text-white bg-red-500 px-2 py-1 rounded text-xs font-bold shadow-md animate-pulse">Opravdu?</button>
-                    ) : (
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setRegionToDelete(r.id!); }} className="text-red-300 hover:text-red-500 text-lg">🗑️</button>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {(isEditingRegion || isRegionActive) && (
-                <form onSubmit={handleRegionSubmit} className="bg-yellow-50/50 p-6 rounded-xl border border-yellow-100 space-y-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold text-yellow-800">{isEditingRegion ? `Region: ${regionFormData.name}` : 'Nový region'}</h3>
-                    {isEditingRegion && !isRegionActive && (
-                      <button type="button" onClick={() => setIsRegionActive(true)} className="text-blue-600 text-sm font-bold hover:underline">✏️ Upravit</button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2 md:col-span-1">
-                      <label className="text-xs font-bold text-yellow-700 uppercase">Název regionu</label>
-                      <input required disabled={!isRegionActive} name="name" value={regionFormData.name} onChange={handleRegionChange} className={inputClass} />
-                    </div>
-                    <div className="col-span-2 md:col-span-1">
-                      <label className="text-xs font-bold text-yellow-700 uppercase">Jazyk(y)</label>
-                      <input disabled={!isRegionActive} name="language" value={regionFormData.language} onChange={handleRegionChange} className={inputClass} />
-                    </div>
-                    <div className="col-span-2">
-                      <ImageManager
-                        title="Obrázek regionu"
-                        entityType="regions"
-                        entityId={regionFormData.id ?? regionFormData.name}
-                        imageUrl={regionFormData.image_url}
-                        disabled={!isRegionActive}
-                        onImageUrlChange={(value) =>
-                          setRegionFormData((prev) => ({ ...prev, image_url: value }))
-                        }
-                        onStatus={setStatus}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <label className="text-xs font-bold text-yellow-700 uppercase">Krátký popis</label>
-                      <textarea required disabled={!isRegionActive} name="description" value={regionFormData.description} onChange={handleRegionChange} rows={2} className={inputClass} />
-                    </div>
-                    
-                    <div className="col-span-2 mt-4 pt-4 border-t border-yellow-200 grid grid-cols-2 gap-4">
-                      <h4 className="col-span-2 font-bold text-yellow-800 text-xs uppercase tracking-wider">📝 Detailní texty</h4>
-                      
-                      <div className="col-span-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Obecně o regionu</label>
-                        <textarea disabled={!isRegionActive} name="general_info" value={regionFormData.general_info || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Výlety a příroda</label>
-                        <textarea disabled={!isRegionActive} name="nature_and_landscapes" value={regionFormData.nature_and_landscapes || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Gastronomie a atmosféra</label>
-                        <textarea disabled={!isRegionActive} name="history_and_culture" value={regionFormData.history_and_culture || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase">Pro koho to je a děti</label>
-                        <textarea disabled={!isRegionActive} name="transport_and_life" value={regionFormData.transport_and_life || ''} onChange={handleRegionChange} rows={4} className={inputClass} />
-                      </div>
-                    </div>
-
-                    <div className="col-span-2 mt-4 pt-4 border-t border-yellow-200">
-                      <h4 className="font-bold text-yellow-800 mb-4 text-xs uppercase tracking-wider">🌡️ Průměrné teploty (°C)</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
-                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">🌸 Jaro</label>
-                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 18-22)" name="temp_spring_air" value={regionFormData.temp_spring_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} title="Vzduch" />
-                          <input disabled={!isRegionActive} placeholder="Moře (např. 16)" name="temp_spring_sea" value={regionFormData.temp_spring_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} title="Moře" />
-                        </div>
-                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
-                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">☀️ Léto</label>
-                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 28-35)" name="temp_summer_air" value={regionFormData.temp_summer_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
-                          <input disabled={!isRegionActive} placeholder="Moře (např. 24)" name="temp_summer_sea" value={regionFormData.temp_summer_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
-                        </div>
-                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
-                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">🍂 Podzim</label>
-                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 20-25)" name="temp_autumn_air" value={regionFormData.temp_autumn_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
-                          <input disabled={!isRegionActive} placeholder="Moře (např. 21)" name="temp_autumn_sea" value={regionFormData.temp_autumn_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
-                        </div>
-                        <div className="space-y-2 bg-white/50 p-3 rounded-lg">
-                          <label className="text-xs font-bold text-gray-500 flex items-center gap-1">❄️ Zima</label>
-                          <input disabled={!isRegionActive} placeholder="Vzduch (např. 12-16)" name="temp_winter_air" value={regionFormData.temp_winter_air || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
-                          <input disabled={!isRegionActive} placeholder="Moře (např. 14)" name="temp_winter_sea" value={regionFormData.temp_winter_sea || ''} onChange={handleRegionChange} className={`${inputClass} !p-2 !text-xs`} />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {isRegionActive && (
-                    <div className="flex gap-3 mt-4">
-                      <button type="submit" className="flex-grow bg-yellow-500 text-white font-bold py-3 rounded-lg hover:bg-yellow-600">Uložit a přeložit</button>
-                      <button type="button" onClick={() => { setIsRegionActive(false); if (!isEditingRegion) handleNewRegion(); }} className="bg-gray-200 text-gray-700 px-4 rounded-lg font-bold hover:bg-gray-300">Zrušit</button>
-                    </div>
-                  )}
-                </form>
-              )}
-            </div>
-          )}
-
-          {/* TŘETÍ PATRO: MÍSTA */}
-          {isEditingRegion && regionFormData.id && (
-            <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 space-y-6">
-              <div className="flex justify-between items-center border-b pb-4">
-                <h2 className="text-xl font-bold text-green-700 flex items-center gap-2"><span>📍</span> Místa ({regionFormData.name})</h2>
-                <button onClick={handleNewPlace} className="bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold text-sm hover:bg-green-200">+ Nové místo</button>
-              </div>
-              
-              {places.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {places.map(p => (
-                    <div key={p.id} onClick={() => selectPlace(p)} className={`p-3 rounded-xl border cursor-pointer flex justify-between items-center transition-all ${placeFormData.id === p.id ? 'border-green-500 bg-green-50 shadow-sm' : 'border-gray-100 hover:bg-gray-50'}`}>
-                      <div className="font-bold truncate">{p.name}</div>
-                      {placeToDelete === p.id ? (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); deletePlace(p.id!); }} className="text-white bg-red-500 px-2 py-1 rounded text-xs font-bold shadow-md animate-pulse">Opravdu?</button>
-                      ) : (
-                        <button type="button" onClick={(e) => { e.stopPropagation(); setPlaceToDelete(p.id!); }} className="text-red-300 hover:text-red-500 text-lg">🗑️</button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-400 text-sm italic">Zatím tu nejsou žádná místa. Přidejte první!</p>
-              )}
-
-              {(isEditingPlace || isPlaceActive) && (
-                <form onSubmit={handlePlaceSubmit} className="bg-green-50/50 p-6 rounded-xl border border-green-100 space-y-4">
-                  <div className="flex justify-between items-center mb-2">
-                    <h3 className="font-bold text-green-800">{isEditingPlace ? `Místo: ${placeFormData.name}` : 'Nové místo'}</h3>
-                    {isEditingPlace && !isPlaceActive && (
-                      <button type="button" onClick={() => setIsPlaceActive(true)} className="text-blue-600 text-sm font-bold hover:underline">✏️ Upravit</button>
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <input required disabled={!isPlaceActive} placeholder="Název (např. Sevilla)" name="name" value={placeFormData.name} onChange={handlePlaceChange} className={`col-span-2 ${inputClass}`} />
-                    <div className="col-span-2">
-                      <ImageManager
-                        title="Obrázek místa"
-                        entityType="places"
-                        entityId={placeFormData.id ?? placeFormData.name}
-                        imageUrl={placeFormData.image_url}
-                        disabled={!isPlaceActive}
-                        onImageUrlChange={(value) =>
-                          setPlaceFormData((prev) => ({ ...prev, image_url: value }))
-                        }
-                        onStatus={setStatus}
-                      />
-                    </div>
-                    <textarea required disabled={!isPlaceActive} placeholder="Popis místa..." name="description" value={placeFormData.description} onChange={handlePlaceChange} rows={3} className={`col-span-2 ${inputClass}`} />
-                  </div>
-                  
-                  {isPlaceActive && (
-                    <div className="flex gap-3 mt-4">
-                      <button type="submit" className="flex-grow bg-green-600 text-white font-bold py-3 rounded-lg hover:bg-green-700">Uložit místo</button>
-                      <button type="button" onClick={() => { setIsPlaceActive(false); if (!isEditingPlace) handleNewPlace(); }} className="bg-gray-200 text-gray-700 px-4 rounded-lg font-bold hover:bg-gray-300">Zrušit</button>
-                    </div>
-                  )}
-                </form>
-              )}
-            </div>
-          )}
-
-          {status && (
-            <div className={`p-4 rounded-lg font-bold sticky bottom-4 z-50 text-center shadow-lg transition-all ${status.includes('❌') ? 'bg-red-100 text-red-800 border border-red-200' : 'bg-green-100 text-green-800 border border-green-200'}`}>
-              {status}
-            </div>
-          )}
-
-        </div>
+        {status && (
+          <div className="sticky bottom-4 z-50 rounded-2xl border border-white/10 bg-slate-900 px-5 py-4 text-center text-sm font-black text-slate-100 shadow-2xl">
+            {status}
+          </div>
+        )}
       </div>
     </main>
   );

@@ -1,6 +1,7 @@
 import createMiddleware from 'next-intl/middleware';
+import { NextRequest, NextResponse } from 'next/server';
 
-export default createMiddleware({
+const intlMiddleware = createMiddleware({
   // Všech 5 jazyků, které podporujeme
   locales: ['cs', 'en', 'de', 'es', 'fr'],
   
@@ -11,12 +12,35 @@ export default createMiddleware({
   localePrefix: 'always'
 });
 
+const blockedCrawlerPatterns = [
+  /AhrefsBot/i,
+  /SemrushBot/i,
+  /MJ12bot/i,
+  /DotBot/i,
+  /BLEXBot/i,
+  /DataForSeoBot/i,
+  /PetalBot/i,
+  /Bytespider/i,
+  /ClaudeBot/i,
+  /GPTBot/i,
+  /CCBot/i,
+  /PerplexityBot/i,
+  /Amazonbot/i,
+];
+
+export default function proxy(request: NextRequest) {
+  const userAgent = request.headers.get('user-agent') ?? '';
+
+  if (blockedCrawlerPatterns.some((pattern) => pattern.test(userAgent))) {
+    return new NextResponse('Forbidden', { status: 403 });
+  }
+
+  return intlMiddleware(request);
+}
+
 export const config = {
-  // Tento matcher říká, které cesty má tento "překladač" hlídat
+  // Tento matcher říká, které cesty má tento "překladač" hlídat - filtrovat pouze stránkové cesty
   matcher: [
-    '/', 
-    '/(cs|en|de|es|fr)/:path*',
-    // Ignorujeme systémové věci a obrázky
-    '/((?!api|_next|_vercel|.*\\..*).*)'
+    '/((?!api|_next|_vercel|flags|.*\\..*).*)'
   ]
 };

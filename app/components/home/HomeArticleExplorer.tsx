@@ -14,6 +14,8 @@ type HomeArticleExplorerProps = {
   articles: ArticleCardData[];
   categories: FilterOption[];
   defaultVisibleCount?: number;
+  countryNamesById?: Record<string, string>;
+  regionNamesById?: Record<string, string>;
 };
 
 export default function HomeArticleExplorer({
@@ -21,6 +23,8 @@ export default function HomeArticleExplorer({
   articles,
   categories,
   defaultVisibleCount,
+  countryNamesById,
+  regionNamesById,
 }: HomeArticleExplorerProps) {
   return (
     <ArticleCategoryExplorer
@@ -29,6 +33,8 @@ export default function HomeArticleExplorer({
       categories={categories}
       defaultVisibleCount={defaultVisibleCount}
       showFeaturedBadges={false}
+      countryNamesById={countryNamesById}
+      regionNamesById={regionNamesById}
     />
   );
 }

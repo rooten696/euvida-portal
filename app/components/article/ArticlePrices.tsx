@@ -150,12 +150,12 @@ function PriceRow({
   const { label, text, note, value: price, official, officialBadge } = formatted;
 
   return (
-    <li className="overflow-hidden rounded-xl border border-green-100 bg-white/85 p-3 shadow-sm shadow-green-950/5">
+    <li className="overflow-hidden rounded-xl border border-white/5 bg-slate-800/50 p-3 shadow-sm">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             {label && (
-              <h3 className="break-words text-sm font-bold leading-snug text-slate-950">
+              <h3 className="break-words text-sm font-bold leading-snug text-white">
                 {label}
               </h3>
             )}
@@ -165,19 +165,19 @@ function PriceRow({
             />
           </div>
           {text && (
-            <p className={`break-words text-sm leading-relaxed text-slate-700 ${label ? 'mt-1' : ''}`}>
+            <p className={`break-words text-sm leading-relaxed text-slate-300 ${label ? 'mt-1' : ''}`}>
               {text}
             </p>
           )}
         </div>
         {price && (
-          <span className="max-w-full break-words rounded-full bg-green-900 px-3 py-1 text-sm font-extrabold text-white shadow-sm sm:shrink-0">
+          <span className="max-w-full break-words rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-sm font-extrabold text-emerald-400 shadow-sm backdrop-blur sm:shrink-0">
             {price}
           </span>
         )}
       </div>
       {note && (
-        <p className="mt-2 break-words text-sm leading-relaxed text-green-900/85">
+        <p className="mt-2 break-words text-sm leading-relaxed text-slate-400">
           {note}
         </p>
       )}
@@ -190,7 +190,15 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
   const currentLocale = normalizeLocale(locale);
   const items = sortBySortOrder(pricesInfo?.items ?? []);
 
-  if (!pricesInfo || items.length === 0) {
+  const summary = getLocalizedValue(pricesInfo?.summary, currentLocale);
+  const seasonNote = getLocalizedValue(pricesInfo?.season_note, currentLocale);
+  const notes = getLocalizedValue(pricesInfo?.notes, currentLocale);
+  const lastChecked = formatDate(pricesInfo?.last_checked, currentLocale);
+  const bookingUrl = pricesInfo?.booking_url;
+
+  const hasContent = items.length > 0 || summary || bookingUrl;
+
+  if (!pricesInfo || !hasContent) {
     return null;
   }
 
@@ -198,27 +206,39 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
     priceItemIsVisible(item, currentLocale, pricesInfo.currency)
   );
 
-  if (visibleItems.length === 0) {
+  const groups = groupPriceItems(visibleItems, currentLocale);
+
+  if (visibleItems.length === 0 && !summary && !bookingUrl) {
     return null;
   }
 
-  const summary = getLocalizedValue(pricesInfo.summary, currentLocale);
-  const seasonNote = getLocalizedValue(pricesInfo.season_note, currentLocale);
-  const notes = getLocalizedValue(pricesInfo.notes, currentLocale);
-  const lastChecked = formatDate(pricesInfo.last_checked, currentLocale);
-  const groups = groupPriceItems(visibleItems, currentLocale);
-
   return (
-    <section className="rounded-2xl border border-green-100 bg-green-50/70 p-5 shadow-sm">
-      <h2 className="text-lg font-extrabold text-green-950">
+    <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
+      <h2 className="text-lg font-extrabold text-emerald-400">
         {getArticleLabel(currentLocale, 'prices')}
       </h2>
 
-      {summary && <p className="mt-2 text-sm leading-relaxed text-slate-700">{summary}</p>}
+      {summary && <p className="mt-2 text-sm leading-relaxed text-slate-300">{summary}</p>}
+
+      {bookingUrl && (
+        <div className="mt-3 flex flex-wrap items-baseline gap-1 text-sm text-slate-300">
+          <span className="font-bold text-white">
+            {getArticleLabel(currentLocale, 'bookingUrl')}
+          </span>{' '}
+          <a
+            href={bookingUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-emerald-400 hover:text-emerald-300 underline font-semibold break-all"
+          >
+            {bookingUrl}
+          </a>
+        </div>
+      )}
 
       {seasonNote && (
-        <p className="mt-3 rounded-xl bg-white/75 p-3 text-sm leading-relaxed text-green-900">
-          <span className="font-bold">{getArticleLabel(currentLocale, 'seasonNote')}:</span>{' '}
+        <p className="mt-3 rounded-xl bg-slate-800/50 p-3 text-sm leading-relaxed text-slate-300">
+          <span className="font-bold text-white">{getArticleLabel(currentLocale, 'seasonNote')}:</span>{' '}
           {seasonNote}
         </p>
       )}
@@ -227,7 +247,7 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
         {groups.map((group) => (
           <section key={group.key} className="min-w-0">
             {group.label && (
-              <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-green-900">
+              <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-emerald-400">
                 {group.label}
               </h3>
             )}
@@ -247,10 +267,10 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
       </div>
 
       {(notes || lastChecked) && (
-        <div className="mt-4 space-y-1 border-t border-green-100 pt-4 text-sm leading-relaxed text-slate-600">
+        <div className="mt-4 space-y-1 border-t border-white/10 pt-4 text-sm leading-relaxed text-slate-400">
           {notes && (
             <p>
-              <span className="font-semibold text-slate-800">
+              <span className="font-semibold text-slate-300">
                 {getArticleLabel(currentLocale, 'note')}:
               </span>{' '}
               {notes}
@@ -258,7 +278,7 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
           )}
           {lastChecked && (
             <p>
-              <span className="font-semibold text-slate-800">
+              <span className="font-semibold text-slate-300">
                 {getArticleLabel(currentLocale, 'checked')}:
               </span>{' '}
               {lastChecked}

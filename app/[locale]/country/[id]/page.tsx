@@ -29,6 +29,24 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
+export async function generateStaticParams() {
+  const { data: countries } = await supabase
+    .from('countries')
+    .select('id');
+
+  if (!countries) return [];
+
+  const params: { locale: string; id: string }[] = [];
+  for (const locale of supportedLocales) {
+    for (const country of countries) {
+      if (country.id) {
+        params.push({ locale, id: country.id });
+      }
+    }
+  }
+  return params;
+}
+
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
   'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
@@ -149,7 +167,7 @@ function hasMarkdownContent(
   return Boolean(section.content?.trim());
 }
 
-export const revalidate = 3600;
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,
@@ -286,7 +304,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
   const countrySections = countrySectionCandidates.filter(hasMarkdownContent);
 
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950">
+    <main className="min-h-screen bg-slate-950 text-slate-100">
       <section className="relative overflow-hidden bg-slate-950">
         {displayCountry.image_url ? (
           <SafeImage
@@ -295,14 +313,14 @@ export default async function CountryPage({ params }: CountryPageParams) {
             fill
             priority
             sizes="100vw"
-            className="object-cover opacity-75"
-            fallbackClassName="opacity-75"
+            className="object-cover"
+            fallbackClassName=""
             fallbackLabel={displayCountry.name}
           />
         ) : (
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-950 via-slate-900 to-emerald-950" />
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-950/40 via-slate-900 to-slate-950" />
         )}
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-50 via-slate-950/50 to-slate-950/20" />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
 
         <div className="relative mx-auto flex min-h-[58vh] max-w-6xl flex-col px-4 pb-12 pt-8 md:px-6 md:pb-16">
           <div className="flex items-start justify-between gap-4">
@@ -322,18 +340,17 @@ export default async function CountryPage({ params }: CountryPageParams) {
             </nav>
 
             <div className="flex shrink-0 flex-col items-end gap-3 sm:flex-row sm:items-center">
-              <LanguageSwitcher currentLocale={locale} />
               <FavoriteButton countryId={displayCountry.id} locale={locale} />
             </div>
           </div>
 
           <div className="mt-auto max-w-4xl pt-20 text-white">
             <div className="mb-4 flex flex-wrap items-center gap-3">
-              <p className="inline-flex rounded-full bg-yellow-300 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-yellow-950">
+              <p className="inline-flex rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-400">
                 {getDestinationLabel(locale, 'countryGuide')}
               </p>
               {displayCountry.flag && (
-                <span className="rounded-full bg-white/15 px-3 py-1 text-xl shadow-sm backdrop-blur">
+                <span className="rounded-full bg-white/10 border border-white/20 px-3 py-1 text-xl shadow-sm backdrop-blur">
                   {displayCountry.flag}
                 </span>
               )}
@@ -348,20 +365,20 @@ export default async function CountryPage({ params }: CountryPageParams) {
             )}
 
             <dl className="mt-8 grid max-w-2xl grid-cols-2 gap-3 sm:grid-cols-3">
-              <div className="rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur">
-                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/90 p-4 text-white shadow-xl backdrop-blur">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
                   {getDestinationLabel(locale, 'regionsCount')}
                 </dt>
                 <dd className="mt-1 text-3xl font-black">{regionCount}</dd>
               </div>
-              <div className="rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur">
-                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+              <div className="rounded-2xl border border-white/10 bg-slate-900/90 p-4 text-white shadow-xl backdrop-blur">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
                   {getDestinationLabel(locale, 'articlesCount')}
                 </dt>
                 <dd className="mt-1 text-3xl font-black">{articleCount}</dd>
               </div>
-              <div className="col-span-2 rounded-2xl border border-white/15 bg-white/90 p-4 text-slate-950 shadow-lg shadow-slate-950/10 backdrop-blur sm:col-span-1">
-                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-500">
+              <div className="col-span-2 rounded-2xl border border-white/10 bg-slate-900/90 p-4 text-white shadow-xl backdrop-blur sm:col-span-1">
+                <dt className="text-xs font-extrabold uppercase tracking-wide text-slate-400">
                   {getDestinationLabel(locale, 'articleCategories')}
                 </dt>
                 <dd className="mt-1 text-3xl font-black">{categories.length}</dd>
@@ -378,7 +395,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
             className={countrySections.length > 0 || regions.length > 0 ? 'mb-16' : undefined}
           >
             <div className="mb-6">
-              <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
                 {getDestinationLabel(locale, 'countryArticles')}
               </h2>
             </div>
@@ -410,10 +427,10 @@ export default async function CountryPage({ params }: CountryPageParams) {
         {regions.length > 0 && (
           <section id="regions">
             <div className="mb-6">
-              <p className="text-sm font-bold uppercase tracking-wide text-blue-700">
+              <p className="text-sm font-bold uppercase tracking-wide text-emerald-400">
                 {getDestinationLabel(locale, 'routes')}
               </p>
-              <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              <h2 className="mt-2 text-3xl font-black tracking-tight text-white md:text-4xl">
                 {getDestinationLabel(locale, 'regions')}
               </h2>
             </div>
@@ -448,7 +465,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
         {articleCards.length === 0 && countrySections.length === 0 && (
           <section id="articles">
             <div className="mb-6">
-              <h2 className="text-3xl font-black tracking-tight text-slate-950 md:text-4xl">
+              <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
                 {getDestinationLabel(locale, 'countryArticles')}
               </h2>
             </div>

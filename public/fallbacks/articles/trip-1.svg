@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Hiking viewpoint illustration">
+  <defs><linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f172a"/><stop offset=".5" stop-color="#0f766e"/><stop offset="1" stop-color="#164e63"/></linearGradient></defs>
+  <rect width="1600" height="1000" fill="url(#t)"/>
+  <circle cx="1230" cy="190" r="130" fill="#fde68a" opacity=".26"/>
+  <path d="M0 595l245-205 230 150 275-260 300 280 210-145 340 240v345H0z" fill="#064e3b" opacity=".9"/>
+  <path d="M0 755c260-88 445-76 670-18 265 68 490 48 930-120v383H0z" fill="#020617" opacity=".36"/>
+  <rect x="610" y="545" width="300" height="310" rx="54" fill="#f97316"/><path d="M650 545c10-88 65-135 145-135s135 47 145 135" stroke="#fef3c7" stroke-width="42" fill="none" stroke-linecap="round"/><circle cx="760" cy="700" r="68" fill="#0f172a" opacity=".75"/><path d="M760 632l28 68-28 68-28-68z" fill="#f8fafc"/>
+</svg>
