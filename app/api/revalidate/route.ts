@@ -9,6 +9,7 @@ const supabase = createClient(
 );
 
 function revalidateCommonPaths(slug?: string | null) {
+  revalidatePath('/', 'layout');
   revalidatePath('/sitemap.xml');
 
   for (const locale of supportedLocales) {

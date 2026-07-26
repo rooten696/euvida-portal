@@ -26,6 +26,7 @@ type ArticleImageData = {
   featured?: boolean | null;
   country_id?: string | null;
   created_at?: string | null;
+  updated_at?: string | null;
 };
 
 type ArticleImageFilter = 'all' | 'missing' | 'has_image' | 'unpublished';
@@ -151,7 +152,8 @@ export default function AdminPage() {
   const fetchArticles = useCallback(async () => {
     const { data } = await supabase
       .from('articles')
-      .select('id, slug, title, category, image_url, image_alt, source_info, published, featured, country_id, created_at')
+      .select('id, slug, title, category, image_url, image_alt, source_info, published, featured, country_id, created_at, updated_at')
+      .order('updated_at', { ascending: false, nullsFirst: false })
       .order('created_at', { ascending: false });
 
     if (data) {

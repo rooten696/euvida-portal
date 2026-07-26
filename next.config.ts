@@ -4,6 +4,7 @@ import type { NextConfig } from 'next';
 const withNextIntl = createNextIntlPlugin('./i18n.ts');
 
 const nextConfig: NextConfig = {
+  allowedDevOrigins: ['100.64.47.108', '38.19.198.49'],
   images: {
     remotePatterns: [
       {
