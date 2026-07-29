@@ -15,12 +15,6 @@ import { getArticleLabel } from '@/lib/articleLabels';
 import { getCategoryLabel, getLocalizedArticle } from '@/lib/articleDisplay';
 import { formatDate } from '@/lib/articleFormatting';
 import {
-  CZECH_ARTICLE_TARGET_ORIGIN,
-  getCzechArticleUrl,
-  isCzechArticleLocation,
-  shouldRedirectCzechArticleToEuvidaCz,
-} from '@/lib/articleRouting';
-import {
   getLocationName,
   normalizeLocale,
   stripFirstMarkdownH1,
@@ -33,9 +27,8 @@ import {
 } from '@/lib/articleTypes';
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
 import Link from 'next/link';
-import { notFound, permanentRedirect } from 'next/navigation';
+import { notFound } from 'next/navigation';
 import type { ComponentPropsWithoutRef } from 'react';
 import { cache } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -128,10 +121,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     return { title: 'Článek nenalezen | Euvida' };
   }
 
-  const { country } = await getLocationData(article);
-  const articleSiteUrl = isCzechArticleLocation(article, country)
-    ? CZECH_ARTICLE_TARGET_ORIGIN
-    : siteUrl;
   const localizedArticle = getLocalizedArticle(article, locale);
   const description =
     localizedArticle.excerpt ??
@@ -140,7 +129,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const metadataImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
 
   return {
-    metadataBase: new URL(articleSiteUrl),
+    metadataBase: new URL(siteUrl),
     title: `${localizedArticle.title} | Euvida`,
     description,
     alternates: {
@@ -327,12 +316,6 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   const { country, region } = await getLocationData(article);
-  const requestHeaders = await headers();
-  const requestHost = requestHeaders.get('x-forwarded-host') ?? requestHeaders.get('host');
-
-  if (shouldRedirectCzechArticleToEuvidaCz(requestHost, article, country)) {
-    permanentRedirect(getCzechArticleUrl(locale, slug));
-  }
 
   const localizedArticle = getLocalizedArticle(article, locale);
   const { title, excerpt, content: rawContent, imageAlt } = localizedArticle;
