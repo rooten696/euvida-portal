@@ -1,6 +1,7 @@
 import type { ArticleCardData } from '@/lib/articleCards';
 import { getArticleHref } from '@/lib/articleRouting';
 import {
+  getArticleFallbackAlt,
   getArticleFallbackImage,
   getArticleImageWithFallback,
   isMissingArticleImage,
@@ -48,7 +49,7 @@ export default function ArticleCard({
   const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug, fallbackIndex);
   const imageUrl = getArticleImageWithFallback(article.imageUrl, article.category, article.slug, fallbackIndex);
   const imageAlt = isMissingArticleImage(article.imageUrl)
-    ? article.categoryLabel ?? 'Euvida'
+    ? getArticleFallbackAlt(locale, article.categoryLabel)
     : article.imageAlt;
 
   return (
@@ -64,7 +65,7 @@ export default function ArticleCard({
           priority={priority}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
-          fallbackLabel={article.categoryLabel ?? 'Euvida'}
+          fallbackLabel={getArticleFallbackAlt(locale, article.categoryLabel)}
           fallbackSrc={fallbackImageUrl}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />

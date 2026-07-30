@@ -1,10 +1,10 @@
 const ARTICLE_FALLBACK_IMAGES = {
-  places: ['/fallbacks/articles/places-1.svg', '/fallbacks/articles/places-2.svg'],
-  camping: ['/fallbacks/articles/camping-1.svg', '/fallbacks/articles/camping-2.svg'],
-  bike_trail: ['/fallbacks/articles/bike_trail-1.svg', '/fallbacks/articles/bike_trail-2.svg'],
-  natural_swimming: ['/fallbacks/articles/natural_swimming-1.svg', '/fallbacks/articles/natural_swimming-2.svg'],
-  outdoor_pool: ['/fallbacks/articles/outdoor_pool-1.svg', '/fallbacks/articles/outdoor_pool-2.svg'],
-  trip: ['/fallbacks/articles/trip-1.svg', '/fallbacks/articles/trip-2.svg'],
+  places: ['/fallbacks/articles/places-1.webp', '/fallbacks/articles/places-2.webp', '/fallbacks/articles/places-3.webp'],
+  camping: ['/fallbacks/articles/camping-1.webp', '/fallbacks/articles/camping-2.webp', '/fallbacks/articles/camping-3.webp'],
+  bike_trail: ['/fallbacks/articles/bike_trail-1.webp', '/fallbacks/articles/bike_trail-2.webp', '/fallbacks/articles/bike_trail-3.webp'],
+  natural_swimming: ['/fallbacks/articles/natural_swimming-1.webp', '/fallbacks/articles/natural_swimming-2.webp', '/fallbacks/articles/natural_swimming-3.webp'],
+  outdoor_pool: ['/fallbacks/articles/outdoor_pool-1.webp', '/fallbacks/articles/outdoor_pool-2.webp', '/fallbacks/articles/outdoor_pool-3.webp'],
+  trip: ['/fallbacks/articles/trip-1.webp', '/fallbacks/articles/trip-2.webp', '/fallbacks/articles/trip-3.webp'],
 } as const;
 
 type ArticleFallbackCategory = keyof typeof ARTICLE_FALLBACK_IMAGES;
@@ -83,4 +83,17 @@ export function getArticleImageWithFallback(
   return isMissingArticleImage(imageUrl)
     ? getArticleFallbackImage(category, key, sequenceIndex)
     : imageUrl!.trim();
+}
+
+export function getArticleFallbackAlt(locale: string, categoryLabel?: string | null): string {
+  const labels: Record<string, string> = {
+    cs: 'AI ilustrace',
+    en: 'AI illustration',
+    de: 'KI-Illustration',
+    fr: 'Illustration IA',
+    es: 'Ilustración de IA',
+  };
+  const prefix = labels[locale] ?? labels.cs;
+
+  return categoryLabel ? `${prefix}: ${categoryLabel}` : prefix;
 }

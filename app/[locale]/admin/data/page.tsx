@@ -127,7 +127,11 @@ function withPrimaryImageCredit(
 }
 
 function hasRealArticleImage(article: ArticleImageData): boolean {
-  return Boolean(article.image_url && !article.image_url.includes('/default_'));
+  return Boolean(
+    article.image_url &&
+    !article.image_url.includes('/default_') &&
+    !article.image_url.includes('/fallbacks/articles/')
+  );
 }
 
 function normalizedCategory(category: string | null | undefined): string {

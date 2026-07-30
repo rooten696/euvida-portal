@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import SafeImage from '@/app/components/SafeImage';
 import {
+  getArticleFallbackAlt,
   getArticleFallbackImage,
   getArticleImageWithFallback,
   isMissingArticleImage,
@@ -338,7 +339,7 @@ export default function FavoritesClient() {
                 const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug, index);
                 const imageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug, index);
                 const imageAlt = isMissingArticleImage(article.image_url)
-                  ? article.category || 'Euvida'
+                  ? getArticleFallbackAlt(locale, article.category)
                   : article.title;
 
                 return (
@@ -349,7 +350,7 @@ export default function FavoritesClient() {
                       alt={imageAlt}
                       fill
                       className="object-cover group-hover:scale-105 transition-transform duration-500"
-                      fallbackLabel={article.title}
+                      fallbackLabel={getArticleFallbackAlt(locale, article.category)}
                       fallbackSrc={fallbackImageUrl}
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent pointer-events-none" />

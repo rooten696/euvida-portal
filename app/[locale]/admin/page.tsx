@@ -106,11 +106,20 @@ function withPrimaryImageCredit(
 }
 
 function hasRealArticleImage(article: ArticleImageData): boolean {
-  return Boolean(article.image_url && !article.image_url.includes('/default_'));
+  return Boolean(
+    article.image_url &&
+    !article.image_url.includes('/default_') &&
+    !article.image_url.includes('/fallbacks/articles/')
+  );
 }
 
 function hasRealImageUrl(imageUrl: string | null | undefined): boolean {
-  return Boolean(imageUrl?.trim() && !imageUrl.includes('/default_') && !imageUrl.includes('/placeholder.png'));
+  return Boolean(
+    imageUrl?.trim() &&
+    !imageUrl.includes('/default_') &&
+    !imageUrl.includes('/placeholder.png') &&
+    !imageUrl.includes('/fallbacks/articles/')
+  );
 }
 
 function normalizedCategory(category: string | null | undefined): string {

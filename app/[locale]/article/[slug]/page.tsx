@@ -7,6 +7,7 @@ import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
 import QuickOverview from '@/app/components/article/QuickOverview';
 import SourcesSection from '@/app/components/article/SourcesSection';
 import {
+  getArticleFallbackAlt,
   getArticleFallbackImage,
   getArticleImageWithFallback,
   isMissingArticleImage,
@@ -387,7 +388,7 @@ export default async function ArticlePage({ params }: PageProps) {
           metaItems={metaItems}
           imageUrl={articleImageUrl}
           fallbackImageUrl={fallbackImageUrl}
-          imageAlt={articleHasRealImage ? imageAlt : categoryLabel ?? 'Euvida'}
+          imageAlt={articleHasRealImage ? imageAlt : getArticleFallbackAlt(locale, categoryLabel)}
           imageCredit={articleHasRealImage ? article.source_info?.images?.[0] : null}
           breadcrumb={<Breadcrumb locale={locale} country={country} region={region} />}
           weatherLocation={weatherLocation}

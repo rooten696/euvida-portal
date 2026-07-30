@@ -61,7 +61,7 @@ export default function ArticleHero({
               sizes="100vw"
               className="object-cover opacity-35"
               fallbackClassName=""
-              fallbackLabel={categoryLabel ?? 'Euvida'}
+              fallbackLabel={imageAlt}
               fallbackSrc={fallbackImageUrl ?? '/placeholder.png'}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
