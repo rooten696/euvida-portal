@@ -4,6 +4,7 @@ import '../globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import banneru
+import ThemeInitializer from '../components/ThemeInitializer';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
@@ -47,7 +48,26 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
-      <head>
+      <head />
+      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
+        <Script
+          id="google-consent-default"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('consent', 'default', {
+                ad_storage: 'denied',
+                analytics_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                functionality_storage: 'granted',
+                security_storage: 'granted'
+              });
+            `,
+          }}
+        />
         <Script
           id="adsense-loader"
           async
@@ -55,23 +75,7 @@ export default async function LocaleLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
-        <Script
-          id="theme-switcher-inline"
-          strategy="beforeInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              try {
-                if (localStorage.getItem('theme') === 'light') {
-                  document.documentElement.classList.add('light');
-                } else {
-                  document.documentElement.classList.remove('light');
-                }
-              } catch (_) {}
-            `,
-          }}
-        />
-      </head>
-      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
+        <ThemeInitializer />
         <NextIntlClientProvider messages={messages} locale={locale}>
           <div className="flex min-h-screen flex-col relative overflow-hidden">
             {/* Subtle Ambient Background Gradients */}

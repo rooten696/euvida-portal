@@ -2,6 +2,17 @@
 
 import { useState, useEffect } from 'react';
 
+function updateGoogleConsent(granted: boolean) {
+  if (typeof window === 'undefined') return;
+  const gtag = (window as Window & { gtag?: (...args: unknown[]) => void }).gtag;
+  gtag?.('consent', 'update', {
+    ad_storage: granted ? 'granted' : 'denied',
+    analytics_storage: granted ? 'granted' : 'denied',
+    ad_user_data: granted ? 'granted' : 'denied',
+    ad_personalization: granted ? 'granted' : 'denied',
+  });
+}
+
 export default function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false);
 
@@ -10,6 +21,7 @@ export default function CookieBanner() {
     // Tím vyřešíme chybu linteru a zamezíme zbytečnému dvojitému renderování.
     const timer = setTimeout(() => {
       const consent = localStorage.getItem('cookie_consent');
+      updateGoogleConsent(consent === 'granted');
       if (!consent) {
         setShowBanner(true);
       }
@@ -20,6 +32,7 @@ export default function CookieBanner() {
 
   const handleAccept = () => {
     localStorage.setItem('cookie_consent', 'granted');
+    updateGoogleConsent(true);
     setShowBanner(false);
     // Refreshne stránku, aby mohl naskočit Google Analytics
     window.location.reload(); 
@@ -27,6 +40,7 @@ export default function CookieBanner() {
 
   const handleDecline = () => {
     localStorage.setItem('cookie_consent', 'denied');
+    updateGoogleConsent(false);
     setShowBanner(false);
   };
 

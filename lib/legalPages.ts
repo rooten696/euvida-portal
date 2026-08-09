@@ -30,7 +30,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Jaké údaje můžeme zpracovávat', body: ['Při návštěvě webu se mohou zpracovávat technické údaje jako IP adresa, typ zařízení, prohlížeč, čas návštěvy a navštívené stránky. Pokud nám napíšete e-mail, zpracujeme údaje uvedené ve zprávě, abychom mohli odpovědět.'] },
-        { heading: 'Cookies, měření a reklama', body: ['Web může používat nezbytné cookies pro správné fungování, analytické nástroje pro pochopení návštěvnosti a reklamní služby Google AdSense. Reklamní partneři mohou používat cookies nebo podobné technologie k měření a personalizaci reklam podle vlastních pravidel.'] },
+        { heading: 'Cookies, měření a reklama', body: ['Web může používat nezbytné cookies pro správné fungování, analytické nástroje pro pochopení návštěvnosti a reklamní služby Google AdSense. V souvislosti se zobrazováním reklam mohou Google a další třetí strany ukládat a číst cookies v prohlížeči, používat web beacony, IP adresu a další identifikátory pro doručování, měření a zabezpečení reklam.', 'Personalizaci reklam Google lze spravovat v nastavení reklam Google. Cookies lze také omezit nebo smazat v nastavení prohlížeče. Pokud v cookie liště odmítnete volitelné cookies, posíláme Googlu základní signál nesouhlasu pro reklamní a analytické úložiště.'] },
         { heading: 'Externí odkazy a zdroje', body: ['Články mohou odkazovat na oficiální weby provozovatelů, turistické portály, mapy a další externí zdroje. Za jejich obsah, dostupnost a zásady ochrany soukromí odpovídají jejich provozovatelé.'] },
         { heading: 'Kontakt', body: ['Dotazy k ochraně soukromí posílejte na info@euvida.eu.'] },
       ],
@@ -65,7 +65,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Data we may process', body: ['When you visit the site, technical data such as IP address, device type, browser, visit time and viewed pages may be processed. If you contact us by e-mail, we process the information in your message so we can reply.'] },
-        { heading: 'Cookies, analytics and advertising', body: ['The website may use essential cookies, analytics tools and Google AdSense advertising. Advertising partners may use cookies or similar technologies for ad measurement and personalization under their own policies.'] },
+        { heading: 'Cookies, analytics and advertising', body: ['The website may use essential cookies, analytics tools and Google AdSense advertising. In connection with ad serving, Google and other third parties may place and read cookies in your browser and may use web beacons, your IP address and other identifiers for ad delivery, measurement and security.', 'You can manage Google ad personalization in Google ad settings. You can also restrict or delete cookies in your browser. If you reject optional cookies in the cookie banner, we send Google a basic denied consent signal for advertising and analytics storage.'] },
         { heading: 'External links and sources', body: ['Articles may link to official operators, tourism portals, maps and other external sources. Their content, availability and privacy rules are controlled by their operators.'] },
         { heading: 'Contact', body: ['Privacy questions can be sent to info@euvida.eu.'] },
       ],
@@ -100,7 +100,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Welche Daten verarbeitet werden koennen', body: ['Beim Besuch der Website koennen technische Daten wie IP-Adresse, Geraetetyp, Browser, Besuchszeit und aufgerufene Seiten verarbeitet werden. Wenn Sie uns per E-Mail kontaktieren, verarbeiten wir die Angaben aus Ihrer Nachricht zur Beantwortung.'] },
-        { heading: 'Cookies, Analyse und Werbung', body: ['Die Website kann notwendige Cookies, Analysewerkzeuge und Google-AdSense-Werbung verwenden. Werbepartner koennen Cookies oder aehnliche Technologien zur Messung und Personalisierung von Anzeigen nach ihren eigenen Regeln einsetzen.'] },
+        { heading: 'Cookies, Analyse und Werbung', body: ['Die Website kann notwendige Cookies, Analysewerkzeuge und Google-AdSense-Werbung verwenden. Im Zusammenhang mit der Anzeigenschaltung koennen Google und andere Dritte Cookies in Ihrem Browser setzen und lesen sowie Web-Beacons, Ihre IP-Adresse und andere Kennungen fuer Auslieferung, Messung und Sicherheit von Anzeigen verwenden.', 'Die Personalisierung von Google-Anzeigen koennen Sie in den Google-Anzeigeneinstellungen verwalten. Cookies lassen sich auch im Browser beschraenken oder loeschen. Wenn Sie optionale Cookies im Banner ablehnen, senden wir Google ein grundlegendes Ablehnungssignal fuer Werbe- und Analyse-Speicher.'] },
         { heading: 'Externe Links und Quellen', body: ['Artikel koennen auf offizielle Betreiber, Tourismusportale, Karten und andere externe Quellen verlinken. Fuer deren Inhalte, Verfuegbarkeit und Datenschutzregeln sind die jeweiligen Betreiber verantwortlich.'] },
         { heading: 'Kontakt', body: ['Fragen zum Datenschutz senden Sie bitte an info@euvida.eu.'] },
       ],
@@ -135,7 +135,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Datos que podemos tratar', body: ['Al visitar el sitio pueden tratarse datos tecnicos como direccion IP, tipo de dispositivo, navegador, hora de visita y paginas vistas. Si nos escribes por e-mail, tratamos la informacion del mensaje para poder responder.'] },
-        { heading: 'Cookies, analitica y publicidad', body: ['El sitio puede usar cookies necesarias, herramientas de analitica y publicidad de Google AdSense. Los socios publicitarios pueden utilizar cookies o tecnologias similares para medir y personalizar anuncios segun sus propias politicas.'] },
+        { heading: 'Cookies, analitica y publicidad', body: ['El sitio puede usar cookies necesarias, herramientas de analitica y publicidad de Google AdSense. En relacion con la publicacion de anuncios, Google y otros terceros pueden colocar y leer cookies en tu navegador y usar balizas web, tu direccion IP y otros identificadores para publicar, medir y proteger anuncios.', 'Puedes gestionar la personalizacion de anuncios de Google en la configuracion de anuncios de Google. Tambien puedes limitar o borrar cookies en tu navegador. Si rechazas las cookies opcionales en el banner, enviamos a Google una senal basica de consentimiento denegado para almacenamiento publicitario y analitico.'] },
         { heading: 'Enlaces y fuentes externas', body: ['Los articulos pueden enlazar a operadores oficiales, portales turisticos, mapas y otras fuentes externas. Su contenido, disponibilidad y normas de privacidad dependen de sus operadores.'] },
         { heading: 'Contacto', body: ['Las preguntas sobre privacidad se pueden enviar a info@euvida.eu.'] },
       ],
@@ -170,7 +170,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Donnees pouvant etre traitees', body: ['Lors de votre visite, des donnees techniques comme l adresse IP, le type d appareil, le navigateur, l heure de visite et les pages consultees peuvent etre traitees. Si vous nous contactez par e-mail, nous traitons les informations de votre message afin de vous repondre.'] },
-        { heading: 'Cookies, mesure et publicite', body: ['Le site peut utiliser des cookies necessaires, des outils de mesure d audience et la publicite Google AdSense. Les partenaires publicitaires peuvent utiliser des cookies ou technologies similaires pour mesurer et personnaliser les annonces selon leurs propres regles.'] },
+        { heading: 'Cookies, mesure et publicite', body: ['Le site peut utiliser des cookies necessaires, des outils de mesure d audience et la publicite Google AdSense. Dans le cadre de la diffusion publicitaire, Google et d autres tiers peuvent deposer et lire des cookies dans votre navigateur et utiliser des balises web, votre adresse IP et d autres identifiants pour diffuser, mesurer et securiser les annonces.', 'Vous pouvez gerer la personnalisation des annonces Google dans les parametres publicitaires de Google. Vous pouvez aussi limiter ou supprimer les cookies dans votre navigateur. Si vous refusez les cookies optionnels dans le bandeau, nous envoyons a Google un signal de refus de base pour le stockage publicitaire et analytique.'] },
         { heading: 'Liens et sources externes', body: ['Les articles peuvent renvoyer vers des exploitants officiels, portails touristiques, cartes et autres sources externes. Leur contenu, disponibilite et regles de confidentialite relevent de leurs exploitants.'] },
         { heading: 'Contact', body: ['Les questions relatives a la confidentialite peuvent etre envoyees a info@euvida.eu.'] },
       ],
