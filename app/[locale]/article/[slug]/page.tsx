@@ -6,6 +6,7 @@ import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
 import QuickOverview from '@/app/components/article/QuickOverview';
 import SourcesSection from '@/app/components/article/SourcesSection';
+import WaterQualityBox from '@/app/components/article/WaterQualityBox';
 import {
   getArticleFallbackAlt,
   getArticleFallbackImage,
@@ -27,6 +28,7 @@ import {
   type SupportedLocale,
 } from '@/lib/articleTypes';
 import { createClient } from '@supabase/supabase-js';
+import { getWaterQualityForArticle } from '@/lib/waterQuality';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -331,6 +333,10 @@ export default async function ArticlePage({ params }: PageProps) {
   const articleImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
   const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
+  const waterQuality =
+    article.country_id === 'CZE'
+      ? await getWaterQualityForArticle(article.source_info)
+      : null;
 
   // Merge booking_url from practical_info into prices_info
   const dbPricesInfo = article.prices_info || {};
@@ -412,6 +418,12 @@ export default async function ArticlePage({ params }: PageProps) {
 
           {/* Middle Column - Article Content */}
           <div className="order-1 min-w-0 lg:order-2 space-y-8">
+            {waterQuality && (
+              <div className="lg:hidden">
+                <WaterQualityBox status={waterQuality} locale={locale} />
+              </div>
+            )}
+
             <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur md:p-8">
               <ReactMarkdown components={markdownComponents} skipHtml>
                 {markdownContent}
@@ -430,6 +442,7 @@ export default async function ArticlePage({ params }: PageProps) {
           {/* Right Column - Prices & Access */}
           <aside className="hidden lg:block order-3 lg:order-3">
             <div className="space-y-5 lg:sticky lg:top-24">
+              {waterQuality && <WaterQualityBox status={waterQuality} locale={locale} />}
               <PricesSection locale={locale} pricesInfo={pricesInfo} />
               <AccessSection locale={locale} accessInfo={article.access_info} />
             </div>
