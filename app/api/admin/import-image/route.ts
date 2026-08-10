@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
 
+const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -122,6 +124,7 @@ export async function POST(request: NextRequest) {
         imageUrl?: string;
         entityType?: string;
         entityId?: string;
+        articleId?: string | null;
       }
     | null;
 
@@ -173,6 +176,7 @@ export async function POST(request: NextRequest) {
 
   const entityType = safePathSegment(body?.entityType || 'articles');
   const entityId = safePathSegment(body?.entityId || 'article');
+  const articleId = body?.articleId?.trim();
   const filePath = `${entityType}/${entityId}/${Date.now()}-remote.${extension}`;
   const writeClient = getWriteClient(accessToken);
 
@@ -185,10 +189,53 @@ export async function POST(request: NextRequest) {
     });
 
   if (error) {
-    return NextResponse.json({ ok: false, error: `Chyba uploadu: ${error.message}` }, { status: 500 });
+    const message =
+      !supabaseServiceKey && /violates row-level security|row-level security|RLS/i.test(error.message)
+        ? 'Chyba uploadu: Storage RLS blokuje zápis. Nastavte SUPABASE_SERVICE_ROLE_KEY ve Vercelu pro tento web.'
+        : `Chyba uploadu: ${error.message}`;
+    return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }
 
   const { data } = writeClient.storage.from(imageBucket).getPublicUrl(filePath);
+  const publicUrl = data.publicUrl;
 
-  return NextResponse.json({ ok: true, publicUrl: data.publicUrl });
+  if (articleId) {
+    const { data: articleRows, error: dbError } = await writeClient
+      .from('articles')
+      .update({ image_url: publicUrl })
+      .eq('id', articleId)
+      .select('id, slug');
+
+    if (dbError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Obrázek je uložený, ale URL se nepodařilo zapsat do článku: ${dbError.message}`,
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!articleRows || articleRows.length === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            'Obrázek je uložený, ale update článku zablokovala RLS policy. Nastavte SUPABASE_SERVICE_ROLE_KEY ve Vercelu.',
+        },
+        { status: 403 }
+      );
+    }
+
+    revalidatePath('/sitemap.xml');
+    for (const locale of supportedLocales) {
+      revalidatePath(`/${locale}`);
+      revalidatePath(`/${locale}/articles`);
+      if (articleRows[0]?.slug) {
+        revalidatePath(`/${locale}/article/${articleRows[0].slug}`);
+      }
+    }
+  }
+
+  return NextResponse.json({ ok: true, publicUrl });
 }

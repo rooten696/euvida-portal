@@ -656,12 +656,14 @@ export default function AdminPage() {
                 return (
                   <article
                     key={article.id}
-                    className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 transition"
+                    className="max-w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70 p-3 transition sm:p-4"
                   >
                     <form onSubmit={(event) => handleArticleImageSubmit(event, article)} className="space-y-4">
                       <div className="flex min-w-0 flex-col text-left">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-black text-white">{article.title.trim()}</h3>
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <h3 className="min-w-0 max-w-full break-words text-base font-black text-white sm:text-lg">
+                            {article.title.trim()}
+                          </h3>
                           <span className="rounded-full bg-slate-800 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-slate-300">
                             {normalizedCategory(article.category)}
                           </span>
@@ -676,7 +678,7 @@ export default function AdminPage() {
                             </span>
                           )}
                         </div>
-                        <p className="mt-2 truncate text-xs font-semibold text-blue-400">
+                        <p className="mt-2 min-w-0 break-all text-xs font-semibold text-blue-400">
                           /article/{article.slug}
                         </p>
                       </div>
@@ -684,6 +686,7 @@ export default function AdminPage() {
                       <ImageManager
                         title="Hlavní obrázek článku"
                         entityType="articles"
+                        articleId={article.id}
                         entityId={article.slug}
                         imageUrl={draft.image_url}
                         compact
@@ -695,7 +698,7 @@ export default function AdminPage() {
                         onStatus={setStatus}
                       />
 
-                      <div className="flex gap-3">
+                      <div className="grid gap-3 sm:flex">
                         <button
                           type="submit"
                           disabled={isSaving}

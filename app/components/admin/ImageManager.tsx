@@ -1,6 +1,5 @@
 'use client';
 
-import { supabase } from '@/lib/supabaseBrowserClient';
 import type { ImageCredit, SupportedLocale } from '@/lib/articleTypes';
 import { useId, useState } from 'react';
 
@@ -10,6 +9,7 @@ const altLocales: SupportedLocale[] = ['cs', 'en', 'de', 'fr', 'es'];
 type ImageManagerProps = {
   title: string;
   entityType: string;
+  articleId?: string | null;
   entityId?: string | null;
   imageUrl?: string | null;
   disabled?: boolean;
@@ -21,16 +21,6 @@ type ImageManagerProps = {
   onCreditChange?: (credit: ImageCredit) => void;
   onStatus?: (message: string) => void;
 };
-
-function safePathSegment(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .toLowerCase();
-}
 
 function hasImageCredit(credit: ImageCredit | null | undefined): boolean {
   if (!credit) {
@@ -58,6 +48,7 @@ function creditSummary(credit: ImageCredit | null | undefined): string {
 export default function ImageManager({
   title,
   entityType,
+  articleId,
   entityId,
   imageUrl,
   disabled = false,
@@ -93,31 +84,53 @@ export default function ImageManager({
     setLocalMessage('Nahrávám obrázek...');
     onStatus?.('Nahrávám obrázek...');
 
-    const owner = safePathSegment(entityId || 'new');
-    const fileName = safePathSegment(file.name) || `image-${Date.now()}`;
-    const filePath = `${safePathSegment(entityType)}/${owner}/${Date.now()}-${fileName}`;
+    try {
+      const { supabase } = await import('@/lib/supabaseBrowserClient');
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
 
-    const { error } = await supabase.storage
-      .from(imageBucket)
-      .upload(filePath, file, {
-        cacheControl: '31536000',
-        contentType: file.type || 'application/octet-stream',
-        upsert: true,
+      if (!accessToken) {
+        throw new Error('Nejsi přihlášený.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('entityType', entityType);
+      formData.append('entityId', entityId || 'new');
+      if (articleId) {
+        formData.append('articleId', articleId);
+      }
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
       });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; publicUrl?: string; error?: string }
+        | null;
 
-    if (error) {
-      const message = `Chyba uploadu: ${error.message}. Ověř bucket "${imageBucket}".`;
+      if (!response.ok || !payload?.ok || !payload.publicUrl) {
+        throw new Error(payload?.error ?? `HTTP ${response.status}`);
+      }
+
+      onImageUrlChange(payload.publicUrl);
+      const message = articleId
+        ? 'Obrázek nahrán a nastaven u článku.'
+        : 'Obrázek nahrán. Nezapomeň uložit formulář.';
       setLocalMessage(message);
       onStatus?.(message);
+    } catch (error) {
+      const message = `Chyba uploadu: ${
+        error instanceof Error ? error.message : 'neznámá chyba'
+      }`;
+      setLocalMessage(message);
+      onStatus?.(message);
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const { data } = supabase.storage.from(imageBucket).getPublicUrl(filePath);
-    onImageUrlChange(data.publicUrl);
-    setLocalMessage('Obrázek nahrán. Nezapomeň uložit formulář.');
-    onStatus?.('Obrázek nahrán. Nezapomeň uložit formulář.');
-    setUploading(false);
   };
 
   const handleImportUrl = async () => {
@@ -128,6 +141,7 @@ export default function ImageManager({
       return;
     }
 
+    const { supabase } = await import('@/lib/supabaseBrowserClient');
     const { data } = await supabase.auth.getSession();
     const accessToken = data.session?.access_token;
 
@@ -152,6 +166,7 @@ export default function ImageManager({
           imageUrl: sourceUrl,
           entityType,
           entityId,
+          articleId,
         }),
       });
       const payload = (await response.json().catch(() => null)) as
@@ -163,8 +178,11 @@ export default function ImageManager({
       }
 
       onImageUrlChange(payload.publicUrl);
-      setLocalMessage('Obrázek je převzatý do úložiště. Nezapomeň uložit formulář.');
-      onStatus?.('Obrázek je převzatý do úložiště. Nezapomeň uložit formulář.');
+      const message = articleId
+        ? 'Obrázek je převzatý do úložiště a nastavený u článku.'
+        : 'Obrázek je převzatý do úložiště. Nezapomeň uložit formulář.';
+      setLocalMessage(message);
+      onStatus?.(message);
     } catch (error) {
       const message = `Převzetí se nepodařilo: ${
         error instanceof Error ? error.message : 'neznámá chyba'
@@ -177,7 +195,7 @@ export default function ImageManager({
   };
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-950/40 p-4">
+    <section className="max-w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:p-4">
       {!compact && (
         <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
@@ -201,15 +219,17 @@ export default function ImageManager({
         </div>
       )}
 
-      <div className={`grid gap-4 ${compact ? 'lg:grid-cols-[190px_1fr]' : 'lg:grid-cols-[220px_1fr]'}`}>
-        <div className={`relative overflow-hidden rounded-xl border border-white/10 bg-slate-900 shadow-inner ${compact ? 'min-h-32' : 'min-h-36'}`}>
+      <div className={`grid min-w-0 gap-4 ${compact ? 'lg:grid-cols-[190px_minmax(0,1fr)]' : 'lg:grid-cols-[220px_minmax(0,1fr)]'}`}>
+        <div className={`relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-slate-900 shadow-inner ${compact ? 'h-48 sm:h-56 lg:h-32' : 'h-52 sm:h-60 lg:h-36'}`}>
           {imageUrl ? (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url("${imageUrl}")` }}
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt=""
+              className="h-full w-full object-contain"
             />
           ) : (
-            <div className="flex h-full min-h-36 items-center justify-center bg-slate-950 px-4 text-center">
+            <div className="flex h-full w-full items-center justify-center bg-slate-950 px-4 text-center">
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-wide text-slate-300 ring-1 ring-white/10">
                 Bez obrázku
               </span>
@@ -217,7 +237,7 @@ export default function ImageManager({
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <label className="block">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Externí URL / veřejná URL obrázku
@@ -232,7 +252,7 @@ export default function ImageManager({
             />
           </label>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
             <label className="inline-flex cursor-pointer items-center rounded-xl bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-300 transition hover:bg-blue-500/20">
               Nahrát soubor
               <input
@@ -274,7 +294,7 @@ export default function ImageManager({
           )}
 
           {localMessage && (
-            <p className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-300 ring-1 ring-white/10">
+            <p className="break-words rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-300 ring-1 ring-white/10">
               {localMessage}
             </p>
           )}
