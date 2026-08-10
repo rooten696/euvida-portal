@@ -49,7 +49,7 @@ export async function generateStaticParams() {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 
 type CountryPageParams = {
   params: Promise<{ locale: string; id: string }>;
@@ -150,7 +150,20 @@ function sortArticles(articles: Article[]): Article[] {
 }
 
 function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
-  const counts = countBy(articles, (article) => article.category);
+  const counts = new Map<string, number>();
+
+  for (const article of articles) {
+    incrementCount(counts, article.category);
+    if (article.category !== 'fkk' && article.visit_info?.nudist_beach === true) {
+      incrementCount(counts, 'fkk');
+    }
+    if (
+      (article.category === 'camping' || article.category === 'camp') &&
+      (article.visit_info?.public_beach_access === true || article.visit_info?.public_swimming_access === true)
+    ) {
+      incrementCount(counts, 'natural_swimming');
+    }
+  }
 
   return [...counts.entries()]
     .map(([category, count]) => ({

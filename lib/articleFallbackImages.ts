@@ -3,6 +3,7 @@ const ARTICLE_FALLBACK_IMAGES = {
   camping: ['/fallbacks/articles/camping-1.webp', '/fallbacks/articles/camping-2.webp', '/fallbacks/articles/camping-3.webp'],
   bike_trail: ['/fallbacks/articles/bike_trail-1.webp', '/fallbacks/articles/bike_trail-2.webp', '/fallbacks/articles/bike_trail-3.webp'],
   natural_swimming: ['/fallbacks/articles/natural_swimming-1.webp', '/fallbacks/articles/natural_swimming-2.webp', '/fallbacks/articles/natural_swimming-3.webp'],
+  fkk: ['/fallbacks/articles/natural_swimming-1.webp', '/fallbacks/articles/natural_swimming-2.webp', '/fallbacks/articles/natural_swimming-3.webp'],
   outdoor_pool: ['/fallbacks/articles/outdoor_pool-1.webp', '/fallbacks/articles/outdoor_pool-2.webp', '/fallbacks/articles/outdoor_pool-3.webp'],
   trip: ['/fallbacks/articles/trip-1.webp', '/fallbacks/articles/trip-2.webp', '/fallbacks/articles/trip-3.webp'],
 } as const;

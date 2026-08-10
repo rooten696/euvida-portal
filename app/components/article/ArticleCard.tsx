@@ -69,13 +69,23 @@ export default function ArticleCard({
           fallbackSrc={fallbackImageUrl}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
-        {(article.categoryLabel || (article.featured && showFeaturedBadge)) && (
+        {((article.categoryTagLabels && article.categoryTagLabels.length > 0) || article.categoryLabel || (article.featured && showFeaturedBadge)) && (
           <div className="absolute left-4 right-4 top-4 flex flex-wrap items-start justify-between gap-2">
-            {article.categoryLabel && (
-              <span className="max-w-full rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-400 border border-emerald-500/30 shadow-sm backdrop-blur">
-                {article.categoryLabel}
-              </span>
-            )}
+            <div className="flex max-w-full flex-wrap gap-2">
+              {(article.categoryTagLabels && article.categoryTagLabels.length > 0
+                ? article.categoryTagLabels
+                : article.categoryLabel
+                  ? [article.categoryLabel]
+                  : []
+              ).map((label) => (
+                <span
+                  key={label}
+                  className="max-w-full rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-400 border border-emerald-500/30 shadow-sm backdrop-blur"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
             {article.featured && showFeaturedBadge && (
               <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-slate-950 shadow-sm">
                 {getArticleLabel(locale, 'featured')}

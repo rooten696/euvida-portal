@@ -31,6 +31,7 @@ const categoryOrder = [
   'landmark',
   'bike_trail',
   'natural_swimming',
+  'fkk',
   'beach',
   'camping',
   'trail',
@@ -46,7 +47,7 @@ const categoryOrder = [
 ];
 
 const filteredArticleSelect =
-  'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+  'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 const maxFilteredArticles = 1000;
 
 function splitParam(value: string): string[] {
@@ -59,6 +60,22 @@ function splitParam(value: string): string[] {
 function getCategoryRank(category: string): number {
   const index = categoryOrder.indexOf(category);
   return index === -1 ? categoryOrder.length : index;
+}
+
+function hasFkkCategory(article: ArticleCardData): boolean {
+  return article.category === 'fkk' || article.categoryTags?.includes('fkk') === true;
+}
+
+function matchesActiveCategories(article: ArticleCardData, activeCategories: string[]): boolean {
+  if (activeCategories.length === 0) {
+    return true;
+  }
+
+  return activeCategories.some((activeCategory) =>
+    activeCategory === 'fkk'
+      ? hasFkkCategory(article)
+      : article.category === activeCategory || article.categoryTags?.includes(activeCategory) === true
+  );
 }
 
 function ArticleCategoryExplorerInner({
@@ -126,7 +143,11 @@ function ArticleCategoryExplorerInner({
         query = query.in('country_id', activeCountries);
       }
 
-      if (activeCategories.length > 0) {
+      if (
+        activeCategories.length > 0 &&
+        !activeCategories.includes('fkk') &&
+        !activeCategories.includes('natural_swimming')
+      ) {
         query = query.in('category', activeCategories);
       }
 
@@ -188,9 +209,7 @@ function ArticleCategoryExplorerInner({
   const filteredArticles = useMemo(() => {
     let result = remoteArticles ?? articles;
 
-    if (activeCategories.length > 0) {
-      result = result.filter((article) => article.category && activeCategories.includes(article.category));
-    }
+    result = result.filter((article) => matchesActiveCategories(article, activeCategories));
 
     if (activeCountries.length > 0) {
       result = result.filter(
