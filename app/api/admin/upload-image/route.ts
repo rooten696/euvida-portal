@@ -7,7 +7,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
-const maxUploadBytes = 8 * 1024 * 1024;
+const maxUploadBytes = 12 * 1024 * 1024;
 
 const authClient = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -100,7 +100,7 @@ export async function POST(request: NextRequest) {
 
   if (file.size > maxUploadBytes) {
     return NextResponse.json(
-      { ok: false, error: 'Obrázek je větší než 8 MB. Nejdřív ho zmenšete.' },
+      { ok: false, error: 'Obrázek je větší než 12 MB. Nejdřív ho zmenšete.' },
       { status: 400 }
     );
   }

@@ -7,7 +7,7 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
-const maxRemoteImageBytes = 8 * 1024 * 1024;
+const maxRemoteImageBytes = 12 * 1024 * 1024;
 
 const authClient = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
   const contentLength = Number(response.headers.get('content-length') || '0');
   if (contentLength > maxRemoteImageBytes) {
     return NextResponse.json(
-      { ok: false, error: 'Obrázek je větší než 8 MB. Nejdřív ho zmenšete.' },
+      { ok: false, error: 'Obrázek je větší než 12 MB. Nejdřív ho zmenšete.' },
       { status: 400 }
     );
   }
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
   const arrayBuffer = await response.arrayBuffer();
   if (arrayBuffer.byteLength > maxRemoteImageBytes) {
     return NextResponse.json(
-      { ok: false, error: 'Obrázek je větší než 8 MB. Nejdřív ho zmenšete.' },
+      { ok: false, error: 'Obrázek je větší než 12 MB. Nejdřív ho zmenšete.' },
       { status: 400 }
     );
   }

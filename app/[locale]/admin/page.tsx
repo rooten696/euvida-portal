@@ -39,6 +39,9 @@ type ArticleImageDraft = {
   source_info: SourceInfo;
 };
 
+const bulkImportDelayMs = 20_000;
+const bulkImportRateLimitDelayMs = 120_000;
+
 type RegionImageData = {
   id: string;
   country_id?: string | null;
@@ -351,7 +354,7 @@ export default function AdminPage() {
     }
 
     const confirmed = window.confirm(
-      `Převzít ${candidates.length} externích obrázků do úložiště? Mezi položkami bude pauza 10 sekund.`
+      `Převzít ${candidates.length} externích obrázků do úložiště? Mezi položkami bude pauza 20 sekund. Při 429 se počká 2 minuty.`
     );
 
     if (!confirmed) {
@@ -420,15 +423,23 @@ export default function AdminPage() {
         }));
       } catch (error) {
         failed += 1;
+        const errorMessage = error instanceof Error ? error.message : 'neznámá chyba';
+        const delayMs = /429|rate limit|too many requests/i.test(errorMessage)
+          ? bulkImportRateLimitDelayMs
+          : bulkImportDelayMs;
         setBulkImportMessage(
           `Chyba u ${article.slug}: ${
-            error instanceof Error ? error.message : 'neznámá chyba'
-          }. Pokračuji za 10 sekund.`
+            errorMessage
+          }. Pokračuji za ${Math.round(delayMs / 1000)} sekund.`
         );
+        if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+          await sleep(delayMs);
+          continue;
+        }
       }
 
       if (index < candidates.length - 1 && !stopBulkImportRef.current) {
-        await sleep(10_000);
+        await sleep(bulkImportDelayMs);
       }
     }
 
@@ -782,7 +793,8 @@ export default function AdminPage() {
               </p>
               <p className="mt-1 text-xs font-medium text-slate-400">
                 Vezme jen aktuálně zobrazené články s externí URL, přeskočí prázdné,
-                fallback a už převzaté Supabase obrázky. Pauza mezi položkami je 10 sekund.
+                fallback a už převzaté Supabase obrázky. Pauza mezi položkami je 20 sekund,
+                při 429 dvě minuty.
               </p>
               {bulkImportMessage && (
                 <p className="mt-2 break-words rounded-lg bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-300">
