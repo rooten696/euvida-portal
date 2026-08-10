@@ -39,8 +39,7 @@ type ArticleImageDraft = {
   source_info: SourceInfo;
 };
 
-const bulkImportDelayMs = 20_000;
-const bulkImportRateLimitDelayMs = 120_000;
+const bulkImportDelayMs = 30_000;
 
 type RegionImageData = {
   id: string;
@@ -354,7 +353,7 @@ export default function AdminPage() {
     }
 
     const confirmed = window.confirm(
-      `Převzít ${candidates.length} externích obrázků do úložiště? Mezi položkami bude pauza 20 sekund. Při 429 se počká 2 minuty.`
+      `Převzít ${candidates.length} externích obrázků do úložiště? Mezi položkami bude pauza 30 sekund. Při 429 se dávka zastaví, aby se zdroj dál nezatěžoval.`
     );
 
     if (!confirmed) {
@@ -424,16 +423,23 @@ export default function AdminPage() {
       } catch (error) {
         failed += 1;
         const errorMessage = error instanceof Error ? error.message : 'neznámá chyba';
-        const delayMs = /429|rate limit|too many requests/i.test(errorMessage)
-          ? bulkImportRateLimitDelayMs
-          : bulkImportDelayMs;
+        const isRateLimited = /429|rate limit|too many requests/i.test(errorMessage);
+
+        if (isRateLimited) {
+          stopped = true;
+          setBulkImportMessage(
+            `Dávka zastavena u ${article.slug}: zdroj vrátil 429/rate-limit. Převzato ${imported}, chyby ${failed}. Zkus pokračovat později.`
+          );
+          break;
+        }
+
         setBulkImportMessage(
           `Chyba u ${article.slug}: ${
             errorMessage
-          }. Pokračuji za ${Math.round(delayMs / 1000)} sekund.`
+          }. Pokračuji za ${Math.round(bulkImportDelayMs / 1000)} sekund.`
         );
         if (index < candidates.length - 1 && !stopBulkImportRef.current) {
-          await sleep(delayMs);
+          await sleep(bulkImportDelayMs);
           continue;
         }
       }
@@ -793,8 +799,8 @@ export default function AdminPage() {
               </p>
               <p className="mt-1 text-xs font-medium text-slate-400">
                 Vezme jen aktuálně zobrazené články s externí URL, přeskočí prázdné,
-                fallback a už převzaté Supabase obrázky. Pauza mezi položkami je 20 sekund,
-                při 429 dvě minuty.
+                fallback a už převzaté Supabase obrázky. Pauza mezi položkami je 30 sekund,
+                při 429 se dávka zastaví.
               </p>
               {bulkImportMessage && (
                 <p className="mt-2 break-words rounded-lg bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-300">

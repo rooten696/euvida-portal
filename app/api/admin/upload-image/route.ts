@@ -1,13 +1,16 @@
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
-const maxUploadBytes = 12 * 1024 * 1024;
+const maxSourceImageBytes = 40 * 1024 * 1024;
+const maxOptimizedImageBytes = 12 * 1024 * 1024;
+const optimizedImageContentType = 'image/webp';
 
 const authClient = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -47,16 +50,17 @@ function safePathSegment(value: string): string {
     .toLowerCase();
 }
 
-function extensionFromNameOrType(fileName: string, contentType: string): string {
-  const ext = fileName.split('.').pop()?.toLowerCase();
-  if (ext && ['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
-    return ext === 'jpeg' ? 'jpg' : ext;
-  }
-  if (contentType.includes('image/jpeg')) return 'jpg';
-  if (contentType.includes('image/png')) return 'png';
-  if (contentType.includes('image/webp')) return 'webp';
-  if (contentType.includes('image/gif')) return 'gif';
-  return 'jpg';
+async function optimizeImage(buffer: Buffer): Promise<Buffer> {
+  return sharp(buffer, { animated: false })
+    .rotate()
+    .resize({
+      width: 1920,
+      height: 1920,
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .webp({ quality: 82 })
+    .toBuffer();
 }
 
 function uploadErrorMessage(message: string): string {
@@ -98,9 +102,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Soubor není obrázek.' }, { status: 400 });
   }
 
-  if (file.size > maxUploadBytes) {
+  if (file.size > maxSourceImageBytes) {
     return NextResponse.json(
-      { ok: false, error: 'Obrázek je větší než 12 MB. Nejdřív ho zmenšete.' },
+      { ok: false, error: 'Zdrojový obrázek je větší než 40 MB. Použijte menší soubor nebo náhled.' },
       { status: 400 }
     );
   }
@@ -109,15 +113,31 @@ export async function POST(request: NextRequest) {
   const entityType = safePathSegment(String(formData?.get('entityType') || 'articles'));
   const entityId = safePathSegment(String(formData?.get('entityId') || 'article'));
   const articleId = String(formData?.get('articleId') || '').trim();
-  const extension = extensionFromNameOrType(file.name, file.type);
-  const filePath = `${entityType}/${entityId}/${Date.now()}-${safePathSegment(file.name) || `upload.${extension}`}`;
-
   const arrayBuffer = await file.arrayBuffer();
+  let optimizedBuffer: Buffer;
+  try {
+    optimizedBuffer = await optimizeImage(Buffer.from(arrayBuffer));
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: 'Obrázek se nepodařilo zmenšit/optimalizovat.' },
+      { status: 400 }
+    );
+  }
+
+  if (optimizedBuffer.byteLength > maxOptimizedImageBytes) {
+    return NextResponse.json(
+      { ok: false, error: 'Optimalizovaný obrázek je stále větší než 12 MB.' },
+      { status: 400 }
+    );
+  }
+
+  const baseName = safePathSegment(file.name.replace(/\.[^.]+$/, '')) || 'upload';
+  const filePath = `${entityType}/${entityId}/${Date.now()}-${baseName}.webp`;
   const { error: uploadError } = await writeClient.storage
     .from(imageBucket)
-    .upload(filePath, Buffer.from(arrayBuffer), {
+    .upload(filePath, optimizedBuffer, {
       cacheControl: '31536000',
-      contentType: file.type || 'application/octet-stream',
+      contentType: optimizedImageContentType,
       upsert: false,
     });
 

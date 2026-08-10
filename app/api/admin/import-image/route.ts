@@ -1,13 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@supabase/supabase-js';
+import sharp from 'sharp';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
-const maxRemoteImageBytes = 12 * 1024 * 1024;
+const maxSourceImageBytes = 40 * 1024 * 1024;
+const maxOptimizedImageBytes = 12 * 1024 * 1024;
+const optimizedImageContentType = 'image/webp';
 
 const authClient = createClient(supabaseUrl, supabaseAnonKey);
 
@@ -60,6 +63,38 @@ function extensionFromContentType(contentType: string): string | null {
   return null;
 }
 
+async function optimizeImage(buffer: Buffer): Promise<Buffer> {
+  return sharp(buffer, { animated: false })
+    .rotate()
+    .resize({
+      width: 1920,
+      height: 1920,
+      fit: 'inside',
+      withoutEnlargement: true,
+    })
+    .webp({ quality: 82 })
+    .toBuffer();
+}
+
+function normalizedRemoteImageUrl(imageUrl: string): string {
+  try {
+    const url = new URL(imageUrl);
+
+    if (
+      url.hostname === 'commons.wikimedia.org' &&
+      /^\/wiki\/Special:(FilePath|Redirect\/file)\//i.test(url.pathname) &&
+      !url.searchParams.has('width')
+    ) {
+      url.searchParams.set('width', '1600');
+      return url.toString();
+    }
+  } catch {
+    return imageUrl;
+  }
+
+  return imageUrl;
+}
+
 function extractHtmlImageUrl(html: string, baseUrl: string): string | null {
   const patterns = [
     /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
@@ -80,11 +115,13 @@ function extractHtmlImageUrl(html: string, baseUrl: string): string | null {
 
 async function fetchRemoteImage(imageUrl: string, depth = 0): Promise<{ response?: Response; error?: string }> {
   let response: Response;
+  const requestUrl = depth === 0 ? normalizedRemoteImageUrl(imageUrl) : imageUrl;
 
   try {
-    response = await fetch(imageUrl, {
+    response = await fetch(requestUrl, {
       headers: {
         Accept: 'image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8,text/html;q=0.4,*/*;q=0.2',
+        'User-Agent': 'Euvida image admin import (contact: euvida@seznam.cz)',
       },
     });
   } catch {
@@ -102,7 +139,7 @@ async function fetchRemoteImage(imageUrl: string, depth = 0): Promise<{ response
 
   if (depth === 0 && contentType.includes('text/html')) {
     const html = await response.text();
-    const extractedUrl = extractHtmlImageUrl(html, response.url || imageUrl);
+    const extractedUrl = extractHtmlImageUrl(html, response.url || requestUrl);
     if (extractedUrl) {
       return fetchRemoteImage(extractedUrl, depth + 1);
     }
@@ -159,17 +196,34 @@ export async function POST(request: NextRequest) {
   }
 
   const contentLength = Number(response.headers.get('content-length') || '0');
-  if (contentLength > maxRemoteImageBytes) {
+  if (contentLength > maxSourceImageBytes) {
     return NextResponse.json(
-      { ok: false, error: 'Obrázek je větší než 12 MB. Nejdřív ho zmenšete.' },
+      { ok: false, error: 'Zdrojový obrázek je větší než 40 MB. Použijte menší soubor nebo náhled.' },
       { status: 400 }
     );
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  if (arrayBuffer.byteLength > maxRemoteImageBytes) {
+  if (arrayBuffer.byteLength > maxSourceImageBytes) {
     return NextResponse.json(
-      { ok: false, error: 'Obrázek je větší než 12 MB. Nejdřív ho zmenšete.' },
+      { ok: false, error: 'Zdrojový obrázek je větší než 40 MB. Použijte menší soubor nebo náhled.' },
+      { status: 400 }
+    );
+  }
+
+  let optimizedBuffer: Buffer;
+  try {
+    optimizedBuffer = await optimizeImage(Buffer.from(arrayBuffer));
+  } catch {
+    return NextResponse.json(
+      { ok: false, error: 'Obrázek se nepodařilo zmenšit/optimalizovat.' },
+      { status: 400 }
+    );
+  }
+
+  if (optimizedBuffer.byteLength > maxOptimizedImageBytes) {
+    return NextResponse.json(
+      { ok: false, error: 'Optimalizovaný obrázek je stále větší než 12 MB.' },
       { status: 400 }
     );
   }
@@ -177,14 +231,14 @@ export async function POST(request: NextRequest) {
   const entityType = safePathSegment(body?.entityType || 'articles');
   const entityId = safePathSegment(body?.entityId || 'article');
   const articleId = body?.articleId?.trim();
-  const filePath = `${entityType}/${entityId}/${Date.now()}-remote.${extension}`;
+  const filePath = `${entityType}/${entityId}/${Date.now()}-remote.webp`;
   const writeClient = getWriteClient(accessToken);
 
   const { error } = await writeClient.storage
     .from(imageBucket)
-    .upload(filePath, Buffer.from(arrayBuffer), {
+    .upload(filePath, optimizedBuffer, {
       cacheControl: '31536000',
-      contentType,
+      contentType: optimizedImageContentType,
       upsert: false,
     });
 
