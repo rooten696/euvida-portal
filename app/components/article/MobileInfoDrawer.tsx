@@ -85,8 +85,8 @@ export default function MobileInfoDrawer({
             else if (hasAccess) setActiveTab('access');
           }
         }}
-        className={`fixed bottom-6 right-6 lg:hidden flex items-center gap-2 rounded-full text-slate-950 font-black px-5 py-3.5 shadow-2xl hover:scale-105 active:scale-95 transition-all duration-200 ${
-          isOpen ? 'bg-emerald-500 hover:bg-emerald-400 z-[110]' : 'bg-emerald-500 hover:bg-emerald-400 z-40'
+        className={`fixed bottom-6 right-6 lg:hidden flex items-center gap-2 rounded-full bg-[#334155] text-white font-black px-5 py-3.5 shadow-2xl shadow-slate-950/20 hover:bg-[#1f2937] hover:scale-105 active:scale-95 transition-all duration-200 ${
+          isOpen ? 'z-[110]' : 'z-40'
         }`}
         aria-label={t.title}
       >

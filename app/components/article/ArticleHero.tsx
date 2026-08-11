@@ -94,6 +94,22 @@ export default function ArticleHero({
         </div>
       )}
 
+      {hasHeroImage && (
+        <div className="absolute bottom-10 right-10 top-10 z-10 hidden w-[38%] overflow-hidden rounded-3xl border border-white/15 bg-slate-900/80 shadow-2xl shadow-slate-950/40 ring-1 ring-white/10 lg:block">
+          <SafeImage
+            src={heroImageSrc}
+            alt={imageAlt}
+            fill
+            priority
+            sizes="38vw"
+            className="object-cover"
+            fallbackClassName=""
+            fallbackLabel={imageAlt}
+            fallbackSrc={heroFallbackSrc}
+          />
+        </div>
+      )}
+
       {/* Top Row: Breadcrumb & Featured */}
       <div className="relative z-10 mx-4 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-2 pb-4 pt-5 md:mx-0 md:px-0 md:pt-0">
         {breadcrumb}
@@ -107,7 +123,7 @@ export default function ArticleHero({
       </div>
 
       {/* Bottom Row: Text content */}
-      <div className="relative z-10 mx-4 mt-6 max-w-4xl space-y-4 px-2 pb-6 md:mx-0 md:mt-16 md:px-0 md:pb-0">
+      <div className="relative z-10 mx-4 mt-6 max-w-4xl space-y-4 px-2 pb-6 md:mx-0 md:mt-16 md:px-0 md:pb-0 lg:max-w-[58%]">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl flex-1">
             {title}
