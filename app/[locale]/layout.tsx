@@ -75,6 +75,26 @@ export default async function LocaleLayout({
           crossOrigin="anonymous"
           strategy="afterInteractive"
         />
+        <Script
+          id="theme-time-default"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var savedTheme = localStorage.getItem('theme');
+                var hour = new Date().getHours();
+                var theme = savedTheme === 'dark' || savedTheme === 'light'
+                  ? savedTheme
+                  : (hour >= 7 && hour < 20 ? 'light' : 'dark');
+                if (theme === 'light') {
+                  document.documentElement.classList.add('light');
+                } else {
+                  document.documentElement.classList.remove('light');
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
         <ThemeInitializer />
         <NextIntlClientProvider messages={messages} locale={locale}>
           <div className="flex min-h-screen flex-col relative overflow-hidden">

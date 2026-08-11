@@ -77,15 +77,15 @@ export default function ArticleHero({
       </div>
 
       {hasHeroImage && (
-        <div className="relative z-10 mx-4 mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl shadow-slate-950/25 md:hidden">
-          <div className="relative aspect-[4/3] w-full">
+        <div className="relative z-10 mx-3 mt-3 overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 shadow-xl shadow-slate-950/25 md:hidden">
+          <div className="relative aspect-[16/10] w-full">
             <SafeImage
               src={heroImageSrc}
               alt={imageAlt}
               fill
               priority
               sizes="(max-width: 768px) 100vw, 0px"
-              className="object-contain"
+              className="object-cover"
               fallbackClassName=""
               fallbackLabel={imageAlt}
               fallbackSrc={heroFallbackSrc}
