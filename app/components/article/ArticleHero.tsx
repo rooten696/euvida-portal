@@ -47,32 +47,55 @@ export default function ArticleHero({
   countryName,
   articleSlug,
 }: ArticleHeroProps) {
+  const hasHeroImage = Boolean(imageUrl || fallbackImageUrl);
+  const heroImageSrc = imageUrl ?? fallbackImageUrl ?? '/placeholder.png';
+  const heroFallbackSrc = fallbackImageUrl ?? '/placeholder.png';
+
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 shadow-2xl p-6 md:p-10 mb-8">
+    <div className="relative mb-8 overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl shadow-slate-950/30 p-0 md:p-10">
       {/* Background Image / Gradient */}
-      <div className="absolute inset-0 z-0">
-        {imageUrl || fallbackImageUrl ? (
+      <div className="absolute inset-0 z-0 hidden md:block">
+        {hasHeroImage ? (
           <>
             <SafeImage
-              src={imageUrl ?? fallbackImageUrl ?? '/placeholder.png'}
+              src={heroImageSrc}
               alt={imageAlt}
               fill
               priority
               sizes="100vw"
-              className="object-cover opacity-35"
+              className="object-cover opacity-60"
               fallbackClassName=""
               fallbackLabel={imageAlt}
-              fallbackSrc={fallbackImageUrl ?? '/placeholder.png'}
+              fallbackSrc={heroFallbackSrc}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/20" />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/35 to-slate-950/10" />
           </>
         ) : (
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#064e3b_0%,#0f766e_38%,#042f2e_100%)] opacity-30" />
         )}
       </div>
 
+      {hasHeroImage && (
+        <div className="relative z-10 mx-4 mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl shadow-slate-950/25 md:hidden">
+          <div className="relative aspect-[4/3] w-full">
+            <SafeImage
+              src={heroImageSrc}
+              alt={imageAlt}
+              fill
+              priority
+              sizes="(max-width: 768px) 100vw, 0px"
+              className="object-contain"
+              fallbackClassName=""
+              fallbackLabel={imageAlt}
+              fallbackSrc={heroFallbackSrc}
+            />
+          </div>
+        </div>
+      )}
+
       {/* Top Row: Breadcrumb & Featured */}
-      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
+      <div className="relative z-10 mx-4 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-2 pb-4 pt-5 md:mx-0 md:px-0 md:pt-0">
         {breadcrumb}
         <div className="flex items-center gap-2">
           {featured && (
@@ -84,7 +107,7 @@ export default function ArticleHero({
       </div>
 
       {/* Bottom Row: Text content */}
-      <div className="relative z-10 max-w-4xl space-y-4 mt-8 md:mt-16">
+      <div className="relative z-10 mx-4 mt-6 max-w-4xl space-y-4 px-2 pb-6 md:mx-0 md:mt-16 md:px-0 md:pb-0">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl flex-1">
             {title}
