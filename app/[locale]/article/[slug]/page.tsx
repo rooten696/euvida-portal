@@ -333,10 +333,9 @@ export default async function ArticlePage({ params }: PageProps) {
   const articleImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
   const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
-  const waterQuality =
-    article.country_id === 'CZE'
-      ? await getWaterQualityForArticle(article.source_info)
-      : null;
+  const waterQuality = ['natural_swimming', 'fkk'].includes(article.category ?? '')
+    ? await getWaterQualityForArticle(article.source_info, article.access_info)
+    : null;
 
   // Merge booking_url from practical_info into prices_info
   const dbPricesInfo = article.prices_info || {};
