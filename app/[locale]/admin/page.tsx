@@ -459,6 +459,236 @@ export default function AdminPage() {
     );
   };
 
+  const handleBulkImportRegionImages = async () => {
+    const candidates = filteredRegions.filter((region) =>
+      isImportableExternalImageUrl(getRegionImageDraft(region))
+    );
+
+    if (candidates.length === 0) {
+      setBulkImportMessage('V aktuálním filtru není žádný externí obrázek regionu k převzetí.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Převzít ${candidates.length} externích obrázků regionů do úložiště? Mezi položkami bude pauza 30 sekund. Při 429 se dávka zastaví.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      setBulkImportMessage('Nejsi přihlášený.');
+      return;
+    }
+
+    stopBulkImportRef.current = false;
+    setBulkImporting(true);
+
+    let imported = 0;
+    let failed = 0;
+    let stopped = false;
+
+    for (let index = 0; index < candidates.length; index += 1) {
+      if (stopBulkImportRef.current) {
+        stopped = true;
+        setBulkImportMessage(`Dávka zastavena: hotovo ${imported}, chyby ${failed}.`);
+        break;
+      }
+
+      const region = candidates[index];
+      const imageUrl = getRegionImageDraft(region).trim();
+      setBulkImportMessage(`Přebírám region ${index + 1}/${candidates.length}: ${region.name}`);
+
+      try {
+        const response = await fetch('/api/admin/import-image', {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageUrl,
+            entityType: 'regions',
+            entityId: region.id,
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; publicUrl?: string; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok || !payload.publicUrl) {
+          throw new Error(payload?.error ?? `HTTP ${response.status}`);
+        }
+
+        imported += 1;
+        setRegions((current) =>
+          current.map((item) =>
+            item.id === region.id ? { ...item, image_url: payload.publicUrl } : item
+          )
+        );
+        setRegionImageDrafts((current) => {
+          const next = { ...current };
+          delete next[region.id];
+          return next;
+        });
+      } catch (error) {
+        failed += 1;
+        const errorMessage = error instanceof Error ? error.message : 'neznámá chyba';
+        const isRateLimited = /429|rate limit|too many requests/i.test(errorMessage);
+
+        if (isRateLimited) {
+          stopped = true;
+          setBulkImportMessage(
+            `Dávka zastavena u regionu ${region.name}: zdroj vrátil 429/rate-limit. Převzato ${imported}, chyby ${failed}. Zkus pokračovat později.`
+          );
+          break;
+        }
+
+        setBulkImportMessage(
+          `Chyba u regionu ${region.name}: ${errorMessage}. Pokračuji za ${Math.round(
+            bulkImportDelayMs / 1000
+          )} sekund.`
+        );
+        if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+          await sleep(bulkImportDelayMs);
+          continue;
+        }
+      }
+
+      if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+        await sleep(bulkImportDelayMs);
+      }
+    }
+
+    setBulkImporting(false);
+    stopBulkImportRef.current = false;
+    await fetchRegions();
+    setBulkImportMessage(
+      stopped
+        ? `Dávka regionů zastavena: převzato ${imported}, chyby ${failed}.`
+        : `Dávka regionů dokončena: převzato ${imported}, chyby ${failed}.`
+    );
+  };
+
+  const handleBulkImportCountryImages = async () => {
+    const candidates = filteredCountries.filter((country) =>
+      isImportableExternalImageUrl(country.image_url)
+    );
+
+    if (candidates.length === 0) {
+      setBulkImportMessage('V aktuálním filtru není žádný externí obrázek země k převzetí.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Převzít ${candidates.length} externích obrázků zemí do úložiště? Mezi položkami bude pauza 30 sekund. Při 429 se dávka zastaví.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      setBulkImportMessage('Nejsi přihlášený.');
+      return;
+    }
+
+    stopBulkImportRef.current = false;
+    setBulkImporting(true);
+
+    let imported = 0;
+    let failed = 0;
+    let stopped = false;
+
+    for (let index = 0; index < candidates.length; index += 1) {
+      if (stopBulkImportRef.current) {
+        stopped = true;
+        setBulkImportMessage(`Dávka zastavena: hotovo ${imported}, chyby ${failed}.`);
+        break;
+      }
+
+      const country = candidates[index];
+      const imageUrl = country.image_url?.trim();
+
+      if (!imageUrl) {
+        continue;
+      }
+
+      setBulkImportMessage(`Přebírám zemi ${index + 1}/${candidates.length}: ${country.name}`);
+
+      try {
+        const response = await fetch('/api/admin/import-image', {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageUrl,
+            entityType: 'countries',
+            entityId: country.id,
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; publicUrl?: string; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok || !payload.publicUrl) {
+          throw new Error(payload?.error ?? `HTTP ${response.status}`);
+        }
+
+        imported += 1;
+        setCountries((current) =>
+          current.map((item) =>
+            item.id === country.id ? { ...item, image_url: payload.publicUrl } : item
+          )
+        );
+      } catch (error) {
+        failed += 1;
+        const errorMessage = error instanceof Error ? error.message : 'neznámá chyba';
+        const isRateLimited = /429|rate limit|too many requests/i.test(errorMessage);
+
+        if (isRateLimited) {
+          stopped = true;
+          setBulkImportMessage(
+            `Dávka zastavena u země ${country.name}: zdroj vrátil 429/rate-limit. Převzato ${imported}, chyby ${failed}. Zkus pokračovat později.`
+          );
+          break;
+        }
+
+        setBulkImportMessage(
+          `Chyba u země ${country.name}: ${errorMessage}. Pokračuji za ${Math.round(
+            bulkImportDelayMs / 1000
+          )} sekund.`
+        );
+        if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+          await sleep(bulkImportDelayMs);
+          continue;
+        }
+      }
+
+      if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+        await sleep(bulkImportDelayMs);
+      }
+    }
+
+    setBulkImporting(false);
+    stopBulkImportRef.current = false;
+    await fetchCountries();
+    setBulkImportMessage(
+      stopped
+        ? `Dávka zemí zastavena: převzato ${imported}, chyby ${failed}.`
+        : `Dávka zemí dokončena: převzato ${imported}, chyby ${failed}.`
+    );
+  };
+
   const handleRegionImageSubmit = async (e: React.FormEvent, region: RegionImageData) => {
     e.preventDefault();
 
@@ -602,6 +832,14 @@ export default function AdminPage() {
       .some((value) => String(value).toLowerCase().includes(query));
   }), [regionImageFilter, regionImageQuery, regions]);
 
+  const bulkImportableRegionCount = useMemo(
+    () =>
+      filteredRegions.filter((region) =>
+        isImportableExternalImageUrl(getRegionImageDraft(region))
+      ).length,
+    [filteredRegions, regionImageDrafts]
+  );
+
   const filteredCountries = useMemo(() => countries.filter((country) => {
     if (countryImageFilter === 'missing' && hasRealImageUrl(country.image_url)) return false;
     if (countryImageFilter === 'has_image' && !hasRealImageUrl(country.image_url)) return false;
@@ -613,6 +851,14 @@ export default function AdminPage() {
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(query));
   }), [countries, countryImageFilter, countryImageQuery]);
+
+  const bulkImportableCountryCount = useMemo(
+    () =>
+      filteredCountries.filter((country) =>
+        isImportableExternalImageUrl(country.image_url)
+      ).length,
+    [filteredCountries]
+  );
 
   const articleImageFilterOptions: { id: ArticleImageFilter; label: string; count: number }[] = [
     { id: 'all', label: 'Vše', count: articleImageCounts.all },
@@ -969,6 +1215,47 @@ export default function AdminPage() {
             />
           </div>
 
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-emerald-200">
+                Dávkové převzetí externích obrázků regionů
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-400">
+                Vezme jen aktuálně zobrazené regiony s externí URL, obrázek optimalizuje a zapíše zpět do `regions.image_url`.
+                Pauza mezi položkami je 30 sekund, při 429 se dávka zastaví.
+              </p>
+              {bulkImportMessage && (
+                <p className="mt-2 break-words rounded-lg bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-300">
+                  {bulkImportMessage}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2 sm:flex sm:shrink-0">
+              {bulkImporting && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopBulkImportRef.current = true;
+                    setBulkImportMessage('Zastavuji dávku po dokončení aktuální položky...');
+                  }}
+                  className="rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-black text-rose-200 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+                >
+                  Zastavit
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleBulkImportRegionImages}
+                disabled={bulkImporting || bulkImportableRegionCount === 0}
+                className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {bulkImporting
+                  ? 'Dávka běží...'
+                  : `Převzít vše nové (${bulkImportableRegionCount})`}
+              </button>
+            </div>
+          </div>
+
           <p className="mt-5 text-sm text-slate-500">
             Zobrazeno {filteredRegions.length} z {regions.length}. U regionů se ukládá jen `image_url`.
           </p>
@@ -1099,8 +1386,49 @@ export default function AdminPage() {
             />
           </div>
 
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-emerald-200">
+                Dávkové převzetí externích obrázků zemí
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-400">
+                Vezme jen aktuálně zobrazené země s externí URL, obrázek optimalizuje a zapíše zpět do `countries.image_url`.
+                Pauza mezi položkami je 30 sekund, při 429 se dávka zastaví.
+              </p>
+              {bulkImportMessage && (
+                <p className="mt-2 break-words rounded-lg bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-300">
+                  {bulkImportMessage}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2 sm:flex sm:shrink-0">
+              {bulkImporting && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopBulkImportRef.current = true;
+                    setBulkImportMessage('Zastavuji dávku po dokončení aktuální položky...');
+                  }}
+                  className="rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-black text-rose-200 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+                >
+                  Zastavit
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleBulkImportCountryImages}
+                disabled={bulkImporting || bulkImportableCountryCount === 0}
+                className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {bulkImporting
+                  ? 'Dávka běží...'
+                  : `Převzít vše nové (${bulkImportableCountryCount})`}
+              </button>
+            </div>
+          </div>
+
           <p className="mt-5 text-sm text-slate-500">
-            Zobrazeno {filteredCountries.length} z {countries.length}. Editace zemí je záměrně vypnutá.
+            Zobrazeno {filteredCountries.length} z {countries.length}. Ruční editace zemí je zatím vypnutá, dávkové převzetí externích URL je dostupné.
           </p>
 
           <div className="mt-6 grid gap-4">

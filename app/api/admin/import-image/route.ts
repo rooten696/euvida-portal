@@ -291,5 +291,49 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  if (!articleId && ['regions', 'countries'].includes(entityType)) {
+    const { data: entityRows, error: dbError } = await writeClient
+      .from(entityType)
+      .update({ image_url: publicUrl })
+      .eq('id', body?.entityId)
+      .select('id');
+
+    if (dbError) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error: `Obrázek je uložený, ale URL se nepodařilo zapsat do ${entityType}: ${dbError.message}`,
+        },
+        { status: 500 }
+      );
+    }
+
+    if (!entityRows || entityRows.length === 0) {
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            'Obrázek je uložený, ale update zablokovala RLS policy. Nastavte SUPABASE_SERVICE_ROLE_KEY ve Vercelu.',
+        },
+        { status: 403 }
+      );
+    }
+
+    revalidatePath('/sitemap.xml');
+    for (const locale of supportedLocales) {
+      revalidatePath(`/${locale}`);
+      revalidatePath(`/${locale}/countries`);
+      revalidatePath(`/${locale}/regions`);
+
+      if (entityType === 'countries') {
+        revalidatePath(`/${locale}/country/${entityRows[0].id}`);
+      }
+
+      if (entityType === 'regions') {
+        revalidatePath(`/${locale}/region/${entityRows[0].id}`);
+      }
+    }
+  }
+
   return NextResponse.json({ ok: true, publicUrl });
 }
