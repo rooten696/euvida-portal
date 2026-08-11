@@ -1,4 +1,4 @@
-import type { AccessInfo, SourceInfo } from '@/lib/articleTypes';
+import type { SourceInfo } from '@/lib/articleTypes';
 
 export type WaterQualityLevel = 0 | 1 | 2 | 3 | 4 | 5;
 
@@ -36,18 +36,7 @@ const QUALITY_LABELS: Record<WaterQualityLevel, string> = {
   5: 'Voda nebezpečná ke koupání',
 };
 
-const EEA_ARCGIS_QUERY_URL =
-  'https://water.discomap.eea.europa.eu/arcgis/rest/services/BathingWater/BathingWater_Dyna_WM/MapServer/0/query';
-const EEA_SOURCE_URL =
-  'https://www.eea.europa.eu/en/analysis/maps-and-charts/state-of-bathing-waters-in-2025';
-
-const EEA_QUALITY_LABELS: Record<string, { level: WaterQualityLevel; label: string }> = {
-  excellent: { level: 1, label: 'Vynikající kvalita vody podle EEA/WISE' },
-  good: { level: 2, label: 'Dobrá kvalita vody podle EEA/WISE' },
-  sufficient: { level: 3, label: 'Dostatečná kvalita vody podle EEA/WISE' },
-  poor: { level: 5, label: 'Špatná kvalita vody podle EEA/WISE' },
-  'not classified': { level: 0, label: 'Kvalita vody zatím není klasifikována podle EEA/WISE' },
-};
+const MAX_STATUS_AGE_DAYS = 45;
 
 function decodeHtml(value: string): string {
   return value
@@ -196,153 +185,14 @@ function makeStatus(
 }
 
 function pickNewest(rows: WaterQualityStatus[]): WaterQualityStatus | null {
-  return rows.find((row) => row.level !== 0) ?? rows[0] ?? null;
-}
-
-function extractGpsFromAccessInfo(accessInfo: AccessInfo | null | undefined): { lat: number; lon: number } | null {
-  const values: string[] = [];
-
-  const collect = (value: unknown) => {
-    if (typeof value === 'string') {
-      values.push(value);
-      return;
-    }
-
-    if (Array.isArray(value)) {
-      value.forEach(collect);
-      return;
-    }
-
-    if (value && typeof value === 'object') {
-      Object.values(value).forEach(collect);
-    }
-  };
-
-  collect(accessInfo);
-
-  const text = values.join(' ');
-  const match = text.match(/(-?\d{1,2}(?:[.,]\d+)?)\s*°?\s*,\s*(-?\d{1,3}(?:[.,]\d+)?)\s*°?/);
-  if (!match) return null;
-
-  const lat = Number(match[1].replace(',', '.'));
-  const lon = Number(match[2].replace(',', '.'));
-
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return null;
-  if (Math.abs(lat) > 90 || Math.abs(lon) > 180) return null;
-
-  return { lat, lon };
-}
-
-function distanceKm(a: { lat: number; lon: number }, b: { lat: number; lon: number }): number {
-  const radiusKm = 6371;
-  const toRad = (value: number) => (value * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLon = toRad(b.lon - a.lon);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
-  return 2 * radiusKm * Math.asin(Math.min(1, Math.sqrt(h)));
-}
-
-type EeaFeature = {
-  attributes?: {
-    bathingWaterName?: string | null;
-    countryCode?: string | null;
-    countryName?: string | null;
-    qualityStatus?: string | null;
-    bwProfileLink?: string | null;
-    latitude?: number | null;
-    longitude?: number | null;
-  };
-};
-
-function getEeaFeatureDistance(feature: EeaFeature, point: { lat: number; lon: number }): number {
-  const lat = Number(feature.attributes?.latitude);
-  const lon = Number(feature.attributes?.longitude);
-
-  if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-    return Number.POSITIVE_INFINITY;
-  }
-
-  return distanceKm(point, { lat, lon });
-}
-
-function statusFromEeaFeature(
-  feature: EeaFeature,
-  articlePoint: { lat: number; lon: number },
-): WaterQualityStatus | null {
-  const attributes = feature.attributes ?? {};
-  const rawStatus = attributes.qualityStatus?.trim().toLowerCase();
-  const status = rawStatus ? EEA_QUALITY_LABELS[rawStatus] : null;
-  const lat = Number(attributes.latitude);
-  const lon = Number(attributes.longitude);
-
-  if (!status || !Number.isFinite(lat) || !Number.isFinite(lon)) {
-    return null;
-  }
-
-  const sourceUrl = toAbsoluteUrl(attributes.bwProfileLink || '') ?? EEA_SOURCE_URL;
-  const name = stripTags(attributes.bathingWaterName ?? '');
-  const country = stripTags(attributes.countryName ?? attributes.countryCode ?? '');
-  const distance = distanceKm(articlePoint, { lat, lon });
-  const noteParts = [
-    name ? `Nejbližší monitorované koupací místo: ${name}` : null,
-    country || null,
-    `vzdálenost přibližně ${distance < 1 ? `${Math.round(distance * 1000)} m` : `${distance.toFixed(1)} km`}`,
-    'roční klasifikace EEA/WISE, aktuální zákazy a mimořádné události ověřte u národního zdroje',
-  ].filter(Boolean);
-
-  return {
-    sourceUrl,
-    sourceHost: new URL(sourceUrl).hostname.replace(/^www\./, ''),
-    date: 'sezóna 2025',
-    level: status.level,
-    label: status.label,
-    note: noteParts.join(' - '),
-    checkedAt: new Date().toISOString(),
-  };
-}
-
-async function getEeaWaterQualityByGps(accessInfo: AccessInfo | null | undefined): Promise<WaterQualityStatus | null> {
-  const point = extractGpsFromAccessInfo(accessInfo);
-  if (!point) return null;
-
-  const params = new URLSearchParams({
-    f: 'json',
-    where: '1=1',
-    outFields: 'bathingWaterName,countryCode,countryName,qualityStatus,bwProfileLink,latitude,longitude',
-    returnGeometry: 'false',
-    geometry: JSON.stringify({
-      x: point.lon,
-      y: point.lat,
-      spatialReference: { wkid: 4326 },
-    }),
-    geometryType: 'esriGeometryPoint',
-    inSR: '4326',
-    spatialRel: 'esriSpatialRelIntersects',
-    distance: '5',
-    units: 'esriSRUnit_Kilometer',
+  const now = Date.now();
+  const recentRows = rows.filter((row) => {
+    const date = parseFullDate(row.date);
+    if (!date) return false;
+    return now - date.getTime() <= MAX_STATUS_AGE_DAYS * 24 * 60 * 60 * 1000;
   });
 
-  const response = await fetch(`${EEA_ARCGIS_QUERY_URL}?${params}`, {
-    next: { revalidate: 7 * 24 * 60 * 60 },
-    headers: {
-      'user-agent': 'Euvida water-quality preview (+https://www.euvida.eu/)',
-      accept: 'application/json',
-    },
-  });
-
-  if (!response.ok) return null;
-
-  const data = (await response.json().catch(() => null)) as { features?: EeaFeature[] } | null;
-  const statuses = (data?.features ?? [])
-    .sort((a, b) => getEeaFeatureDistance(a, point) - getEeaFeatureDistance(b, point))
-    .map((feature) => statusFromEeaFeature(feature, point))
-    .filter((status): status is WaterQualityStatus => Boolean(status));
-
-  return statuses[0] ?? null;
+  return recentRows.find((row) => row.level !== 0) ?? recentRows[0] ?? null;
 }
 
 function parseLiberec(html: string, sourceUrl: string): WaterQualityStatus | null {
@@ -425,7 +275,6 @@ function parseWaterQualityHtml(html: string, sourceUrl: string): WaterQualitySta
 
 export async function getWaterQualityForArticle(
   sourceInfo: SourceInfo | null | undefined,
-  accessInfo?: AccessInfo | null,
 ): Promise<WaterQualityStatus | null> {
   const urls = getWaterSourceUrls(sourceInfo);
 
@@ -451,9 +300,5 @@ export async function getWaterQualityForArticle(
     }
   }
 
-  try {
-    return await getEeaWaterQualityByGps(accessInfo);
-  } catch {
-    return null;
-  }
+  return null;
 }

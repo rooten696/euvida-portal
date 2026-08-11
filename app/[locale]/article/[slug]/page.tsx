@@ -334,7 +334,7 @@ export default async function ArticlePage({ params }: PageProps) {
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
   const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
   const waterQuality = ['natural_swimming', 'fkk'].includes(article.category ?? '')
-    ? await getWaterQualityForArticle(article.source_info, article.access_info)
+    ? await getWaterQualityForArticle(article.source_info)
     : null;
 
   // Merge booking_url from practical_info into prices_info
@@ -382,7 +382,7 @@ export default async function ArticlePage({ params }: PageProps) {
   ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   return (
-    <main className="min-h-screen bg-slate-950 pb-16 pt-8 font-sans text-slate-100">
+    <main className="article-detail-page min-h-screen bg-slate-950 pb-16 pt-8 font-sans text-slate-100">
       <article className="mx-auto max-w-[1360px] px-4 md:px-6">
         <ArticleHero
           locale={locale}

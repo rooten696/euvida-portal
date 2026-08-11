@@ -2,7 +2,7 @@ import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getWaterQualityForArticle } from '@/lib/waterQuality';
-import type { AccessInfo, SourceInfo } from '@/lib/articleTypes';
+import type { SourceInfo } from '@/lib/articleTypes';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
 const supabase = createClient(
@@ -13,7 +13,6 @@ const supabase = createClient(
 type WaterArticle = {
   slug: string;
   source_info: SourceInfo | null;
-  access_info: AccessInfo | null;
 };
 
 function isAuthorized(request: NextRequest): boolean {
@@ -39,7 +38,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('articles')
-    .select('slug, source_info, access_info')
+    .select('slug, source_info')
     .eq('published', true)
     .in('category', ['natural_swimming', 'fkk'])
     .limit(120);
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest) {
 
   for (const article of (data ?? []) as WaterArticle[]) {
     try {
-      await getWaterQualityForArticle(article.source_info, article.access_info);
+      await getWaterQualityForArticle(article.source_info);
       revalidateArticle(article.slug);
       refreshed += 1;
     } catch {

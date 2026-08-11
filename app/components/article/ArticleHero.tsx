@@ -52,9 +52,9 @@ export default function ArticleHero({
   const heroFallbackSrc = fallbackImageUrl ?? '/placeholder.png';
 
   return (
-    <div className="relative mb-8 overflow-hidden rounded-3xl border border-white/10 bg-slate-950 shadow-2xl shadow-slate-950/30 p-0 md:p-10">
+    <div className="relative mb-8 min-h-[560px] overflow-hidden rounded-3xl border border-white/10 bg-[#020617] p-6 shadow-2xl shadow-slate-950/30 md:min-h-[620px] md:p-10">
       {/* Background Image / Gradient */}
-      <div className="absolute inset-0 z-0 hidden md:block">
+      <div className="absolute inset-0 z-0">
         {hasHeroImage ? (
           <>
             <SafeImage
@@ -63,55 +63,19 @@ export default function ArticleHero({
               fill
               priority
               sizes="100vw"
-              className="object-cover opacity-60"
+              className="object-cover opacity-100"
               fallbackClassName=""
               fallbackLabel={imageAlt}
               fallbackSrc={heroFallbackSrc}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/50 to-slate-950/20" />
-            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-slate-950/35 to-slate-950/10" />
           </>
         ) : (
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#064e3b_0%,#0f766e_38%,#042f2e_100%)] opacity-30" />
         )}
       </div>
 
-      {hasHeroImage && (
-        <div className="relative z-10 mx-3 mt-3 overflow-hidden rounded-[1.35rem] border border-white/10 bg-slate-900 shadow-xl shadow-slate-950/25 md:hidden">
-          <div className="relative aspect-[16/10] w-full">
-            <SafeImage
-              src={heroImageSrc}
-              alt={imageAlt}
-              fill
-              priority
-              sizes="(max-width: 768px) 100vw, 0px"
-              className="object-cover"
-              fallbackClassName=""
-              fallbackLabel={imageAlt}
-              fallbackSrc={heroFallbackSrc}
-            />
-          </div>
-        </div>
-      )}
-
-      {hasHeroImage && (
-        <div className="absolute bottom-10 right-10 top-10 z-10 hidden w-[38%] overflow-hidden rounded-3xl border border-white/15 bg-slate-900/80 shadow-2xl shadow-slate-950/40 ring-1 ring-white/10 lg:block">
-          <SafeImage
-            src={heroImageSrc}
-            alt={imageAlt}
-            fill
-            priority
-            sizes="38vw"
-            className="object-cover"
-            fallbackClassName=""
-            fallbackLabel={imageAlt}
-            fallbackSrc={heroFallbackSrc}
-          />
-        </div>
-      )}
-
       {/* Top Row: Breadcrumb & Featured */}
-      <div className="relative z-10 mx-4 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 px-2 pb-4 pt-5 md:mx-0 md:px-0 md:pt-0">
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
         {breadcrumb}
         <div className="flex items-center gap-2">
           {featured && (
@@ -123,9 +87,9 @@ export default function ArticleHero({
       </div>
 
       {/* Bottom Row: Text content */}
-      <div className="relative z-10 mx-4 mt-6 max-w-4xl space-y-4 px-2 pb-6 md:mx-0 md:mt-16 md:px-0 md:pb-0 lg:max-w-[58%]">
+      <div className="relative z-10 mt-16 max-w-4xl space-y-4 md:mt-24">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl flex-1">
+          <h1 className="break-words text-3xl font-black leading-tight text-[#f8fafc] drop-shadow-[0_4px_18px_rgba(2,6,23,0.9)] sm:text-4xl md:text-5xl flex-1">
             {title}
           </h1>
           <div className="flex flex-wrap items-center gap-3 shrink-0 self-start md:self-center">
@@ -144,20 +108,20 @@ export default function ArticleHero({
         </div>
 
         {excerpt && (
-          <p className="max-w-3xl break-words text-lg font-medium leading-relaxed text-slate-300 md:text-xl">
+          <p className="max-w-3xl break-words text-lg font-medium leading-relaxed text-[#f8fafc] drop-shadow-[0_3px_14px_rgba(2,6,23,0.9)] md:text-xl">
             {excerpt}
           </p>
         )}
 
         {metaItems.length > 0 && (
-          <dl className="flex flex-wrap gap-2 text-sm text-slate-400">
+          <dl className="flex flex-wrap gap-2 text-sm text-[#94a3b8]">
             {metaItems.map((item) => (
               <div
                 key={`${item.label}-${item.value}`}
-                className="flex max-w-full items-center gap-1 rounded-full border border-white/5 bg-slate-900/60 px-3 py-1.5 shadow-sm backdrop-blur"
+                className="flex max-w-full items-center gap-1 rounded-full border border-white/10 bg-[#0f172a]/65 px-3 py-1.5 shadow-sm backdrop-blur"
               >
-                <dt className="font-semibold text-slate-300">{item.label}:</dt>
-                <dd className="break-words text-slate-400">{item.value}</dd>
+                <dt className="font-semibold text-[#cbd5e1]">{item.label}:</dt>
+                <dd className="break-words text-[#94a3b8]">{item.value}</dd>
               </div>
             ))}
           </dl>

@@ -13,9 +13,6 @@ const TEXT = {
     source: 'Zdroj',
     checked: 'Načteno',
     notice: 'Aktuální stav se může měnit. Před koupáním berte jako rozhodující údaje hygienické stanice.',
-    eeaNotice: 'Jde o sezónní klasifikaci EEA/WISE. Aktuální zákazy, sinice, bouřkové splachy a mimořádné události vždy ověřte u národního zdroje.',
-    nearest: 'Nejbližší monitorované koupací místo',
-    distance: 'vzdálenost přibližně',
   },
   en: {
     title: 'Water Quality',
@@ -24,9 +21,6 @@ const TEXT = {
     source: 'Source',
     checked: 'Loaded',
     notice: 'Conditions can change. Before swimming, treat the public health authority data as decisive.',
-    eeaNotice: 'This is an EEA/WISE seasonal classification. Always check the national source for current bans, algae, stormwater events and temporary incidents.',
-    nearest: 'Nearest monitored bathing water',
-    distance: 'approximate distance',
   },
   de: {
     title: 'Wasserqualität',
@@ -35,9 +29,6 @@ const TEXT = {
     source: 'Quelle',
     checked: 'Geladen',
     notice: 'Der Zustand kann sich ändern. Vor dem Baden sind die Angaben der Hygiene-Behörde maßgeblich.',
-    eeaNotice: 'Dies ist eine saisonale EEA/WISE-Einstufung. Aktuelle Badeverbote, Algen, Starkregenfolgen und Sondermeldungen bitte immer bei der nationalen Quelle prüfen.',
-    nearest: 'Nächstgelegene überwachte Badestelle',
-    distance: 'ungefähre Entfernung',
   },
   fr: {
     title: "Qualité de l'eau",
@@ -46,9 +37,6 @@ const TEXT = {
     source: 'Source',
     checked: 'Chargé',
     notice: "L'état peut changer. Avant la baignade, les données de l'autorité sanitaire font foi.",
-    eeaNotice: "Il s'agit d'un classement saisonnier EEA/WISE. Vérifiez toujours la source nationale pour les interdictions, algues, orages et incidents temporaires.",
-    nearest: 'Zone de baignade surveillée la plus proche',
-    distance: 'distance approximative',
   },
   es: {
     title: 'Calidad del agua',
@@ -57,47 +45,6 @@ const TEXT = {
     source: 'Fuente',
     checked: 'Cargado',
     notice: 'El estado puede cambiar. Antes del baño, prevalecen los datos de la autoridad sanitaria.',
-    eeaNotice: 'Es una clasificación estacional EEA/WISE. Compruebe siempre la fuente nacional para prohibiciones, algas, lluvias intensas e incidencias temporales.',
-    nearest: 'Zona de baño monitorizada más cercana',
-    distance: 'distancia aproximada',
-  },
-};
-
-const EEA_LABELS: Record<number, Record<string, string>> = {
-  0: {
-    cs: 'Kvalita vody zatím není klasifikována podle EEA/WISE',
-    en: 'Water quality is not classified yet by EEA/WISE',
-    de: 'Wasserqualität ist nach EEA/WISE noch nicht klassifiziert',
-    fr: "La qualité de l'eau n'est pas encore classée par EEA/WISE",
-    es: 'La calidad del agua aún no está clasificada por EEA/WISE',
-  },
-  1: {
-    cs: 'Vynikající kvalita vody podle EEA/WISE',
-    en: 'Excellent water quality according to EEA/WISE',
-    de: 'Ausgezeichnete Wasserqualität nach EEA/WISE',
-    fr: "Excellente qualité de l'eau selon EEA/WISE",
-    es: 'Calidad del agua excelente según EEA/WISE',
-  },
-  2: {
-    cs: 'Dobrá kvalita vody podle EEA/WISE',
-    en: 'Good water quality according to EEA/WISE',
-    de: 'Gute Wasserqualität nach EEA/WISE',
-    fr: "Bonne qualité de l'eau selon EEA/WISE",
-    es: 'Buena calidad del agua según EEA/WISE',
-  },
-  3: {
-    cs: 'Dostatečná kvalita vody podle EEA/WISE',
-    en: 'Sufficient water quality according to EEA/WISE',
-    de: 'Ausreichende Wasserqualität nach EEA/WISE',
-    fr: "Qualité de l'eau suffisante selon EEA/WISE",
-    es: 'Calidad del agua suficiente según EEA/WISE',
-  },
-  5: {
-    cs: 'Špatná kvalita vody podle EEA/WISE',
-    en: 'Poor water quality according to EEA/WISE',
-    de: 'Mangelhafte Wasserqualität nach EEA/WISE',
-    fr: "Mauvaise qualité de l'eau selon EEA/WISE",
-    es: 'Mala calidad del agua según EEA/WISE',
   },
 };
 
@@ -203,27 +150,8 @@ function formatLoadedAt(value: string, locale: string): string {
   });
 }
 
-function formatEeaNote(note: string | undefined, locale: string, t: (typeof TEXT)['cs']): string | undefined {
-  if (!note) return undefined;
-
-  const match = note.match(
-    /Nejbližší monitorované koupací místo:\s*(.*?)\s*-\s*(.*?)\s*-\s*vzdálenost přibližně\s*(.*?)\s*-/,
-  );
-
-  if (!match) {
-    return locale === 'cs' ? note : undefined;
-  }
-
-  return `${t.nearest}: ${match[1]} - ${match[2]} - ${t.distance} ${match[3]}`;
-}
-
 export default function WaterQualityBox({ status, locale }: WaterQualityBoxProps) {
   const t = TEXT[locale as keyof typeof TEXT] ?? TEXT.cs;
-  const isEeaStatus = status.label.includes('EEA/WISE') || status.note?.includes('EEA/WISE');
-  const displayLabel = isEeaStatus
-    ? EEA_LABELS[status.level]?.[locale] ?? EEA_LABELS[status.level]?.cs ?? status.label
-    : status.label;
-  const displayNote = isEeaStatus ? formatEeaNote(status.note, locale, t) : status.note;
   const tone = getTone(status.level);
 
   return (
@@ -233,23 +161,23 @@ export default function WaterQualityBox({ status, locale }: WaterQualityBoxProps
           <span className="text-xl">💧</span>
           <h2 className="text-lg font-extrabold tracking-tight">{t.title}</h2>
         </div>
-        <WaterQualityStars level={status.level} label={displayLabel} tone={tone} />
+        <WaterQualityStars level={status.level} label={status.label} tone={tone} />
       </div>
 
       <div className="px-5 py-5 space-y-4">
         <div className="flex items-start gap-3">
           <span className={`mt-1.5 h-3 w-3 rounded-full ${tone.dot}`} />
           <div>
-            <div className={`text-sm font-black leading-snug ${tone.text}`}>{displayLabel}</div>
-            {displayNote && displayNote !== displayLabel && (
-              <p className="mt-1 text-sm leading-relaxed text-slate-400">{displayNote}</p>
+            <div className={`text-sm font-black leading-snug ${tone.text}`}>{status.label}</div>
+            {status.note && status.note !== status.label && (
+              <p className="mt-1 text-sm leading-relaxed text-slate-400">{status.note}</p>
             )}
           </div>
         </div>
 
         <dl className="space-y-2 text-sm">
           <div className="flex justify-between gap-4">
-            <dt className="font-bold text-white">{isEeaStatus ? t.classification : t.measured}</dt>
+            <dt className="font-bold text-white">{t.measured}</dt>
             <dd className="text-right text-slate-300">{status.date}</dd>
           </div>
           <div className="flex justify-between gap-4">
@@ -272,7 +200,7 @@ export default function WaterQualityBox({ status, locale }: WaterQualityBoxProps
         </dl>
 
         <p className="text-xs leading-relaxed text-slate-500">
-          {isEeaStatus ? t.eeaNotice : t.notice}
+          {t.notice}
         </p>
       </div>
     </section>
