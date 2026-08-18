@@ -30,6 +30,11 @@ const blockedCrawlerPatterns = [
 
 export default function proxy(request: NextRequest) {
   const userAgent = request.headers.get('user-agent') ?? '';
+  const host = request.headers.get('host') ?? '';
+
+  if (host.endsWith('.vercel.app')) {
+    return new NextResponse('Forbidden', { status: 403 });
+  }
 
   if (blockedCrawlerPatterns.some((pattern) => pattern.test(userAgent))) {
     return new NextResponse('Forbidden', { status: 403 });
