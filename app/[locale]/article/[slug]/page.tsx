@@ -41,7 +41,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
-export const revalidate = 604800;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   const { data: articles } = await supabase
