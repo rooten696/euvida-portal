@@ -180,7 +180,7 @@ function hasMarkdownContent(
   return Boolean(section.content?.trim());
 }
 
-export const revalidate = 604800;
+export const revalidate = 86400;
 
 export async function generateMetadata({
   params,

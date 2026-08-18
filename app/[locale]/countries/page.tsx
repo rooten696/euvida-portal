@@ -70,7 +70,7 @@ function countBy<T>(items: T[], getKey: (item: T) => string | null | undefined):
   return counts;
 }
 
-export const revalidate = 604800;
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
