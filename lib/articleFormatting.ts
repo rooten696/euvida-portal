@@ -130,6 +130,16 @@ const currencySymbols: Record<string, string> = {
   PLN: 'zł',
 };
 
+const amountCurrencyByKey: Record<string, string> = {
+  amount_czk: 'CZK',
+  amount_eur: 'EUR',
+  amount_usd: 'USD',
+  amount_gbp: 'GBP',
+  amount_pln: 'PLN',
+  amount_chf: 'CHF',
+  amount_huf: 'HUF',
+};
+
 export function getIntlLocale(locale: string): string {
   return intlLocaleByCode[normalizeLocale(locale)];
 }
@@ -213,6 +223,19 @@ function formatMoney(value: number, currency: string, locale: string): string {
   return `${formatNumber(value, locale)} ${currencySymbol(currency)}`;
 }
 
+function legacyAmount(item: PriceItem): { amount: number; currency: string } | null {
+  const record = item as unknown as Record<string, unknown>;
+
+  for (const [key, currency] of Object.entries(amountCurrencyByKey)) {
+    const amount = toNumber(record[key] as number | string | null | undefined);
+    if (amount !== null) {
+      return { amount, currency };
+    }
+  }
+
+  return null;
+}
+
 function formatMoneyRange(
   min: number,
   max: number,
@@ -240,8 +263,9 @@ export function formatPriceValue(
 ): string | null {
   const currentLocale = normalizeLocale(locale);
   const priceType = item.price_type ?? 'text';
-  const currency = item.currency ?? fallbackCurrency ?? 'EUR';
-  const amount = toNumber(item.amount);
+  const legacy = legacyAmount(item);
+  const currency = item.currency ?? legacy?.currency ?? fallbackCurrency ?? 'EUR';
+  const amount = toNumber(item.amount) ?? legacy?.amount ?? null;
   const amountMin = toNumber(item.amount_min);
   const amountMax = toNumber(item.amount_max);
   const suffix = unitSuffix(item.unit, currentLocale);
