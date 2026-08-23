@@ -10,6 +10,7 @@ const CATEGORIES: { id: string; name: string; icon: string }[] = [
   { id: 'camping',            name: 'Kemping',                 icon: '⛺' },
   { id: 'bike_trail',         name: 'Bike parky',              icon: '🚴' },
   { id: 'natural_swimming',   name: 'Přírodní koupání',        icon: '🏊' },
+  { id: 'fkk',                name: 'FKK pláže',               icon: '☀️' },
   { id: 'outdoor_pool',       name: 'Bazény a aquaparky',      icon: '🌊' },
   { id: 'trip',               name: 'Výlety',                  icon: '🥾' },
 ];

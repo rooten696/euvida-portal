@@ -6,6 +6,7 @@ import {
   toArticleCardData,
   type ArticleCardData,
 } from '@/lib/articleCards';
+import { getArticleHref } from '@/lib/articleRouting';
 import { normalizeLocale } from '@/lib/articleLocalization';
 import type { Article, SupportedLocale } from '@/lib/articleTypes';
 import { supportedLocales } from '@/lib/articleTypes';
@@ -29,6 +30,10 @@ const supabase = createClient(
 const heroImage =
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
+const homepageArticleLimit = 120;
+const homepageArticleSelect =
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
+const articleCountSelect = 'country_id, region_id';
 
 const homeMetadata: Record<SupportedLocale, { title: string; description: string }> = {
   cs: {
@@ -97,7 +102,20 @@ function countBy<T>(items: T[], getKey: (item: T) => string | null | undefined):
 }
 
 function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
-  const counts = countBy(articles, (article) => article.category);
+  const counts = new Map<string, number>();
+
+  for (const article of articles) {
+    incrementCount(counts, article.category);
+    if (article.category !== 'fkk' && article.visit_info?.nudist_beach === true) {
+      incrementCount(counts, 'fkk');
+    }
+    if (
+      (article.category === 'camping' || article.category === 'camp') &&
+      (article.visit_info?.public_beach_access === true || article.visit_info?.public_swimming_access === true)
+    ) {
+      incrementCount(counts, 'natural_swimming');
+    }
+  }
 
   return [...counts.entries()]
     .map(([category, count]) => ({
@@ -165,7 +183,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   };
 }
 
-export const revalidate = 3600;
+export const revalidate = 21600;
 
 export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
@@ -179,17 +197,21 @@ export default async function HomePage({ params }: PageProps) {
 
   let articlesQuery = supabase
     .from('articles')
-    .select(
-      'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes'
-    )
+    .select(homepageArticleSelect)
+    .eq('published', true);
+  let articleCountsQuery = supabase
+    .from('articles')
+    .select(articleCountSelect)
     .eq('published', true);
 
   if (process.env.NEXT_PUBLIC_SITE_MODE === 'cz') {
     articlesQuery = articlesQuery.eq('country_id', 'CZE');
+    articleCountsQuery = articleCountsQuery.eq('country_id', 'CZE');
   }
 
-  const [articlesResult, countriesResult, regionsResult] = await Promise.all([
-    articlesQuery.order('created_at', { ascending: false }),
+  const [articlesResult, articleCountsResult, countriesResult, regionsResult] = await Promise.all([
+    articlesQuery.order('created_at', { ascending: false }).limit(homepageArticleLimit),
+    articleCountsQuery,
     supabase
       .from('countries')
       .select('id, name, flag, description, image_url, translations')
@@ -204,6 +226,10 @@ export default async function HomePage({ params }: PageProps) {
     warnHomepageLoadError('články', articlesResult.error);
   }
 
+  if (articleCountsResult.error) {
+    warnHomepageLoadError('počty článků', articleCountsResult.error);
+  }
+
   if (countriesResult.error) {
     warnHomepageLoadError('země', countriesResult.error);
   }
@@ -213,6 +239,10 @@ export default async function HomePage({ params }: PageProps) {
   }
 
   const articles = (articlesResult.data ?? []) as Article[];
+  const articleCountRows = (articleCountsResult.data ?? []) as Pick<
+    Article,
+    'country_id' | 'region_id'
+  >[];
   const countries = ((countriesResult.data ?? []) as CountryDestination[]).map((country) =>
     getCountryDisplay(country, locale)
   );
@@ -220,11 +250,13 @@ export default async function HomePage({ params }: PageProps) {
     getRegionDisplay(region, locale)
   );
 
-  const articleCountByCountry = countBy(articles, (article) => article.country_id);
-  const articleCountByRegion = countBy(articles, (article) => article.region_id);
+  const articleCountByCountry = countBy(articleCountRows, (article) => article.country_id);
+  const articleCountByRegion = countBy(articleCountRows, (article) => article.region_id);
   const regionCountByCountry = countBy(regions, (region) => region.country_id);
   const countryNameById = new Map(countries.map((country) => [country.id, country.name]));
   const regionNameById = new Map(regions.map((region) => [region.id, region.name]));
+  const countryNamesById = Object.fromEntries(countryNameById);
+  const regionNamesById = Object.fromEntries(regionNameById);
 
   const articleCards: ArticleCardData[] = articles.map((article) =>
     toArticleCardData(article, locale, {
@@ -280,7 +312,7 @@ export default async function HomePage({ params }: PageProps) {
     ...articleCards.map((article) => ({
       id: `article-${article.id ?? article.slug}`,
       title: article.title,
-      href: `/${locale}/article/${article.slug}`,
+      href: getArticleHref(article, locale),
       typeLabel: article.categoryLabel ?? getDestinationLabel(locale, 'articlesAndGuides'),
       description: article.excerpt,
       meta: presentValues([
@@ -368,6 +400,8 @@ export default async function HomePage({ params }: PageProps) {
             articles={articleCards}
             categories={categories}
             defaultVisibleCount={latestArticlesLimit}
+            countryNamesById={countryNamesById}
+            regionNamesById={regionNamesById}
           />
           <div className="mt-8 flex justify-center">
             <a

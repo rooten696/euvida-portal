@@ -17,6 +17,8 @@ export type ArticleCardData = {
   imageAlt: string;
   category?: string | null;
   categoryLabel?: string | null;
+  categoryTags?: string[];
+  categoryTagLabels?: string[];
   countryId?: string | null;
   countryName?: string | null;
   regionId?: string | null;
@@ -76,6 +78,38 @@ export function getArticleCardBadges(): string[] {
   return [];
 }
 
+function isFkkArticle(article: Article): boolean {
+  return article.category === 'fkk' || article.visit_info?.nudist_beach === true;
+}
+
+function hasPublicSwimmingAccess(article: Article): boolean {
+  return (
+    article.category === 'natural_swimming' ||
+    article.visit_info?.public_beach_access === true ||
+    article.visit_info?.public_swimming_access === true
+  );
+}
+
+function getArticleCategoryTags(article: Article): string[] {
+  const tags = new Set<string>();
+
+  if (article.category) {
+    tags.add(article.category);
+  }
+
+  if (isFkkArticle(article)) {
+    tags.add('fkk');
+  }
+
+  if (article.category === 'camping' || article.category === 'camp') {
+    if (hasPublicSwimmingAccess(article)) {
+      tags.add('natural_swimming');
+    }
+  }
+
+  return Array.from(tags);
+}
+
 export function toArticleCardData(
   article: Article,
   locale: string,
@@ -85,6 +119,10 @@ export function toArticleCardData(
   const localized = getLocalizedArticle(article, currentLocale);
 
   const badges = getArticleCardBadges();
+  const categoryTags = getArticleCategoryTags(article);
+  const categoryTagLabels = categoryTags
+    .map((categoryTag) => getArticleCategoryLabel(categoryTag, currentLocale))
+    .filter((label): label is string => Boolean(label));
 
   return {
     id: article.id,
@@ -95,6 +133,8 @@ export function toArticleCardData(
     imageAlt: localized.imageAlt,
     category: article.category,
     categoryLabel: getArticleCategoryLabel(article.category, currentLocale),
+    categoryTags,
+    categoryTagLabels,
     countryId: article.country_id,
     countryName: location.countryName,
     regionId: article.region_id,

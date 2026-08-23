@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Historic European street illustration">
+  <defs><linearGradient id="s" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0f766e"/><stop offset=".55" stop-color="#164e63"/><stop offset="1" stop-color="#0f172a"/></linearGradient><linearGradient id="l" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fbbf24"/><stop offset="1" stop-color="#f97316"/></linearGradient></defs>
+  <rect width="1600" height="1000" fill="url(#s)"/>
+  <circle cx="1210" cy="210" r="150" fill="#fde68a" opacity=".25"/>
+  <path d="M0 705c235-82 438-83 680-22 286 72 552 61 920-75v392H0z" fill="#020617" opacity=".38"/>
+  <path d="M120 230h390v640H120zM1090 190h380v680h-380z" fill="#0f172a" opacity=".72"/>
+  <path d="M510 350c110-150 360-150 470 0v520H510z" fill="#111827" opacity=".85"/>
+  <path d="M590 392c76-96 236-96 312 0v478H590z" fill="#0f766e" opacity=".35"/>
+  <g fill="url(#l)" opacity=".86"><rect x="190" y="330" width="74" height="96" rx="8"/><rect x="326" y="330" width="74" height="96" rx="8"/><rect x="1170" y="300" width="74" height="96" rx="8"/><rect x="1306" y="300" width="74" height="96" rx="8"/></g>
+  <path d="M0 870h1600v130H0z" fill="#020617" opacity=".42"/>
+</svg>

@@ -1,38 +1,26 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { applyTheme, getStoredOrAutomaticTheme, THEME_STORAGE_KEY, type ThemePreference } from './themePreference';
 
 export default function ThemeSwitcher() {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<ThemePreference>('dark');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setTimeout(() => {
       setMounted(true);
-      const savedTheme = localStorage.getItem('theme') as 'dark' | 'light' | null;
-      if (savedTheme) {
-        setTheme(savedTheme);
-        if (savedTheme === 'light') {
-          document.documentElement.classList.add('light');
-        } else {
-          document.documentElement.classList.remove('light');
-        }
-      } else {
-        setTheme('dark');
-        document.documentElement.classList.remove('light');
-      }
+      const activeTheme = getStoredOrAutomaticTheme();
+      setTheme(activeTheme);
+      applyTheme(activeTheme);
     }, 0);
   }, []);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'dark' ? 'light' : 'dark';
     setTheme(nextTheme);
-    localStorage.setItem('theme', nextTheme);
-    if (nextTheme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
-      document.documentElement.classList.remove('light');
-    }
+    localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    applyTheme(nextTheme);
   };
 
   if (!mounted) {

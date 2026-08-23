@@ -3,6 +3,7 @@ import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import RegionArticleExplorer from '@/app/components/region/RegionArticleExplorer';
 import SafeImage from '@/app/components/SafeImage';
+import WeatherWidget from '@/app/components/WeatherWidget';
 import {
   getArticleCategoryLabel,
   toArticleCardData,
@@ -15,14 +16,12 @@ import { getDestinationLabel } from '@/lib/destinationLabels';
 import {
   type CountryDestination,
   type RegionDestination,
-  type WeatherData,
   getCountryDisplay,
   getRegionDisplay,
   hasTemperature,
 } from '@/lib/destinationTypes';
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
-import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
@@ -51,7 +50,7 @@ export async function generateStaticParams() {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 
 type RegionPageParams = {
   params: Promise<{ locale: string; id: string }>;
@@ -141,7 +140,7 @@ const regionMetadata: Record<
   },
 };
 
-export const revalidate = 1800;
+export const revalidate = 86400;
 
 function hasSeasonData(seasons: SeasonTemperature[]): boolean {
   return seasons.some((season) => hasTemperature(season.air) || hasTemperature(season.sea));
@@ -190,7 +189,20 @@ function sortArticles(articles: Article[]): Article[] {
 }
 
 function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
-  const counts = countBy(articles, (article) => article.category);
+  const counts = new Map<string, number>();
+
+  for (const article of articles) {
+    incrementCount(counts, article.category);
+    if (article.category !== 'fkk' && article.visit_info?.nudist_beach === true) {
+      incrementCount(counts, 'fkk');
+    }
+    if (
+      (article.category === 'camping' || article.category === 'camp') &&
+      (article.visit_info?.public_beach_access === true || article.visit_info?.public_swimming_access === true)
+    ) {
+      incrementCount(counts, 'natural_swimming');
+    }
+  }
 
   return [...counts.entries()]
     .map(([category, count]) => ({
@@ -199,100 +211,6 @@ function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOp
       count,
     }))
     .sort((left, right) => left.label.localeCompare(right.label, locale));
-}
-
-async function getWeatherData(
-  locationName: string,
-  locale: string
-): Promise<WeatherData | null> {
-  const weatherApiKey = process.env.NEXT_PUBLIC_WEATHER_API_KEY;
-
-  if (!weatherApiKey || !locationName) {
-    return null;
-  }
-
-  // Helper to extract a clean city/region name
-  // E.g. "Řím, Lazio a střední Itálie" -> "Řím"
-  const extractPrimaryName = (name: string) => {
-    let clean = name.split(',')[0].split(':')[0].trim();
-    if (clean.includes(' a ')) clean = clean.split(' a ')[0];
-    if (clean.includes(' and ')) clean = clean.split(' and ')[0];
-    return clean.replace(/\b(Region|Province|County|Kraj|State)\b/ig, '').trim();
-  };
-
-  // Map known region names (English or Czech) to their capital cities for OpenWeatherMap
-  const REGION_CITY_MAP: Record<string, string> = {
-    'South Bohemian Region': 'Ceske Budejovice',
-    'South Moravian Region': 'Brno',
-    'Central Bohemian Region': 'Prague',
-    'Plzeň Region': 'Plzen',
-    'Karlovy Vary Region': 'Karlovy Vary',
-    'Ústí nad Labem Region': 'Usti nad Labem',
-    'Liberec Region': 'Liberec',
-    'Hradec Králové Region': 'Hradec Kralove',
-    'Pardubice Region': 'Pardubice',
-    'Vysočina Region': 'Jihlava',
-    'Olomouc Region': 'Olomouc',
-    'Zlín Region': 'Zlin',
-    'Moravian-Silesian Region': 'Ostrava',
-    'Jihočeský kraj': 'Ceske Budejovice',
-    'Jihomoravský kraj': 'Brno',
-    'Středočeský kraj': 'Prague',
-    'Plzeňský kraj': 'Plzen',
-    'Karlovarský kraj': 'Karlovy Vary',
-    'Ústecký kraj': 'Usti nad Labem',
-    'Liberecký kraj': 'Liberec',
-    'Královéhradecký kraj': 'Hradec Kralove',
-    'Pardubický kraj': 'Pardubice',
-    'Kraj Vysočina': 'Jihlava',
-    'Olomoucký kraj': 'Olomouc',
-    'Zlínský kraj': 'Zlin',
-    'Moravskoslezský kraj': 'Ostrava',
-    'Apulie, Basilicata a Kalábrie': 'Bari',
-    'Apulia, Basilicata and Calabria': 'Bari',
-    'Řím, Lazio a střední Itálie': 'Rome',
-    'Rome, Lazio and Central Italy': 'Rome',
-    'Toskánsko, Florencie a Umbrie': 'Florence',
-    'Tuscany, Florence and Umbria': 'Florence',
-    'Milán, jezera a Lombardie': 'Milan',
-    'Milan, the lakes and Lombardy': 'Milan',
-    'Benátsko, Verona a Dolomity': 'Venice',
-    'Veneto, Verona and the Dolomites': 'Venice',
-    'Neapol, Kampánie a pobřeží Amalfi': 'Naples',
-    'Naples, Campania and Amalfi Coast': 'Naples',
-    'Sicílie': 'Palermo',
-    'Sicily': 'Palermo',
-    'Sardinie': 'Cagliari',
-    'Sardinia': 'Cagliari',
-    'Athény, Attika a Saronské ostrovy': 'Athens',
-    'Kréta': 'Heraklion',
-    'Peloponés': 'Patras',
-    'Salcbursko, Salzkammergut a Hallstatt': 'Salzburg',
-    'Salzburg, Salzkammergut and Hallstatt': 'Salzburg'
-  };
-
-  let queryName = REGION_CITY_MAP[locationName];
-  if (!queryName) {
-    queryName = extractPrimaryName(locationName);
-  }
-
-  try {
-    const weatherRes = await fetch(
-      `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(
-        queryName
-      )}&appid=${weatherApiKey}&units=metric&lang=${locale}`,
-      { next: { revalidate: 1800 } }
-    );
-
-    if (!weatherRes.ok) {
-      return null;
-    }
-
-    return (await weatherRes.json()) as WeatherData;
-  } catch (error) {
-    console.error('Chyba při načítání počasí:', error);
-    return null;
-  }
 }
 
 async function getRegionAndCountry(id: string, locale: SupportedLocale) {
@@ -388,14 +306,6 @@ export default async function RegionPage({ params }: RegionPageParams) {
   );
   const categories = categoryOptions(articles, locale);
   const countryHref = `/${locale}/country/${displayRegion.country_id}`;
-
-  const weatherData = await getWeatherData(displayRegion.name, locale);
-  const weather = weatherData?.weather?.[0];
-  const temperature =
-    typeof weatherData?.main?.temp === 'number' ? weatherData.main.temp : null;
-  const temperatureFormatter = new Intl.NumberFormat(locale, {
-    maximumFractionDigits: 0,
-  });
 
   const seasons: SeasonTemperature[] = [
     {
@@ -565,7 +475,7 @@ export default async function RegionPage({ params }: RegionPageParams) {
           </section>
         )}
 
-        {(weather || hasSeasonData(seasons)) && (
+        {(displayRegion.name || hasSeasonData(seasons)) && (
           <section className="mb-12 rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-sm backdrop-blur md:p-8">
             <div className="mb-6 flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
@@ -583,30 +493,14 @@ export default async function RegionPage({ params }: RegionPageParams) {
               )}
             </div>
 
-            <div className={`grid gap-6 ${weather ? 'lg:grid-cols-[240px_minmax(0,1fr)]' : 'grid-cols-1'}`}>
-              {weather && (
-                <div className="rounded-2xl border border-blue-500/20 bg-blue-950/30 p-5 text-center">
-                  {weather.icon && (
-                     <Image
-                      src={`https://openweathermap.org/img/wn/${weather.icon}@2x.png`}
-                      alt={weather.description || getDestinationLabel(locale, 'currentWeather')}
-                      width={96}
-                      height={96}
-                      className="mx-auto -mb-2 h-24 w-24"
-                    />
-                  )}
-                  {temperature !== null && (
-                    <div className="text-4xl font-black text-blue-100">
-                      {temperatureFormatter.format(temperature)} °C
-                    </div>
-                  )}
-                  {weather.description && (
-                    <div className="mt-2 text-sm font-bold capitalize text-blue-300">
-                      {weather.description}
-                    </div>
-                  )}
-                </div>
-              )}
+            <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-950/30 p-5 text-center">
+                <WeatherWidget
+                  locationName={displayRegion.name}
+                  fallbackLocations={displayCountry?.name ? [displayCountry.name] : []}
+                  dark
+                />
+              </div>
 
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {seasons.map((season) => (

@@ -11,6 +11,7 @@ import ThemeSwitcher from './ThemeSwitcher';
 import CountryNav from './CountryNav';
 import ArticleCategoryNav from './ArticleCategoryNav';
 import HeaderCountryDropdown from './HeaderCountryDropdown';
+import HideOnScrollHeader from './HideOnScrollHeader';
 
 type Country = {
   id: string;
@@ -96,17 +97,16 @@ export default function Navbar() {
     router.push(`/${locale}`);
   };
 
-  if (pathname.includes('/admin')) {
-    return null;
-  }
-
   const switchLanguage = (newLocale: string) => {
     if (!pathname) return `/${newLocale}`;
     return pathname.replace(`/${locale}`, `/${newLocale}`);
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-md transition-all duration-300">
+    <HideOnScrollHeader
+      forceVisible={isMenuOpen}
+      className="fixed left-0 top-0 z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-md"
+    >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
         {/* LEVÁ ČÁST: Logo a výběr obecných info o státech */}
@@ -254,6 +254,6 @@ export default function Navbar() {
           </div>
         </div>
       </div>
-    </header>
+    </HideOnScrollHeader>
   );
 }

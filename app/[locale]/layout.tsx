@@ -4,10 +4,12 @@ import '../globals.css';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import banneru
+import ThemeInitializer from '../components/ThemeInitializer';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
 import { supportedLocales } from '@/lib/articleTypes';
+import Script from 'next/script';
 
 export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
@@ -42,20 +44,49 @@ export default async function LocaleLayout({
   // Nastavíme locale pro static rendering na serveru
   setRequestLocale(locale);
 
-  // Tohle se nám vypíše dole v terminálu!
-  console.log("➡️ LAYOUT VIDÍ JAZYK:", resolvedParams?.locale); 
-
   const messages = await getMessages({ locale });
 
   return (
     <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
-      <head>
-        <script
-          id="theme-switcher-inline"
+      <head />
+      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
+        <Script
+          id="google-consent-default"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('consent', 'default', {
+                ad_storage: 'denied',
+                analytics_storage: 'denied',
+                ad_user_data: 'denied',
+                ad_personalization: 'denied',
+                functionality_storage: 'granted',
+                security_storage: 'granted'
+              });
+            `,
+          }}
+        />
+        <Script
+          id="adsense-loader"
+          async
+          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2225812723448265"
+          crossOrigin="anonymous"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="theme-time-default"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                if (localStorage.getItem('theme') === 'light') {
+                var savedTheme = localStorage.getItem('theme');
+                var hour = new Date().getHours();
+                var theme = savedTheme === 'dark' || savedTheme === 'light'
+                  ? savedTheme
+                  : (hour >= 7 && hour < 20 ? 'light' : 'dark');
+                if (theme === 'light') {
                   document.documentElement.classList.add('light');
                 } else {
                   document.documentElement.classList.remove('light');
@@ -64,8 +95,7 @@ export default async function LocaleLayout({
             `,
           }}
         />
-      </head>
-      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
+        <ThemeInitializer />
         <NextIntlClientProvider messages={messages} locale={locale}>
           <div className="flex min-h-screen flex-col relative overflow-hidden">
             {/* Subtle Ambient Background Gradients */}

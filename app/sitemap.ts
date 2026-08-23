@@ -6,7 +6,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://euvida.eu';
-const locales = ['cs', 'en', 'de', 'fr', 'es'];
+const locales = ['cs', 'en'];
 
 export const revalidate = 86400; // Kešování sitemapy na 24 hodin
 
@@ -14,7 +14,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Fetch dynamic data from database
   const { data: articles } = await supabase
     .from('articles')
-    .select('slug, updated_at');
+    .select('slug, updated_at')
+    .eq('published', true)
+    .order('updated_at', { ascending: false, nullsFirst: false })
+    .limit(5000);
   
   const { data: regions } = await supabase
     .from('regions')
@@ -44,7 +47,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     if (countries) {
       for (const country of countries) {
         sitemapEntries.push({
-          url: `${siteUrl}/${locale}/country/${country.id.toLowerCase()}`,
+          url: `${siteUrl}/${locale}/country/${country.id}`,
           lastModified: new Date(),
           changeFrequency: 'weekly',
           priority: 0.7,

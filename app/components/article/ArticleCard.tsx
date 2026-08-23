@@ -1,4 +1,11 @@
 import type { ArticleCardData } from '@/lib/articleCards';
+import { getArticleHref } from '@/lib/articleRouting';
+import {
+  getArticleFallbackAlt,
+  getArticleFallbackImage,
+  getArticleImageWithFallback,
+  isMissingArticleImage,
+} from '@/lib/articleFallbackImages';
 import { getArticleLabel } from '@/lib/articleLabels';
 import { getDestinationLabel } from '@/lib/destinationLabels';
 import SafeImage from '@/app/components/SafeImage';
@@ -11,6 +18,7 @@ type ArticleCardProps = {
   region?: string | null;
   priority?: boolean;
   showFeaturedBadge?: boolean;
+  fallbackIndex?: number;
 };
 
 function locationLabel(
@@ -35,44 +43,49 @@ export default function ArticleCard({
   region,
   priority = false,
   showFeaturedBadge = true,
+  fallbackIndex,
 }: ArticleCardProps) {
   const location = locationLabel(article, country, region);
+  const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug, fallbackIndex);
+  const imageUrl = getArticleImageWithFallback(article.imageUrl, article.category, article.slug, fallbackIndex);
+  const imageAlt = isMissingArticleImage(article.imageUrl)
+    ? getArticleFallbackAlt(locale, article.categoryLabel)
+    : article.imageAlt;
 
   return (
     <Link
-      href={`/${locale}/article/${article.slug}`}
+      href={getArticleHref(article, locale)}
       className="group flex min-h-full flex-col overflow-hidden rounded-2xl border border-white/5 bg-slate-900/50 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-800">
-        {article.imageUrl ? (
-          <SafeImage
-            src={article.imageUrl}
-            alt={article.imageAlt}
-            fill
-            priority={priority}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            fallbackLabel={article.categoryLabel ?? 'Euvida'}
-          />
-        ) : (
-          <div className="relative flex h-full items-center justify-center overflow-hidden bg-slate-900 px-5 text-center">
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,#064e3b_0%,#0f766e_38%,#042f2e_100%)]" />
-            <div className="absolute inset-0 opacity-70 [background-image:linear-gradient(120deg,rgba(15,23,42,0.08)_0_1px,transparent_1px_18px)]" />
-            <div className="relative rounded-full border border-white/10 bg-black/30 px-4 py-2 shadow-sm backdrop-blur">
-              <span className="text-xs font-extrabold uppercase tracking-wide text-emerald-400">
-                Euvida
-              </span>
-            </div>
-          </div>
-        )}
+        <SafeImage
+          src={imageUrl}
+          alt={imageAlt}
+          fill
+          priority={priority}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          fallbackLabel={getArticleFallbackAlt(locale, article.categoryLabel)}
+          fallbackSrc={fallbackImageUrl}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-slate-950/10 to-transparent" />
-        {(article.categoryLabel || (article.featured && showFeaturedBadge)) && (
+        {((article.categoryTagLabels && article.categoryTagLabels.length > 0) || article.categoryLabel || (article.featured && showFeaturedBadge)) && (
           <div className="absolute left-4 right-4 top-4 flex flex-wrap items-start justify-between gap-2">
-            {article.categoryLabel && (
-              <span className="max-w-full rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-400 border border-emerald-500/30 shadow-sm backdrop-blur">
-                {article.categoryLabel}
-              </span>
-            )}
+            <div className="flex max-w-full flex-wrap gap-2">
+              {(article.categoryTagLabels && article.categoryTagLabels.length > 0
+                ? article.categoryTagLabels
+                : article.categoryLabel
+                  ? [article.categoryLabel]
+                  : []
+              ).map((label) => (
+                <span
+                  key={label}
+                  className="max-w-full rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold uppercase tracking-wide text-emerald-400 border border-emerald-500/30 shadow-sm backdrop-blur"
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
             {article.featured && showFeaturedBadge && (
               <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-slate-950 shadow-sm">
                 {getArticleLabel(locale, 'featured')}

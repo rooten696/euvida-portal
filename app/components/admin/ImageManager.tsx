@@ -1,18 +1,19 @@
 'use client';
 
-import { supabase } from '@/lib/supabaseBrowserClient';
 import type { ImageCredit, SupportedLocale } from '@/lib/articleTypes';
 import { useId, useState } from 'react';
 
-const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'images';
+const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
 const altLocales: SupportedLocale[] = ['cs', 'en', 'de', 'fr', 'es'];
 
 type ImageManagerProps = {
   title: string;
   entityType: string;
+  articleId?: string | null;
   entityId?: string | null;
   imageUrl?: string | null;
   disabled?: boolean;
+  compact?: boolean;
   altValues?: Partial<Record<SupportedLocale, string>>;
   credit?: ImageCredit | null;
   onImageUrlChange: (value: string) => void;
@@ -20,16 +21,6 @@ type ImageManagerProps = {
   onCreditChange?: (credit: ImageCredit) => void;
   onStatus?: (message: string) => void;
 };
-
-function safePathSegment(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')
-    .toLowerCase();
-}
 
 function hasImageCredit(credit: ImageCredit | null | undefined): boolean {
   if (!credit) {
@@ -39,12 +30,29 @@ function hasImageCredit(credit: ImageCredit | null | undefined): boolean {
   return Object.values(credit).some((value) => typeof value === 'string' && value.trim());
 }
 
+function creditSummary(credit: ImageCredit | null | undefined): string {
+  if (!credit) {
+    return 'Bez zdroje/licence';
+  }
+
+  return (
+    credit.source_url ||
+    credit.source_name ||
+    credit.source ||
+    credit.attribution_text ||
+    credit.license_name ||
+    'Bez zdroje/licence'
+  );
+}
+
 export default function ImageManager({
   title,
   entityType,
+  articleId,
   entityId,
   imageUrl,
   disabled = false,
+  compact = false,
   altValues,
   credit,
   onImageUrlChange,
@@ -54,6 +62,8 @@ export default function ImageManager({
 }: ImageManagerProps) {
   const id = useId();
   const [uploading, setUploading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [creditOpen, setCreditOpen] = useState(false);
   const [localMessage, setLocalMessage] = useState('');
   const canEditCredit = Boolean(onCreditChange);
   const canEditAlt = Boolean(onAltChange);
@@ -74,73 +84,160 @@ export default function ImageManager({
     setLocalMessage('Nahrávám obrázek...');
     onStatus?.('Nahrávám obrázek...');
 
-    const owner = safePathSegment(entityId || 'new');
-    const fileName = safePathSegment(file.name) || `image-${Date.now()}`;
-    const filePath = `${safePathSegment(entityType)}/${owner}/${Date.now()}-${fileName}`;
+    try {
+      const { supabase } = await import('@/lib/supabaseBrowserClient');
+      const { data } = await supabase.auth.getSession();
+      const accessToken = data.session?.access_token;
 
-    const { error } = await supabase.storage
-      .from(imageBucket)
-      .upload(filePath, file, {
-        cacheControl: '3600',
-        contentType: file.type || 'application/octet-stream',
-        upsert: true,
+      if (!accessToken) {
+        throw new Error('Nejsi přihlášený.');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('entityType', entityType);
+      formData.append('entityId', entityId || 'new');
+      if (articleId) {
+        formData.append('articleId', articleId);
+      }
+
+      const response = await fetch('/api/admin/upload-image', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+        },
+        body: formData,
       });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; publicUrl?: string; error?: string }
+        | null;
 
-    if (error) {
-      const message = `Chyba uploadu: ${error.message}. Ověř bucket "${imageBucket}".`;
+      if (!response.ok || !payload?.ok || !payload.publicUrl) {
+        throw new Error(payload?.error ?? `HTTP ${response.status}`);
+      }
+
+      onImageUrlChange(payload.publicUrl);
+      const message = articleId
+        ? 'Obrázek nahrán a nastaven u článku.'
+        : 'Obrázek nahrán. Nezapomeň uložit formulář.';
       setLocalMessage(message);
       onStatus?.(message);
+    } catch (error) {
+      const message = `Chyba uploadu: ${
+        error instanceof Error ? error.message : 'neznámá chyba'
+      }`;
+      setLocalMessage(message);
+      onStatus?.(message);
+    } finally {
       setUploading(false);
+    }
+  };
+
+  const handleImportUrl = async () => {
+    const sourceUrl = imageUrl?.trim();
+
+    if (!sourceUrl) {
+      setLocalMessage('Nejdřív vlož URL obrázku nebo stránky s náhledovým obrázkem.');
       return;
     }
 
-    const { data } = supabase.storage.from(imageBucket).getPublicUrl(filePath);
-    onImageUrlChange(data.publicUrl);
-    setLocalMessage('Obrázek nahrán. Nezapomeň uložit formulář.');
-    onStatus?.('Obrázek nahrán. Nezapomeň uložit formulář.');
-    setUploading(false);
+    const { supabase } = await import('@/lib/supabaseBrowserClient');
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      setLocalMessage('Nejsi přihlášený.');
+      onStatus?.('Nejsi přihlášený.');
+      return;
+    }
+
+    setImporting(true);
+    setLocalMessage('Přebírám obrázek do úložiště...');
+    onStatus?.('Přebírám obrázek do úložiště...');
+
+    try {
+      const response = await fetch('/api/admin/import-image', {
+        method: 'POST',
+        headers: {
+          authorization: `Bearer ${accessToken}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          imageUrl: sourceUrl,
+          entityType,
+          entityId,
+          articleId,
+        }),
+      });
+      const payload = (await response.json().catch(() => null)) as
+        | { ok?: boolean; publicUrl?: string; error?: string }
+        | null;
+
+      if (!response.ok || !payload?.ok || !payload.publicUrl) {
+        throw new Error(payload?.error ?? `HTTP ${response.status}`);
+      }
+
+      onImageUrlChange(payload.publicUrl);
+      const message = articleId
+        ? 'Obrázek je převzatý do úložiště a nastavený u článku.'
+        : 'Obrázek je převzatý do úložiště. Nezapomeň uložit formulář.';
+      setLocalMessage(message);
+      onStatus?.(message);
+    } catch (error) {
+      const message = `Převzetí se nepodařilo: ${
+        error instanceof Error ? error.message : 'neznámá chyba'
+      }`;
+      setLocalMessage(message);
+      onStatus?.(message);
+    } finally {
+      setImporting(false);
+    }
   };
 
   return (
-    <section className="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
-      <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h3 className="text-sm font-black uppercase tracking-wide text-slate-700">
-            {title}
-          </h3>
-          <p className="mt-1 text-xs font-medium text-slate-500">
-            Externí URL nebo upload do Supabase Storage bucketu `{imageBucket}`.
-          </p>
-        </div>
+    <section className="max-w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40 p-3 sm:p-4">
+      {!compact && (
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h3 className="text-sm font-black uppercase tracking-wide text-blue-300">
+              {title}
+            </h3>
+            <p className="mt-1 text-xs font-medium text-slate-400">
+              Externí URL nebo upload do Supabase Storage bucketu `{imageBucket}`.
+            </p>
+          </div>
         {imageUrl && (
           <button
             type="button"
             disabled={disabled}
             onClick={() => onImageUrlChange('')}
-            className="rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-600 shadow-sm ring-1 ring-slate-200 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-full bg-rose-500/10 px-3 py-1.5 text-xs font-bold text-rose-300 ring-1 ring-rose-500/20 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             Odebrat obrázek
           </button>
         )}
-      </div>
+        </div>
+      )}
 
-      <div className="grid gap-4 lg:grid-cols-[220px_1fr]">
-        <div className="relative min-h-36 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-inner">
+      <div className={`grid min-w-0 gap-4 ${compact ? 'lg:grid-cols-[190px_minmax(0,1fr)]' : 'lg:grid-cols-[220px_minmax(0,1fr)]'}`}>
+        <div className={`relative flex w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-slate-900 shadow-inner ${compact ? 'h-48 sm:h-56 lg:h-32' : 'h-52 sm:h-60 lg:h-36'}`}>
           {imageUrl ? (
-            <div
-              className="absolute inset-0 bg-cover bg-center"
-              style={{ backgroundImage: `url("${imageUrl}")` }}
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={imageUrl}
+              alt=""
+              className="h-full w-full object-contain"
             />
           ) : (
-            <div className="flex h-full min-h-36 items-center justify-center bg-[linear-gradient(135deg,#dbeafe_0%,#e0f2fe_40%,#fef3c7_100%)] px-4 text-center">
-              <span className="rounded-full bg-white/80 px-3 py-1 text-xs font-black uppercase tracking-wide text-blue-950 shadow-sm">
+            <div className="flex h-full w-full items-center justify-center bg-slate-950 px-4 text-center">
+              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-wide text-slate-300 ring-1 ring-white/10">
                 Bez obrázku
               </span>
             </div>
           )}
         </div>
 
-        <div className="space-y-4">
+        <div className="min-w-0 space-y-4">
           <label className="block">
             <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
               Externí URL / veřejná URL obrázku
@@ -151,38 +248,62 @@ export default function ImageManager({
               value={imageUrl ?? ''}
               onChange={(event) => onImageUrlChange(event.target.value)}
               placeholder="https://..."
-              className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm font-medium outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm font-medium text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
             />
           </label>
 
-          <label className="block">
-            <span className="text-xs font-bold uppercase tracking-wide text-slate-500">
-              Nahrát nový obrázek
-            </span>
-            <input
-              id={`${id}-upload`}
-              type="file"
-              disabled={disabled || uploading}
-              accept="image/*"
-              onChange={(event) => {
-                void handleUpload(event.target.files?.[0] ?? null);
-                event.target.value = '';
-              }}
-              className="mt-1 block w-full rounded-xl border border-dashed border-slate-300 bg-white p-3 text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-blue-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-blue-800 hover:file:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-          </label>
+          <div className="grid gap-2 sm:flex sm:flex-wrap">
+            <label className="inline-flex cursor-pointer items-center rounded-xl bg-blue-500/10 px-4 py-2 text-sm font-bold text-blue-300 transition hover:bg-blue-500/20">
+              Nahrát soubor
+              <input
+                id={`${id}-upload`}
+                type="file"
+                disabled={disabled || uploading}
+                accept="image/*"
+                onChange={(event) => {
+                  void handleUpload(event.target.files?.[0] ?? null);
+                  event.target.value = '';
+                }}
+                className="hidden"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={disabled || importing || !imageUrl?.trim()}
+              onClick={handleImportUrl}
+              className="rounded-xl bg-violet-500/10 px-4 py-2 text-sm font-bold text-violet-300 transition hover:bg-violet-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {importing ? 'Přebírám...' : 'Převzít URL'}
+            </button>
+            {imageUrl && (
+              <button
+                type="button"
+                disabled={disabled}
+                onClick={() => onImageUrlChange('')}
+                className="rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-bold text-rose-300 ring-1 ring-rose-500/20 hover:bg-rose-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Odebrat
+              </button>
+            )}
+          </div>
+
+          {!compact && (
+            <p className="text-xs font-medium text-slate-500">
+              Upload i převzetí jen připraví URL. Změnu článku uloží až tlačítko v kartě.
+            </p>
+          )}
 
           {localMessage && (
-            <p className="rounded-xl bg-white px-3 py-2 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+            <p className="break-words rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-slate-300 ring-1 ring-white/10">
               {localMessage}
             </p>
           )}
         </div>
       </div>
 
-      {canEditAlt && (
-        <div className="mt-5 border-t border-slate-200 pt-5">
-          <h4 className="text-xs font-black uppercase tracking-wide text-slate-600">
+      {canEditAlt && (!compact || creditOpen) && (
+        <div className="mt-5 border-t border-white/10 pt-5">
+          <h4 className="text-xs font-black uppercase tracking-wide text-slate-300">
             Popisek / alt podle jazyka
           </h4>
           <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -195,7 +316,7 @@ export default function ImageManager({
                   disabled={disabled}
                   value={altValues?.[locale] ?? ''}
                   onChange={(event) => onAltChange?.(locale, event.target.value)}
-                  className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                  className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
                 />
               </label>
             ))}
@@ -204,22 +325,39 @@ export default function ImageManager({
       )}
 
       {canEditCredit && (
-        <div className="mt-5 border-t border-slate-200 pt-5">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h4 className="text-xs font-black uppercase tracking-wide text-slate-600">
-              Kredit, licence a zdroj
-            </h4>
-            {hasImageCredit(credit) && !disabled && (
-              <button
-                type="button"
-                onClick={() => onCreditChange?.({})}
-                className="text-xs font-bold text-slate-500 hover:text-red-600"
-              >
-                Vyčistit kredit
-              </button>
-            )}
+        <div className="mt-5 border-t border-white/10 pt-5">
+          <div className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-slate-900 px-3 py-2">
+            <div className="min-w-0">
+              <h4 className="text-xs font-black uppercase tracking-wide text-slate-300">
+                Zdroj, licence a popisky obrázku
+              </h4>
+              <p className="mt-1 truncate text-xs font-medium text-slate-500">
+                {creditSummary(credit)}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              {hasImageCredit(credit) && !disabled && (!compact || creditOpen) && (
+                <button
+                  type="button"
+                  onClick={() => onCreditChange?.({})}
+                  className="text-xs font-bold text-slate-500 hover:text-rose-300"
+                >
+                  Vyčistit
+                </button>
+              )}
+              {compact && (
+                <button
+                  type="button"
+                  onClick={() => setCreditOpen((value) => !value)}
+                  className="text-xs font-bold text-slate-400 hover:text-white"
+                >
+                  {creditOpen ? 'Skrýt' : 'Upravit'}
+                </button>
+              )}
+            </div>
           </div>
 
+          {(!compact || creditOpen) && (
           <div className="grid gap-3 md:grid-cols-2">
             <label className="block md:col-span-2">
               <span className="text-xs font-bold uppercase text-slate-500">
@@ -230,7 +368,7 @@ export default function ImageManager({
                 value={credit?.attribution_text ?? ''}
                 onChange={(event) => updateCredit('attribution_text', event.target.value)}
                 placeholder="např. John Doe / Wikimedia Commons"
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
               />
             </label>
 
@@ -240,7 +378,7 @@ export default function ImageManager({
                 disabled={disabled}
                 value={credit?.author_name ?? ''}
                 onChange={(event) => updateCredit('author_name', event.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
               />
             </label>
             <label className="block">
@@ -250,7 +388,7 @@ export default function ImageManager({
                 disabled={disabled}
                 value={credit?.author_url ?? ''}
                 onChange={(event) => updateCredit('author_url', event.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
               />
             </label>
             <label className="block">
@@ -260,7 +398,7 @@ export default function ImageManager({
                 value={credit?.license_name ?? ''}
                 onChange={(event) => updateCredit('license_name', event.target.value)}
                 placeholder="např. CC BY-SA 4.0"
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
               />
             </label>
             <label className="block">
@@ -270,7 +408,7 @@ export default function ImageManager({
                 disabled={disabled}
                 value={credit?.license_url ?? ''}
                 onChange={(event) => updateCredit('license_url', event.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
               />
             </label>
             <label className="block">
@@ -280,7 +418,7 @@ export default function ImageManager({
                 value={credit?.source_name ?? credit?.source ?? ''}
                 onChange={(event) => updateCredit('source_name', event.target.value)}
                 placeholder="např. Wikimedia Commons"
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition placeholder:text-slate-600 focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
               />
             </label>
             <label className="block">
@@ -290,10 +428,11 @@ export default function ImageManager({
                 disabled={disabled}
                 value={credit?.source_url ?? ''}
                 onChange={(event) => updateCredit('source_url', event.target.value)}
-                className="mt-1 w-full rounded-xl border border-slate-200 bg-white p-3 text-sm outline-none transition focus:border-blue-300 focus:ring-2 focus:ring-blue-100 disabled:bg-transparent disabled:text-slate-500"
+                className="mt-1 w-full rounded-xl border border-white/10 bg-slate-900 p-3 text-sm text-slate-100 outline-none transition focus:border-blue-400/70 focus:ring-2 focus:ring-blue-500/20 disabled:bg-transparent disabled:text-slate-500"
               />
             </label>
           </div>
+          )}
         </div>
       )}
     </section>

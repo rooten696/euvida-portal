@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="European town rooftops illustration">
+  <defs><linearGradient id="a" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#134e4a"/><stop offset=".55" stop-color="#0f766e"/><stop offset="1" stop-color="#1e293b"/></linearGradient></defs>
+  <rect width="1600" height="1000" fill="url(#a)"/>
+  <circle cx="340" cy="210" r="135" fill="#fef3c7" opacity=".28"/>
+  <path d="M0 610c210-75 340-62 510-18 210 55 405 60 620-20 185-68 307-76 470-38v466H0z" fill="#042f2e" opacity=".62"/>
+  <g opacity=".95"><path d="M130 590h260v300H130z" fill="#0f172a"/><path d="M95 590l165-130 165 130z" fill="#b45309"/><path d="M470 515h250v375H470z" fill="#111827"/><path d="M440 515l155-120 155 120z" fill="#dc2626"/><path d="M820 570h275v320H820z" fill="#0f172a"/><path d="M790 570l168-128 168 128z" fill="#c2410c"/><path d="M1185 500h245v390h-245z" fill="#111827"/><path d="M1155 500l152-116 152 116z" fill="#a16207"/></g>
+  <path d="M1030 270h110v620h-110z" fill="#020617" opacity=".72"/><path d="M990 270l95-110 95 110z" fill="#020617" opacity=".78"/>
+  <g fill="#fde68a" opacity=".82"><rect x="210" y="650" width="56" height="72" rx="8"/><rect x="555" y="610" width="54" height="72" rx="8"/><rect x="910" y="640" width="54" height="72" rx="8"/><rect x="1260" y="600" width="54" height="72" rx="8"/></g>
+</svg>

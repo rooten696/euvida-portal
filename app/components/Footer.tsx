@@ -1,10 +1,14 @@
 import Link from 'next/link';
+import { getLegalLocale, legalPages } from '@/lib/legalPages';
 
 type FooterProps = {
   locale?: string;
 };
 
 export default function Footer({ locale = 'cs' }: FooterProps) {
+  const legalLocale = getLegalLocale(locale);
+  const legalLinks = legalPages[legalLocale].links;
+
   return (
     <footer className="w-full border-t border-white/5 bg-slate-900/60 backdrop-blur-md py-12 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -25,13 +29,18 @@ export default function Footer({ locale = 'cs' }: FooterProps) {
             <Link href={`/${locale}`} className="hover:text-emerald-400 transition-colors">Domů</Link>
             <Link href={`/${locale}/oblibene`} className="hover:text-emerald-400 transition-colors">Oblíbené</Link>
             <Link href={`/${locale}/profile`} className="hover:text-emerald-400 transition-colors">Profil</Link>
-            <Link href="#" className="hover:text-emerald-400 transition-colors">O nás</Link>
+            <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors">O nás</Link>
+            <Link href={`/${locale}/privacy`} className="hover:text-emerald-400 transition-colors">{legalLinks.privacy}</Link>
+            <Link href={`/${locale}/terms`} className="hover:text-emerald-400 transition-colors">{legalLinks.terms}</Link>
+            <Link href={`/${locale}/contact`} className="hover:text-emerald-400 transition-colors">{legalLinks.contact}</Link>
           </div>
         </div>
 
         {/* Spodní linka - Copyright */}
         <div className="mt-8 border-t border-white/5 pt-8 text-center text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>&copy; {new Date().getFullYear()} EUVIDA.eu. Všechna práva vyhrazena.</div>
+          <div className="max-w-2xl text-center md:text-left">
+            <div>&copy; {new Date().getFullYear()} EUVIDA.eu. Všechna práva vyhrazena.</div>
+          </div>
           <div className="flex gap-4">
             <span className="cursor-pointer hover:text-white transition-colors">Instagram</span>
             <span className="cursor-pointer hover:text-white transition-colors">Facebook</span>

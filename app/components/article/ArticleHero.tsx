@@ -18,6 +18,7 @@ type ArticleHeroProps = {
   featured?: boolean | null;
   metaItems: MetaItem[];
   imageUrl?: string | null;
+  fallbackImageUrl?: string | null;
   imageAlt: string;
   imageCredit?: ImageCreditData | null;
   breadcrumb?: React.ReactNode;
@@ -36,6 +37,7 @@ export default function ArticleHero({
   featured,
   metaItems,
   imageUrl,
+  fallbackImageUrl,
   imageAlt,
   imageCredit,
   breadcrumb,
@@ -45,23 +47,27 @@ export default function ArticleHero({
   countryName,
   articleSlug,
 }: ArticleHeroProps) {
+  const hasHeroImage = Boolean(imageUrl || fallbackImageUrl);
+  const heroImageSrc = imageUrl ?? fallbackImageUrl ?? '/placeholder.png';
+  const heroFallbackSrc = fallbackImageUrl ?? '/placeholder.png';
+
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-slate-900 border border-white/10 shadow-2xl p-6 md:p-10 mb-8">
+    <div className="relative mb-8 min-h-[560px] overflow-hidden rounded-3xl border border-white/10 bg-[#020617] p-6 shadow-2xl shadow-slate-950/30 md:min-h-[620px] md:p-10">
       {/* Background Image / Gradient */}
       <div className="absolute inset-0 z-0">
-        {imageUrl ? (
+        {hasHeroImage ? (
           <>
             <SafeImage
-              src={imageUrl}
+              src={heroImageSrc}
               alt={imageAlt}
               fill
               priority
               sizes="100vw"
-              className="object-cover opacity-35"
+              className="object-cover opacity-100"
               fallbackClassName=""
-              fallbackLabel={categoryLabel ?? 'Euvida'}
+              fallbackLabel={imageAlt}
+              fallbackSrc={heroFallbackSrc}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent" />
           </>
         ) : (
           <div className="absolute inset-0 bg-[linear-gradient(135deg,#064e3b_0%,#0f766e_38%,#042f2e_100%)] opacity-30" />
@@ -69,7 +75,7 @@ export default function ArticleHero({
       </div>
 
       {/* Top Row: Breadcrumb & Featured */}
-      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
+      <div className="relative z-10 flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
         {breadcrumb}
         <div className="flex items-center gap-2">
           {featured && (
@@ -81,9 +87,9 @@ export default function ArticleHero({
       </div>
 
       {/* Bottom Row: Text content */}
-      <div className="relative z-10 max-w-4xl space-y-4 mt-8 md:mt-16">
+      <div className="relative z-10 mt-16 max-w-4xl space-y-4 md:mt-24">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="break-words text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl flex-1">
+          <h1 className="break-words text-3xl font-black leading-tight text-[#f8fafc] drop-shadow-[0_4px_18px_rgba(2,6,23,0.9)] sm:text-4xl md:text-5xl flex-1">
             {title}
           </h1>
           <div className="flex flex-wrap items-center gap-3 shrink-0 self-start md:self-center">
@@ -102,20 +108,20 @@ export default function ArticleHero({
         </div>
 
         {excerpt && (
-          <p className="max-w-3xl break-words text-lg font-medium leading-relaxed text-slate-300 md:text-xl">
+          <p className="max-w-3xl break-words text-lg font-medium leading-relaxed text-[#f8fafc] drop-shadow-[0_3px_14px_rgba(2,6,23,0.9)] md:text-xl">
             {excerpt}
           </p>
         )}
 
         {metaItems.length > 0 && (
-          <dl className="flex flex-wrap gap-2 text-sm text-slate-400">
+          <dl className="flex flex-wrap gap-2 text-sm text-[#94a3b8]">
             {metaItems.map((item) => (
               <div
                 key={`${item.label}-${item.value}`}
-                className="flex max-w-full items-center gap-1 rounded-full border border-white/5 bg-slate-900/60 px-3 py-1.5 shadow-sm backdrop-blur"
+                className="flex max-w-full items-center gap-1 rounded-full border border-white/10 bg-[#0f172a]/65 px-3 py-1.5 shadow-sm backdrop-blur"
               >
-                <dt className="font-semibold text-slate-300">{item.label}:</dt>
-                <dd className="break-words text-slate-400">{item.value}</dd>
+                <dt className="font-semibold text-[#cbd5e1]">{item.label}:</dt>
+                <dd className="break-words text-[#94a3b8]">{item.value}</dd>
               </div>
             ))}
           </dl>

@@ -1,7 +1,7 @@
 import { getArticleLabel, practicalLabels } from '@/lib/articleLabels';
 import { stripLeadingListMarkers } from '@/lib/articleFormatting';
 import { getLocalizedPracticalInfo, normalizeLocale } from '@/lib/articleLocalization';
-import type { PracticalInfoKey, PracticalInfoLocales } from '@/lib/articleTypes';
+import type { PracticalInfoKey, PracticalInfoLocales, SupportedLocale } from '@/lib/articleTypes';
 
 type ArticlePracticalInfoProps = {
   locale: string;
@@ -18,6 +18,35 @@ const practicalOrder: PracticalInfoKey[] = [
   'watch_out',
   'accessibility',
 ];
+
+function normalizeInfoKey(value: string): string {
+  return value
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+    .replace(/[\s-]+/g, '_')
+    .replace(/__+/g, '_')
+    .toLowerCase();
+}
+
+function humanizeInfoKey(value: string): string {
+  return value
+    .trim()
+    .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .replace(/^./, (char) => char.toUpperCase());
+}
+
+function getPracticalLabel(locale: SupportedLocale, key: string): string {
+  const normalizedKey = normalizeInfoKey(key);
+  return (
+    practicalLabels[locale]?.[normalizedKey] ??
+    practicalLabels[locale]?.[key] ??
+    practicalLabels.cs[normalizedKey] ??
+    practicalLabels.cs[key] ??
+    humanizeInfoKey(key)
+  );
+}
 
 export default function ArticlePracticalInfo({
   locale,
@@ -37,14 +66,9 @@ export default function ArticlePracticalInfo({
         return null;
       }
 
-      // Try to find a translated label in practicalLabels, otherwise capitalize the key
-      const normalizedKey = key.toLowerCase().replace(/[\s_-]+/g, '_');
-      const labelFromMap = (practicalLabels[currentLocale] as any)[normalizedKey] || (practicalLabels[currentLocale] as any)[key];
-      const label = labelFromMap ?? (key.charAt(0).toUpperCase() + key.slice(1));
-
       return {
         key,
-        label,
+        label: getPracticalLabel(currentLocale, key),
         value: stripLeadingListMarkers(value),
       };
     })

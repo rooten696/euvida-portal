@@ -6,6 +6,13 @@ import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
 import QuickOverview from '@/app/components/article/QuickOverview';
 import SourcesSection from '@/app/components/article/SourcesSection';
+import WaterQualityBox from '@/app/components/article/WaterQualityBox';
+import {
+  getArticleFallbackAlt,
+  getArticleFallbackImage,
+  getArticleImageWithFallback,
+  isMissingArticleImage,
+} from '@/lib/articleFallbackImages';
 import { getArticleLabel } from '@/lib/articleLabels';
 import { getCategoryLabel, getLocalizedArticle } from '@/lib/articleDisplay';
 import { formatDate } from '@/lib/articleFormatting';
@@ -21,6 +28,7 @@ import {
   type SupportedLocale,
 } from '@/lib/articleTypes';
 import { createClient } from '@supabase/supabase-js';
+import { getWaterQualityForArticle } from '@/lib/waterQuality';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -33,7 +41,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
-export const revalidate = 3600; // Cache on edge for 1 hour
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   const { data: articles } = await supabase
@@ -121,6 +129,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     localizedArticle.excerpt ??
     descriptionFromContent(localizedArticle.content) ??
     'Přečtěte si článek na Euvida.eu';
+  const metadataImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
 
   return {
     metadataBase: new URL(siteUrl),
@@ -140,10 +149,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description,
       type: 'article',
       url: `/${locale}/article/${slug}`,
-      images: article.image_url
+      images: metadataImageUrl
         ? [
             {
-              url: article.image_url,
+              url: metadataImageUrl,
               alt: localizedArticle.imageAlt,
             },
           ]
@@ -310,6 +319,7 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   const { country, region } = await getLocationData(article);
+
   const localizedArticle = getLocalizedArticle(article, locale);
   const { title, excerpt, content: rawContent, imageAlt } = localizedArticle;
   const markdownContent = stripStructuredArticleSections(stripFirstMarkdownH1(rawContent), locale);
@@ -318,8 +328,14 @@ export default async function ArticlePage({ params }: PageProps) {
   const updatedDate = formatDate(article.updated_at ?? article.created_at, locale);
   const countryName = getLocationName(country, locale);
   const regionName = getLocationName(region, locale);
+  const articleHasRealImage = !isMissingArticleImage(article.image_url);
+  const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug);
+  const articleImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
   const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
+  const waterQuality = ['natural_swimming', 'fkk'].includes(article.category ?? '')
+    ? await getWaterQualityForArticle(article.source_info)
+    : null;
 
   // Merge booking_url from practical_info into prices_info
   const dbPricesInfo = article.prices_info || {};
@@ -366,7 +382,7 @@ export default async function ArticlePage({ params }: PageProps) {
   ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   return (
-    <main className="min-h-screen bg-slate-950 pb-16 pt-8 font-sans text-slate-100">
+    <main className="article-detail-page min-h-screen bg-slate-950 pb-16 pt-8 font-sans text-slate-100">
       <article className="mx-auto max-w-[1360px] px-4 md:px-6">
         <ArticleHero
           locale={locale}
@@ -375,9 +391,10 @@ export default async function ArticlePage({ params }: PageProps) {
           categoryLabel={categoryLabel}
           featured={article.featured}
           metaItems={metaItems}
-          imageUrl={article.image_url}
-          imageAlt={imageAlt}
-          imageCredit={article.image_url ? article.source_info?.images?.[0] : null}
+          imageUrl={articleImageUrl}
+          fallbackImageUrl={fallbackImageUrl}
+          imageAlt={articleHasRealImage ? imageAlt : getArticleFallbackAlt(locale, categoryLabel)}
+          imageCredit={articleHasRealImage ? article.source_info?.images?.[0] : null}
           breadcrumb={<Breadcrumb locale={locale} country={country} region={region} />}
           weatherLocation={weatherLocation}
           gpsCoords={gpsCoords}
@@ -400,6 +417,12 @@ export default async function ArticlePage({ params }: PageProps) {
 
           {/* Middle Column - Article Content */}
           <div className="order-1 min-w-0 lg:order-2 space-y-8">
+            {waterQuality && (
+              <div className="lg:hidden">
+                <WaterQualityBox status={waterQuality} locale={locale} />
+              </div>
+            )}
+
             <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-xl backdrop-blur md:p-8">
               <ReactMarkdown components={markdownComponents} skipHtml>
                 {markdownContent}
@@ -418,6 +441,7 @@ export default async function ArticlePage({ params }: PageProps) {
           {/* Right Column - Prices & Access */}
           <aside className="hidden lg:block order-3 lg:order-3">
             <div className="space-y-5 lg:sticky lg:top-24">
+              {waterQuality && <WaterQualityBox status={waterQuality} locale={locale} />}
               <PricesSection locale={locale} pricesInfo={pricesInfo} />
               <AccessSection locale={locale} accessInfo={article.access_info} />
             </div>

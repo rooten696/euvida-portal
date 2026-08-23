@@ -141,6 +141,8 @@ export type VisitInfo = {
   dogs_allowed_note?: LocalizedField;
   water_nearby?: boolean | null;
   beach_nearby?: boolean | null;
+  public_beach_access?: boolean | null;
+  public_swimming_access?: boolean | null;
   electric_hookup?: boolean | null;
   kitchen_available?: boolean | null;
   showers_available?: boolean | null;
