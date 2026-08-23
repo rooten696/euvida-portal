@@ -46,6 +46,6 @@ export default function proxy(request: NextRequest) {
 export const config = {
   // Tento matcher říká, které cesty má tento "překladač" hlídat - filtrovat pouze stránkové cesty
   matcher: [
-    '/((?!api|_next|_vercel|flags|.*\\..*).*)'
+    '/((?!api|_next|_vercel|flags|ads.txt|robots.txt|sitemap.xml|.*\\..*).*)'
   ]
 };
