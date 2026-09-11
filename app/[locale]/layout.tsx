@@ -48,11 +48,9 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
-      <head />
-      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
-        <Script
+      <head>
+        <script
           id="google-consent-default"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -68,6 +66,30 @@ export default async function LocaleLayout({
             `,
           }}
         />
+        <script
+          data-noptimize="1"
+          data-cfasync="false"
+          data-wpfc-render="false"
+          data-no-defer="1"
+          data-cmp-ab="2"
+          {...{
+            nowprocket: '',
+            'seraph-accel-crit': '1',
+          }}
+          dangerouslySetInnerHTML={{
+            __html: `
+  (function () {
+      var script = document.createElement("script");
+      script.async = 1;
+      script.setAttribute("data-cmp-ab","2");
+      script.src = 'https://emrldco.com/NTcyOTEw.js?t=572910';
+      document.head.appendChild(script);
+  })();
+`,
+          }}
+        />
+      </head>
+      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
         <Script
           id="adsense-loader"
           async
