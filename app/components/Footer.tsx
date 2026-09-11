@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Script from 'next/script';
 import { getLegalLocale, legalPages } from '@/lib/legalPages';
 
 type FooterProps = {
@@ -12,6 +13,16 @@ export default function Footer({ locale = 'cs' }: FooterProps) {
   return (
     <footer className="w-full border-t border-white/5 bg-slate-900/60 backdrop-blur-md py-12 mt-auto">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mb-8 overflow-hidden rounded-xl bg-white p-4">
+          <Script
+            id="travelpayouts-footer-widget"
+            async
+            src="https://tpwgt.com/content?currency=usd&trs=572910&shmarker=776456&locale=en&powered_by=true&limit=4&primary_color=00AE98&results_background_color=FFFFFF&form_background_color=FFFFFF&campaign_id=111&promo_id=3411"
+            charSet="utf-8"
+            strategy="afterInteractive"
+          />
+        </div>
+
         <div className="flex flex-col md:flex-row items-center justify-between gap-6">
           
           {/* Logo a popisek */}
