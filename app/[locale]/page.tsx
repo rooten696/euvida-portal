@@ -28,7 +28,7 @@ const supabase = createClient(
 );
 
 const heroImage =
-  'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2070&auto=format&fit=crop';
+  'https://images.unsplash.com/photo-1668936132313-2c3105eef631?q=80&w=2400&auto=format&fit=crop';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const homepageArticleLimit = 120;
 const homepageArticleSelect =
@@ -373,19 +373,19 @@ export default async function HomePage({ params }: PageProps) {
           fill
           priority
           sizes="100vw"
-          className="object-cover"
+          className="object-cover object-[25%_center] md:object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/80 to-slate-950/40" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/45 to-slate-950" />
 
         <div className="relative mx-auto flex min-h-[54vh] max-w-6xl flex-col justify-end items-center px-4 pb-14 pt-20 md:min-h-[58vh] md:px-6 md:pt-24">
           <div className="max-w-4xl text-white flex flex-col items-center text-center">
-            <p className="mb-4 inline-flex rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-400">
+            <p className="mb-4 inline-flex rounded-full bg-emerald-500/20 border border-emerald-500/30 px-3 py-1 text-xs font-extrabold uppercase tracking-wide text-emerald-400 backdrop-blur-sm">
               {getDestinationLabel(locale, 'travelGuide')}
             </p>
-            <h1 className="max-w-4xl break-words text-4xl font-black leading-tight tracking-tight md:text-6xl">
+            <h1 className="max-w-4xl break-words text-4xl font-black leading-tight tracking-tight drop-shadow-md md:text-6xl">
               {t('title')}
             </h1>
-            <p className="mt-6 max-w-2xl break-words text-lg font-medium leading-relaxed text-white/90 md:text-xl">
+            <p className="mt-6 max-w-2xl break-words text-lg font-medium leading-relaxed text-white/95 drop-shadow md:text-xl">
               {t('subtitle')}
             </p>
             <div className="mt-8 w-full max-w-2xl mx-auto">
