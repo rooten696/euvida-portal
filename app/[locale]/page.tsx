@@ -369,13 +369,14 @@ export default async function HomePage({ params }: PageProps) {
       <section className="relative z-20 bg-slate-950">
         <Image
           src={heroImage}
-          alt={t('title')}
+          alt=""
+          aria-hidden="true"
           fill
           priority
           sizes="100vw"
           className="object-cover object-[25%_center] md:object-center"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/75 via-slate-950/45 to-slate-950" />
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-950/70 via-slate-950/30 to-slate-950/90" />
 
         <div className="relative mx-auto flex min-h-[54vh] max-w-6xl flex-col justify-end items-center px-4 pb-14 pt-20 md:min-h-[58vh] md:px-6 md:pt-24">
           <div className="max-w-4xl text-white flex flex-col items-center text-center">
