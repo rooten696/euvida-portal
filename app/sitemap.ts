@@ -6,7 +6,7 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://euvida.eu';
-const locales = ['cs', 'en', 'de', 'fr', 'es'];
+const locales = ['cs', 'en'];
 
 export const revalidate = 86400; // Kešování sitemapy na 24 hodin
 

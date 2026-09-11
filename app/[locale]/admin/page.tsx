@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocale } from 'next-intl';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseBrowserClient';
@@ -38,6 +38,8 @@ type ArticleImageDraft = {
   image_alt: LocalizedText;
   source_info: SourceInfo;
 };
+
+const bulkImportDelayMs = 30_000;
 
 type RegionImageData = {
   id: string;
@@ -122,6 +124,20 @@ function hasRealImageUrl(imageUrl: string | null | undefined): boolean {
   );
 }
 
+function isImportableExternalImageUrl(imageUrl: string | null | undefined): boolean {
+  const value = imageUrl?.trim();
+
+  if (!value || !hasRealImageUrl(value)) {
+    return false;
+  }
+
+  return (
+    /^https?:\/\//i.test(value) &&
+    !value.includes('.supabase.co/') &&
+    !value.includes('/storage/v1/object/public/')
+  );
+}
+
 function normalizedCategory(category: string | null | undefined): string {
   return category === 'camp' ? 'camping' : category || 'bez kategorie';
 }
@@ -157,6 +173,9 @@ export default function AdminPage() {
   const [revalidateSlug, setRevalidateSlug] = useState('');
   const [isRevalidating, setIsRevalidating] = useState(false);
   const [status, setStatus] = useState('');
+  const [bulkImporting, setBulkImporting] = useState(false);
+  const [bulkImportMessage, setBulkImportMessage] = useState('');
+  const stopBulkImportRef = useRef(false);
 
   const fetchArticles = useCallback(async () => {
     const { data } = await supabase
@@ -318,6 +337,358 @@ export default function AdminPage() {
     setSavingArticleId(null);
   };
 
+  const sleep = (milliseconds: number) =>
+    new Promise((resolve) => {
+      window.setTimeout(resolve, milliseconds);
+    });
+
+  const handleBulkImportArticleImages = async () => {
+    const candidates = filteredArticles.filter((article) =>
+      isImportableExternalImageUrl(getArticleDraft(article).image_url)
+    );
+
+    if (candidates.length === 0) {
+      setBulkImportMessage('V aktuálním filtru není žádný externí obrázek k převzetí.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Převzít ${candidates.length} externích obrázků do úložiště? Mezi položkami bude pauza 30 sekund. Při 429 se dávka zastaví, aby se zdroj dál nezatěžoval.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      setBulkImportMessage('Nejsi přihlášený.');
+      return;
+    }
+
+    stopBulkImportRef.current = false;
+    setBulkImporting(true);
+
+    let imported = 0;
+    let failed = 0;
+    let stopped = false;
+
+    for (let index = 0; index < candidates.length; index += 1) {
+      if (stopBulkImportRef.current) {
+        stopped = true;
+        setBulkImportMessage(
+          `Dávka zastavena: hotovo ${imported}, chyby ${failed}.`
+        );
+        break;
+      }
+
+      const article = candidates[index];
+      const imageUrl = getArticleDraft(article).image_url.trim();
+      setBulkImportMessage(
+        `Přebírám ${index + 1}/${candidates.length}: ${article.slug}`
+      );
+
+      try {
+        const response = await fetch('/api/admin/import-image', {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageUrl,
+            entityType: 'articles',
+            entityId: article.slug,
+            articleId: article.id,
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; publicUrl?: string; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok || !payload.publicUrl) {
+          throw new Error(payload?.error ?? `HTTP ${response.status}`);
+        }
+
+        imported += 1;
+        setArticleDrafts((current) => ({
+          ...current,
+          [article.id]: {
+            ...(current[article.id] ?? createImageDraft(article)),
+            image_url: payload.publicUrl ?? imageUrl,
+          },
+        }));
+      } catch (error) {
+        failed += 1;
+        const errorMessage = error instanceof Error ? error.message : 'neznámá chyba';
+        const isRateLimited = /429|rate limit|too many requests/i.test(errorMessage);
+
+        if (isRateLimited) {
+          stopped = true;
+          setBulkImportMessage(
+            `Dávka zastavena u ${article.slug}: zdroj vrátil 429/rate-limit. Převzato ${imported}, chyby ${failed}. Zkus pokračovat později.`
+          );
+          break;
+        }
+
+        setBulkImportMessage(
+          `Chyba u ${article.slug}: ${
+            errorMessage
+          }. Pokračuji za ${Math.round(bulkImportDelayMs / 1000)} sekund.`
+        );
+        if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+          await sleep(bulkImportDelayMs);
+          continue;
+        }
+      }
+
+      if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+        await sleep(bulkImportDelayMs);
+      }
+    }
+
+    setBulkImporting(false);
+    stopBulkImportRef.current = false;
+    await fetchArticles();
+    setBulkImportMessage(
+      stopped
+        ? `Dávka zastavena: převzato ${imported}, chyby ${failed}.`
+        : `Dávka dokončena: převzato ${imported}, chyby ${failed}.`
+    );
+  };
+
+  const handleBulkImportRegionImages = async () => {
+    const candidates = filteredRegions.filter((region) =>
+      isImportableExternalImageUrl(getRegionImageDraft(region))
+    );
+
+    if (candidates.length === 0) {
+      setBulkImportMessage('V aktuálním filtru není žádný externí obrázek regionu k převzetí.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Převzít ${candidates.length} externích obrázků regionů do úložiště? Mezi položkami bude pauza 30 sekund. Při 429 se dávka zastaví.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      setBulkImportMessage('Nejsi přihlášený.');
+      return;
+    }
+
+    stopBulkImportRef.current = false;
+    setBulkImporting(true);
+
+    let imported = 0;
+    let failed = 0;
+    let stopped = false;
+
+    for (let index = 0; index < candidates.length; index += 1) {
+      if (stopBulkImportRef.current) {
+        stopped = true;
+        setBulkImportMessage(`Dávka zastavena: hotovo ${imported}, chyby ${failed}.`);
+        break;
+      }
+
+      const region = candidates[index];
+      const imageUrl = getRegionImageDraft(region).trim();
+      setBulkImportMessage(`Přebírám region ${index + 1}/${candidates.length}: ${region.name}`);
+
+      try {
+        const response = await fetch('/api/admin/import-image', {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageUrl,
+            entityType: 'regions',
+            entityId: region.id,
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; publicUrl?: string; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok || !payload.publicUrl) {
+          throw new Error(payload?.error ?? `HTTP ${response.status}`);
+        }
+
+        imported += 1;
+        setRegions((current) =>
+          current.map((item) =>
+            item.id === region.id ? { ...item, image_url: payload.publicUrl } : item
+          )
+        );
+        setRegionImageDrafts((current) => {
+          const next = { ...current };
+          delete next[region.id];
+          return next;
+        });
+      } catch (error) {
+        failed += 1;
+        const errorMessage = error instanceof Error ? error.message : 'neznámá chyba';
+        const isRateLimited = /429|rate limit|too many requests/i.test(errorMessage);
+
+        if (isRateLimited) {
+          stopped = true;
+          setBulkImportMessage(
+            `Dávka zastavena u regionu ${region.name}: zdroj vrátil 429/rate-limit. Převzato ${imported}, chyby ${failed}. Zkus pokračovat později.`
+          );
+          break;
+        }
+
+        setBulkImportMessage(
+          `Chyba u regionu ${region.name}: ${errorMessage}. Pokračuji za ${Math.round(
+            bulkImportDelayMs / 1000
+          )} sekund.`
+        );
+        if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+          await sleep(bulkImportDelayMs);
+          continue;
+        }
+      }
+
+      if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+        await sleep(bulkImportDelayMs);
+      }
+    }
+
+    setBulkImporting(false);
+    stopBulkImportRef.current = false;
+    await fetchRegions();
+    setBulkImportMessage(
+      stopped
+        ? `Dávka regionů zastavena: převzato ${imported}, chyby ${failed}.`
+        : `Dávka regionů dokončena: převzato ${imported}, chyby ${failed}.`
+    );
+  };
+
+  const handleBulkImportCountryImages = async () => {
+    const candidates = filteredCountries.filter((country) =>
+      isImportableExternalImageUrl(country.image_url)
+    );
+
+    if (candidates.length === 0) {
+      setBulkImportMessage('V aktuálním filtru není žádný externí obrázek země k převzetí.');
+      return;
+    }
+
+    const confirmed = window.confirm(
+      `Převzít ${candidates.length} externích obrázků zemí do úložiště? Mezi položkami bude pauza 30 sekund. Při 429 se dávka zastaví.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const { data } = await supabase.auth.getSession();
+    const accessToken = data.session?.access_token;
+
+    if (!accessToken) {
+      setBulkImportMessage('Nejsi přihlášený.');
+      return;
+    }
+
+    stopBulkImportRef.current = false;
+    setBulkImporting(true);
+
+    let imported = 0;
+    let failed = 0;
+    let stopped = false;
+
+    for (let index = 0; index < candidates.length; index += 1) {
+      if (stopBulkImportRef.current) {
+        stopped = true;
+        setBulkImportMessage(`Dávka zastavena: hotovo ${imported}, chyby ${failed}.`);
+        break;
+      }
+
+      const country = candidates[index];
+      const imageUrl = country.image_url?.trim();
+
+      if (!imageUrl) {
+        continue;
+      }
+
+      setBulkImportMessage(`Přebírám zemi ${index + 1}/${candidates.length}: ${country.name}`);
+
+      try {
+        const response = await fetch('/api/admin/import-image', {
+          method: 'POST',
+          headers: {
+            authorization: `Bearer ${accessToken}`,
+            'content-type': 'application/json',
+          },
+          body: JSON.stringify({
+            imageUrl,
+            entityType: 'countries',
+            entityId: country.id,
+          }),
+        });
+        const payload = (await response.json().catch(() => null)) as
+          | { ok?: boolean; publicUrl?: string; error?: string }
+          | null;
+
+        if (!response.ok || !payload?.ok || !payload.publicUrl) {
+          throw new Error(payload?.error ?? `HTTP ${response.status}`);
+        }
+
+        imported += 1;
+        setCountries((current) =>
+          current.map((item) =>
+            item.id === country.id ? { ...item, image_url: payload.publicUrl } : item
+          )
+        );
+      } catch (error) {
+        failed += 1;
+        const errorMessage = error instanceof Error ? error.message : 'neznámá chyba';
+        const isRateLimited = /429|rate limit|too many requests/i.test(errorMessage);
+
+        if (isRateLimited) {
+          stopped = true;
+          setBulkImportMessage(
+            `Dávka zastavena u země ${country.name}: zdroj vrátil 429/rate-limit. Převzato ${imported}, chyby ${failed}. Zkus pokračovat později.`
+          );
+          break;
+        }
+
+        setBulkImportMessage(
+          `Chyba u země ${country.name}: ${errorMessage}. Pokračuji za ${Math.round(
+            bulkImportDelayMs / 1000
+          )} sekund.`
+        );
+        if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+          await sleep(bulkImportDelayMs);
+          continue;
+        }
+      }
+
+      if (index < candidates.length - 1 && !stopBulkImportRef.current) {
+        await sleep(bulkImportDelayMs);
+      }
+    }
+
+    setBulkImporting(false);
+    stopBulkImportRef.current = false;
+    await fetchCountries();
+    setBulkImportMessage(
+      stopped
+        ? `Dávka zemí zastavena: převzato ${imported}, chyby ${failed}.`
+        : `Dávka zemí dokončena: převzato ${imported}, chyby ${failed}.`
+    );
+  };
+
   const handleRegionImageSubmit = async (e: React.FormEvent, region: RegionImageData) => {
     e.preventDefault();
 
@@ -441,6 +812,14 @@ export default function AdminPage() {
       .some((value) => String(value).toLowerCase().includes(query));
   }), [articleImageFilter, articleImageQuery, articles]);
 
+  const bulkImportableArticleCount = useMemo(
+    () =>
+      filteredArticles.filter((article) =>
+        isImportableExternalImageUrl(getArticleDraft(article).image_url)
+      ).length,
+    [articleDrafts, filteredArticles]
+  );
+
   const filteredRegions = useMemo(() => regions.filter((region) => {
     if (regionImageFilter === 'missing' && hasRealImageUrl(region.image_url)) return false;
     if (regionImageFilter === 'has_image' && !hasRealImageUrl(region.image_url)) return false;
@@ -453,6 +832,14 @@ export default function AdminPage() {
       .some((value) => String(value).toLowerCase().includes(query));
   }), [regionImageFilter, regionImageQuery, regions]);
 
+  const bulkImportableRegionCount = useMemo(
+    () =>
+      filteredRegions.filter((region) =>
+        isImportableExternalImageUrl(getRegionImageDraft(region))
+      ).length,
+    [filteredRegions, regionImageDrafts]
+  );
+
   const filteredCountries = useMemo(() => countries.filter((country) => {
     if (countryImageFilter === 'missing' && hasRealImageUrl(country.image_url)) return false;
     if (countryImageFilter === 'has_image' && !hasRealImageUrl(country.image_url)) return false;
@@ -464,6 +851,14 @@ export default function AdminPage() {
       .filter(Boolean)
       .some((value) => String(value).toLowerCase().includes(query));
   }), [countries, countryImageFilter, countryImageQuery]);
+
+  const bulkImportableCountryCount = useMemo(
+    () =>
+      filteredCountries.filter((country) =>
+        isImportableExternalImageUrl(country.image_url)
+      ).length,
+    [filteredCountries]
+  );
 
   const articleImageFilterOptions: { id: ArticleImageFilter; label: string; count: number }[] = [
     { id: 'all', label: 'Vše', count: articleImageCounts.all },
@@ -643,6 +1038,48 @@ export default function AdminPage() {
             />
           </div>
 
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-emerald-200">
+                Dávkové převzetí nových externích obrázků
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-400">
+                Vezme jen aktuálně zobrazené články s externí URL, přeskočí prázdné,
+                fallback a už převzaté Supabase obrázky. Pauza mezi položkami je 30 sekund,
+                při 429 se dávka zastaví.
+              </p>
+              {bulkImportMessage && (
+                <p className="mt-2 break-words rounded-lg bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-300">
+                  {bulkImportMessage}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2 sm:flex sm:shrink-0">
+              {bulkImporting && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopBulkImportRef.current = true;
+                    setBulkImportMessage('Zastavuji dávku po dokončení aktuální položky...');
+                  }}
+                  className="rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-black text-rose-200 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+                >
+                  Zastavit
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleBulkImportArticleImages}
+                disabled={bulkImporting || bulkImportableArticleCount === 0}
+                className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {bulkImporting
+                  ? 'Dávka běží...'
+                  : `Převzít vše nové (${bulkImportableArticleCount})`}
+              </button>
+            </div>
+          </div>
+
           <p className="mt-5 text-sm text-slate-500">
             Zobrazeno {filteredArticles.length} z {articles.length}. Články bez URL používají fallback a v DB nemají uložený reálný obrázek.
           </p>
@@ -656,12 +1093,14 @@ export default function AdminPage() {
                 return (
                   <article
                     key={article.id}
-                    className="rounded-2xl border border-white/10 bg-slate-900/70 p-4 transition"
+                    className="max-w-full overflow-hidden rounded-2xl border border-white/10 bg-slate-900/70 p-3 transition sm:p-4"
                   >
                     <form onSubmit={(event) => handleArticleImageSubmit(event, article)} className="space-y-4">
                       <div className="flex min-w-0 flex-col text-left">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-lg font-black text-white">{article.title.trim()}</h3>
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
+                          <h3 className="min-w-0 max-w-full break-words text-base font-black text-white sm:text-lg">
+                            {article.title.trim()}
+                          </h3>
                           <span className="rounded-full bg-slate-800 px-2 py-1 text-[11px] font-black uppercase tracking-wide text-slate-300">
                             {normalizedCategory(article.category)}
                           </span>
@@ -676,7 +1115,7 @@ export default function AdminPage() {
                             </span>
                           )}
                         </div>
-                        <p className="mt-2 truncate text-xs font-semibold text-blue-400">
+                        <p className="mt-2 min-w-0 break-all text-xs font-semibold text-blue-400">
                           /article/{article.slug}
                         </p>
                       </div>
@@ -684,6 +1123,7 @@ export default function AdminPage() {
                       <ImageManager
                         title="Hlavní obrázek článku"
                         entityType="articles"
+                        articleId={article.id}
                         entityId={article.slug}
                         imageUrl={draft.image_url}
                         compact
@@ -695,7 +1135,7 @@ export default function AdminPage() {
                         onStatus={setStatus}
                       />
 
-                      <div className="flex gap-3">
+                      <div className="grid gap-3 sm:flex">
                         <button
                           type="submit"
                           disabled={isSaving}
@@ -773,6 +1213,47 @@ export default function AdminPage() {
               placeholder="Hledat podle názvu, ID, země nebo jazyka"
               className="w-full rounded-lg border border-white/10 bg-slate-950 px-4 py-2 text-sm text-slate-100 outline-none placeholder:text-slate-600 focus:border-emerald-400/70 focus:ring-2 focus:ring-emerald-500/20 xl:w-96"
             />
+          </div>
+
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-emerald-200">
+                Dávkové převzetí externích obrázků regionů
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-400">
+                Vezme jen aktuálně zobrazené regiony s externí URL, obrázek optimalizuje a zapíše zpět do `regions.image_url`.
+                Pauza mezi položkami je 30 sekund, při 429 se dávka zastaví.
+              </p>
+              {bulkImportMessage && (
+                <p className="mt-2 break-words rounded-lg bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-300">
+                  {bulkImportMessage}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2 sm:flex sm:shrink-0">
+              {bulkImporting && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopBulkImportRef.current = true;
+                    setBulkImportMessage('Zastavuji dávku po dokončení aktuální položky...');
+                  }}
+                  className="rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-black text-rose-200 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+                >
+                  Zastavit
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleBulkImportRegionImages}
+                disabled={bulkImporting || bulkImportableRegionCount === 0}
+                className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {bulkImporting
+                  ? 'Dávka běží...'
+                  : `Převzít vše nové (${bulkImportableRegionCount})`}
+              </button>
+            </div>
           </div>
 
           <p className="mt-5 text-sm text-slate-500">
@@ -905,8 +1386,49 @@ export default function AdminPage() {
             />
           </div>
 
+          <div className="mt-4 flex flex-col gap-3 rounded-xl border border-emerald-500/10 bg-emerald-500/5 p-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p className="text-sm font-bold text-emerald-200">
+                Dávkové převzetí externích obrázků zemí
+              </p>
+              <p className="mt-1 text-xs font-medium text-slate-400">
+                Vezme jen aktuálně zobrazené země s externí URL, obrázek optimalizuje a zapíše zpět do `countries.image_url`.
+                Pauza mezi položkami je 30 sekund, při 429 se dávka zastaví.
+              </p>
+              {bulkImportMessage && (
+                <p className="mt-2 break-words rounded-lg bg-slate-950/60 px-3 py-2 text-xs font-semibold text-slate-300">
+                  {bulkImportMessage}
+                </p>
+              )}
+            </div>
+            <div className="grid gap-2 sm:flex sm:shrink-0">
+              {bulkImporting && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    stopBulkImportRef.current = true;
+                    setBulkImportMessage('Zastavuji dávku po dokončení aktuální položky...');
+                  }}
+                  className="rounded-xl bg-rose-500/10 px-4 py-2 text-sm font-black text-rose-200 ring-1 ring-rose-500/20 hover:bg-rose-500/20"
+                >
+                  Zastavit
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleBulkImportCountryImages}
+                disabled={bulkImporting || bulkImportableCountryCount === 0}
+                className="rounded-xl bg-emerald-500 px-4 py-2 text-sm font-black text-slate-950 transition hover:bg-emerald-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {bulkImporting
+                  ? 'Dávka běží...'
+                  : `Převzít vše nové (${bulkImportableCountryCount})`}
+              </button>
+            </div>
+          </div>
+
           <p className="mt-5 text-sm text-slate-500">
-            Zobrazeno {filteredCountries.length} z {countries.length}. Editace zemí je záměrně vypnutá.
+            Zobrazeno {filteredCountries.length} z {countries.length}. Ruční editace zemí je zatím vypnutá, dávkové převzetí externích URL je dostupné.
           </p>
 
           <div className="mt-6 grid gap-4">
