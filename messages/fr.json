@@ -1,6 +1,9 @@
 {
   "Navigation": {
     "home": "Accueil",
+    "bikeparks": "Bike parks",
+    "countries": "Pays",
+    "about": "À propos",
     "destinations": "Destinations",
     "favorites": "Favoris",
     "profile": "Profil",
@@ -8,34 +11,35 @@
     "logout": "Déconnexion"
   },
   "HomePage": {
-    "title": "Découvrez le meilleur de l'Europe.",
-    "subtitle": "Votre guide ultime pour voyager, déménager et vivre une vie épanouie dans les plus belles destinations.",
-    "cta": "Commencer à explorer.🌍",
-    "feature1_title": "Voyage sans faille",
-    "feature1_desc": "Des conseils authentiques sur les lieux incontournables et des conseils pratiques pour des vacances parfaites et sans stress.",
-    "feature2_title": "Vie et Travail",
-    "feature2_desc": "Tenté par un déménagement ? Découvrez tout sur la culture, le logement et les opportunités d'emploi à l'étranger.",
-    "feature3_title": "Culture et Saveur",
-    "feature3_desc": "Des tapas espagnoles aux pralines belges. Plongez pleinement dans la gastronomie et les coutumes locales.",
-    "where_to": "Où allez-vous ?",
-    "where_to_desc": "Choisissez un pays et explorez ses régions uniques, ses sites touristiques et la météo actuelle.",
-    "no_countries": "Aucun pays disponible pour le moment."
+    "title": "Bike parks et trail centers d'Europe.",
+    "subtitle": "Votre guide et planificateur VTT : remontées mécaniques, pistes du flow au downhill, location de vélo, tarifs et conseils pratiques.",
+    "cta": "Explorer les bike parks.🚵",
+    "feature1_title": "Remontées & navettes",
+    "feature1_desc": "Informations vérifiées sur les télécabines, télésièges, navettes, périodes d'ouverture et forfaits VTT.",
+    "feature2_title": "Pistes & niveaux",
+    "feature2_desc": "Des flow trails accessibles aux enfants et débutants jusqu'aux pistes noires de descente, sauts et passages engagés.",
+    "feature3_title": "Location, atelier & services",
+    "feature3_desc": "Où louer un VTT de descente ou d'enduro et des protections, laver son vélo, trouver un atelier et stationner.",
+    "where_to": "Où rouler pour votre prochaine sortie ?",
+    "where_to_desc": "Choisissez un pays pour découvrir les meilleurs bike parks, réseaux de sentiers et plans de pistes.",
+    "no_countries": "Aucun pays avec bike park disponible pour le moment."
   },
   "CountryDetail": {
     "back_button": "Retour à l'aperçu",
     "general_info": "Informations générales",
-    "travel_tourism": "Voyage et Tourisme",
-    "life_work": "Vie et Travail",
-    "culture_food": "Culture et Gastronomie",
-    "regions_title": "Régions et zones",
-    "explore_region": "Explorer la région"
+    "travel_tourism": "Bike parks & pistes",
+    "life_work": "Accès & hébergement",
+    "culture_food": "Services & équipement",
+    "regions_title": "Régions avec bike parks",
+    "explore_region": "Explorer les bike parks régionaux",
+    "practical_cautions": "Sécurité et conseils pratiques"
   },
   "RegionDetail": {
     "back_button": "Retour au pays",
-    "general_info": "Généralités sur la région",
-    "nature": "Excursions et Nature",
-    "history": "Gastronomie et Atmosphère",
-    "transport": "Pour qui c'est et enfants",
+    "general_info": "Région et sentiers",
+    "nature": "Bike parks et sentiers",
+    "history": "Infrastructures et ambiance",
+    "transport": "Niveau, enfants & accès",
     "weather_title": "Météo actuelle",
     "temp_title": "Températures moyennes",
     "spring": "Printemps",
@@ -43,6 +47,6 @@
     "autumn": "Automne",
     "winter": "Hiver",
     "air": "Air",
-    "sea": "Mer"
+    "sea": "Eau"
   }
 }

@@ -28,38 +28,38 @@ const supabase = createClient(
 );
 
 const heroImage =
-  'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
+  'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?q=80&w=2070&auto=format&fit=crop';
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const homepageArticleLimit = 120;
 const homepageArticleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, practical_info, visit_info, published, featured, created_at, reading_time_minutes';
 const articleCountSelect = 'country_id, region_id';
 
 const homeMetadata: Record<SupportedLocale, { title: string; description: string }> = {
   cs: {
-    title: 'Euvida | Cestovatelský průvodce Evropou',
+    title: 'Euvida | Katalog a plánovač evropských bikeparků a trailcenter',
     description:
-      'Praktické cestovatelské články, země a regiony Evropy pro výlety, koupání, památky i plánování cest.',
+      'Praktický průvodce evropskými bikeparky, trailcentry, lanovkami, tratěmi, půjčovnami a MTB plánováním.',
   },
   en: {
-    title: 'Euvida | Travel guide to Europe',
+    title: 'Euvida | European Bike Parks & Trail Centers Guide',
     description:
-      'Practical travel articles, countries, and regions across Europe for trips, swimming, landmarks, and planning.',
+      'Practical guide and planner for European bike parks, trail networks, uplifts, bike rentals, and trip planning.',
   },
   de: {
-    title: 'Euvida | Reiseführer für Europa',
+    title: 'Euvida | Europäische Bikeparks & Trailcenter Planer',
     description:
-      'Praktische Reiseartikel, Länder und Regionen Europas für Ausflüge, Baden, Sehenswürdigkeiten und Reiseplanung.',
+      'Praktischer Guide für europäische Bikeparks, Trailcenter, Bergbahnen, Strecken, Bikeverleih und MTB-Planung.',
   },
   fr: {
-    title: 'Euvida | Guide de voyage en Europe',
+    title: 'Euvida | Guide des bike parks et trail centers en Europe',
     description:
-      'Articles pratiques, pays et régions d’Europe pour les sorties, la baignade, les monuments et la préparation de voyage.',
+      'Guide pratique des bike parks européens, trail centers, remontées mécaniques, pistes, location de VTT et préparation.',
   },
   es: {
-    title: 'Euvida | Guía de viaje por Europa',
+    title: 'Euvida | Guía de bike parks y trail centers en Europa',
     description:
-      'Artículos prácticos, países y regiones de Europa para escapadas, baño, monumentos y planificación de viajes.',
+      'Guía práctica de bike parks europeos, centros de senderos, remontes, pistas, alquiler de bicis y planificación MTB.',
   },
 };
 
@@ -102,28 +102,43 @@ function countBy<T>(items: T[], getKey: (item: T) => string | null | undefined):
 }
 
 function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
-  const counts = new Map<string, number>();
+  let lift = 0;
+  let beginner = 0;
+  let rental = 0;
+  let trailMap = 0;
 
   for (const article of articles) {
-    incrementCount(counts, article.category);
-    if (article.category !== 'fkk' && article.visit_info?.nudist_beach === true) {
-      incrementCount(counts, 'fkk');
+    const v = (article.visit_info as Record<string, unknown>) || {};
+    const p = (article.practical_info as Record<string, Record<string, unknown>>) || {};
+    const pl = p[locale] || p.cs || p.en || {};
+
+    if (v.lift_available === true || Boolean(pl.lift)) {
+      lift++;
+    }
+    if (v.beginner_friendly === true || v.family_friendly === true) {
+      beginner++;
     }
     if (
-      (article.category === 'camping' || article.category === 'camp') &&
-      (article.visit_info?.public_beach_access === true || article.visit_info?.public_swimming_access === true)
+      v.bike_rental_available === true ||
+      v.service_available === true ||
+      Boolean(pl.rental_service) ||
+      Boolean(pl.bike_rental)
     ) {
-      incrementCount(counts, 'natural_swimming');
+      rental++;
+    }
+    if (Boolean(pl.trail_map_url) || Boolean(pl.trail_map)) {
+      trailMap++;
     }
   }
 
-  return [...counts.entries()]
-    .map(([category, count]) => ({
-      value: category,
-      label: getArticleCategoryLabel(category, locale) ?? category,
-      count,
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label, locale));
+  const options: FilterOption[] = [
+    { value: 'lift', label: getArticleCategoryLabel('lift', locale) ?? 'Lanovka & vlek', count: lift },
+    { value: 'beginner', label: getArticleCategoryLabel('beginner', locale) ?? 'Pro začátečníky & rodiny', count: beginner },
+    { value: 'rental', label: getArticleCategoryLabel('rental', locale) ?? 'Půjčovna & servis', count: rental },
+    { value: 'trail_map', label: getArticleCategoryLabel('trail_map', locale) ?? 'Mapa trailů', count: trailMap },
+  ];
+
+  return options.filter((opt) => (opt.count ?? 0) > 0);
 }
 
 function formatSupabaseError(error: unknown): string {
@@ -198,11 +213,13 @@ export default async function HomePage({ params }: PageProps) {
   let articlesQuery = supabase
     .from('articles')
     .select(homepageArticleSelect)
-    .eq('published', true);
+    .eq('published', true)
+    .eq('category', 'bike_trail');
   let articleCountsQuery = supabase
     .from('articles')
     .select(articleCountSelect)
-    .eq('published', true);
+    .eq('published', true)
+    .eq('category', 'bike_trail');
 
   if (process.env.NEXT_PUBLIC_SITE_MODE === 'cz') {
     articlesQuery = articlesQuery.eq('country_id', 'CZE');
@@ -280,24 +297,14 @@ export default async function HomePage({ params }: PageProps) {
 
       return left.name.localeCompare(right.name, locale);
     });
-  const extraCountries = countriesWithCounts
-    .filter((country) => country.articleCount === 0)
-    .sort((left, right) => {
-      if (right.regionCount !== left.regionCount) {
-        return right.regionCount - left.regionCount;
-      }
-
-      return left.name.localeCompare(right.name, locale);
-    })
-    .slice(0, 6);
-  const homepageCountries = [...countriesWithArticles, ...extraCountries];
+  const homepageCountries = countriesWithArticles;
   const regionsWithCounts = regions.map((region) => ({
     ...region,
     articleCount: articleCountByRegion.get(region.id) ?? 0,
     countryName: countryNameById.get(region.country_id) ?? null,
   }));
-  const selectedRegions = regionsWithCounts
-    .filter((region) => region.articleCount > 0)
+  const regionsWithArticles = regionsWithCounts.filter((region) => region.articleCount > 0);
+  const selectedRegions = [...regionsWithArticles]
     .sort((left, right) => {
       if (right.articleCount !== left.articleCount) {
         return right.articleCount - left.articleCount;
@@ -329,7 +336,7 @@ export default async function HomePage({ params }: PageProps) {
       ]),
       priority: article.featured ? 8 : 5,
     })),
-    ...countriesWithCounts.map((country) => ({
+    ...countriesWithArticles.map((country) => ({
       id: `country-${country.id}`,
       title: country.name,
       href: `/${locale}/country/${country.id}`,
@@ -340,9 +347,9 @@ export default async function HomePage({ params }: PageProps) {
         countMeta(country.regionCount, regionsCountLabel, locale),
       ]).join(' · '),
       keywords: presentValues([country.id, country.flag, country.name]),
-      priority: country.articleCount > 0 ? 7 : 2,
+      priority: 7,
     })),
-    ...regionsWithCounts.map((region) => ({
+    ...regionsWithArticles.map((region) => ({
       id: `region-${region.id}`,
       title: region.name,
       href: `/${locale}/region/${region.id}`,
@@ -353,7 +360,7 @@ export default async function HomePage({ params }: PageProps) {
         countMeta(region.articleCount, articlesCountLabel, locale),
       ]).join(' · '),
       keywords: presentValues([region.countryName, region.language, region.name]),
-      priority: region.articleCount > 0 ? 6 : 1,
+      priority: 6,
     })),
   ];
 
@@ -388,8 +395,35 @@ export default async function HomePage({ params }: PageProps) {
         </div>
       </section>
 
+      {/* MTB Highlights */}
+      <section className="relative z-20 mx-auto -mt-6 max-w-6xl px-4 md:px-6">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl backdrop-blur-md transition hover:border-emerald-500/40">
+            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-xl text-emerald-400">
+              🚡
+            </div>
+            <h3 className="text-lg font-bold text-white">{t('feature1_title')}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">{t('feature1_desc')}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl backdrop-blur-md transition hover:border-emerald-500/40">
+            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-xl text-emerald-400">
+              🚵
+            </div>
+            <h3 className="text-lg font-bold text-white">{t('feature2_title')}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">{t('feature2_desc')}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-slate-900/90 p-6 shadow-xl backdrop-blur-md transition hover:border-emerald-500/40">
+            <div className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-xl text-emerald-400">
+              🔧
+            </div>
+            <h3 className="text-lg font-bold text-white">{t('feature3_title')}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-slate-400">{t('feature3_desc')}</p>
+          </div>
+        </div>
+      </section>
+
       {articleCards.length > 0 && (
-        <section id="articles" className="relative z-10 mx-auto -mt-8 max-w-6xl scroll-mt-24 px-4 pt-10 pb-10 md:px-6">
+        <section id="articles" className="relative z-10 mx-auto max-w-6xl scroll-mt-24 px-4 pt-12 pb-10 md:px-6">
           <div className="mb-8">
             <h2 className="text-3xl font-black tracking-tight text-white md:text-4xl">
               {getDestinationLabel(locale, 'latestArticles')}

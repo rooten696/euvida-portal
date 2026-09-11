@@ -78,33 +78,47 @@ export function getArticleCardBadges(): string[] {
   return [];
 }
 
-function isFkkArticle(article: Article): boolean {
-  return article.category === 'fkk' || article.visit_info?.nudist_beach === true;
-}
-
-function hasPublicSwimmingAccess(article: Article): boolean {
-  return (
-    article.category === 'natural_swimming' ||
-    article.visit_info?.public_beach_access === true ||
-    article.visit_info?.public_swimming_access === true
-  );
-}
-
-function getArticleCategoryTags(article: Article): string[] {
+function getArticleCategoryTags(article: Article, locale?: string): string[] {
   const tags = new Set<string>();
 
-  if (article.category) {
-    tags.add(article.category);
+  if (article.category === 'bike_trail') {
+    tags.add('bike_trail');
   }
 
-  if (isFkkArticle(article)) {
-    tags.add('fkk');
+  const visitInfo = (article.visit_info as Record<string, unknown>) || {};
+  const practicalInfo = (article.practical_info as Record<string, Record<string, unknown>>) || {};
+  const practicalLoc =
+    (locale ? practicalInfo[locale] : null) ||
+    practicalInfo.cs ||
+    practicalInfo.en ||
+    practicalInfo.de ||
+    practicalInfo.fr ||
+    practicalInfo.es ||
+    {};
+
+  // Lift & shuttle
+  if (visitInfo.lift_available === true || Boolean(practicalLoc.lift)) {
+    tags.add('lift');
   }
 
-  if (article.category === 'camping' || article.category === 'camp') {
-    if (hasPublicSwimmingAccess(article)) {
-      tags.add('natural_swimming');
-    }
+  // Beginners & families
+  if (visitInfo.beginner_friendly === true || visitInfo.family_friendly === true) {
+    tags.add('beginner');
+  }
+
+  // Rental & service
+  if (
+    visitInfo.bike_rental_available === true ||
+    visitInfo.service_available === true ||
+    Boolean(practicalLoc.rental_service) ||
+    Boolean(practicalLoc.bike_rental)
+  ) {
+    tags.add('rental');
+  }
+
+  // Trail map
+  if (Boolean(practicalLoc.trail_map_url) || Boolean(practicalLoc.trail_map)) {
+    tags.add('trail_map');
   }
 
   return Array.from(tags);
@@ -119,7 +133,7 @@ export function toArticleCardData(
   const localized = getLocalizedArticle(article, currentLocale);
 
   const badges = getArticleCardBadges();
-  const categoryTags = getArticleCategoryTags(article);
+  const categoryTags = getArticleCategoryTags(article, currentLocale);
   const categoryTagLabels = categoryTags
     .map((categoryTag) => getArticleCategoryLabel(categoryTag, currentLocale))
     .filter((label): label is string => Boolean(label));

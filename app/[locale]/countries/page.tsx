@@ -31,24 +31,24 @@ type CountMap = Map<string, number>;
 
 const countriesMetadata: Record<SupportedLocale, { title: string; description: string }> = {
   cs: {
-    title: 'Všechny země | Euvida',
-    description: 'Přehled evropských zemí na Euvidě s odkazy na regiony a praktické články.',
+    title: 'Země s bikeparky v Evropě | Euvida',
+    description: 'Přehled evropských zemí s bikeparky, trailcentry, lanovkami a tipy na ježdění.',
   },
   en: {
-    title: 'All countries | Euvida',
-    description: 'Browse European countries on Euvida with links to regions and practical guides.',
+    title: 'Countries with Bike Parks in Europe | Euvida',
+    description: 'Overview of European countries featuring bike parks, trail networks, uplifts, and riding tips.',
   },
   de: {
-    title: 'Alle Länder | Euvida',
-    description: 'Europäische Länder auf Euvida mit Links zu Regionen und praktischen Artikeln.',
+    title: 'Länder mit Bikeparks in Europa | Euvida',
+    description: 'Übersicht europäischer Länder mit Bikeparks, Trailcentern, Bergbahnen und MTB-Guides.',
   },
   fr: {
-    title: 'Tous les pays | Euvida',
-    description: 'Parcourez les pays européens sur Euvida avec leurs régions et guides pratiques.',
+    title: 'Pays avec bike parks en Europe | Euvida',
+    description: 'Présentation des pays européens avec des bike parks, des réseaux de sentiers et des remontées mécaniques.',
   },
   es: {
-    title: 'Todos los países | Euvida',
-    description: 'Explora países europeos en Euvida con enlaces a regiones y guías prácticas.',
+    title: 'Países con bike parks en Europa | Euvida',
+    description: 'Resumen de países europeos con bike parks, redes de senderos, remontes y consejos de ciclismo.',
   },
 };
 
@@ -107,7 +107,11 @@ export default async function CountriesPage({ params }: CountriesPageProps) {
       .select('id, name, flag, description, image_url, translations')
       .order('name'),
     supabase.from('regions').select('id, country_id'),
-    supabase.from('articles').select('country_id').eq('published', true),
+    supabase
+      .from('articles')
+      .select('country_id')
+      .eq('published', true)
+      .eq('category', 'bike_trail'),
   ]);
 
   if (countriesResult.error) {
@@ -135,13 +139,10 @@ export default async function CountriesPage({ params }: CountriesPageProps) {
       articleCount: articleCountByCountry.get(country.id) ?? 0,
       regionCount: regionCountByCountry.get(country.id) ?? 0,
     }))
+    .filter((country) => country.articleCount > 0)
     .sort((left, right) => {
       if (right.articleCount !== left.articleCount) {
         return right.articleCount - left.articleCount;
-      }
-
-      if (right.regionCount !== left.regionCount) {
-        return right.regionCount - left.regionCount;
       }
 
       return left.name.localeCompare(right.name, locale);

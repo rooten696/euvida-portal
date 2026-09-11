@@ -4,15 +4,62 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabaseBrowserClient';
 
-const CATEGORIES: { id: string; name: string; icon: string }[] = [
-  { id: 'all',                name: 'Vše',                     icon: '✨' },
-  { id: 'places',             name: 'Památky',                 icon: '🏰' },
-  { id: 'camping',            name: 'Kemping',                 icon: '⛺' },
-  { id: 'bike_trail',         name: 'Bike parky',              icon: '🚴' },
-  { id: 'natural_swimming',   name: 'Přírodní koupání',        icon: '🏊' },
-  { id: 'fkk',                name: 'FKK pláže',               icon: '☀️' },
-  { id: 'outdoor_pool',       name: 'Bazény a aquaparky',      icon: '🌊' },
-  { id: 'trip',               name: 'Výlety',                  icon: '🥾' },
+const CATEGORIES: { id: string; name: Record<string, string>; icon: string }[] = [
+  {
+    id: 'all',
+    name: {
+      cs: 'Všechny bikeparky',
+      en: 'All bike parks',
+      de: 'Alle Bikeparks',
+      fr: 'Tous les bike parks',
+      es: 'Todos los bike parks',
+    },
+    icon: '🚵',
+  },
+  {
+    id: 'lift',
+    name: {
+      cs: 'Lanovky & vleky',
+      en: 'Lifts & shuttles',
+      de: 'Bergbahnen & Lifte',
+      fr: 'Remontées & navettes',
+      es: 'Remontes y shuttles',
+    },
+    icon: '🚡',
+  },
+  {
+    id: 'beginner',
+    name: {
+      cs: 'Pro začátečníky & rodiny',
+      en: 'Kids & beginners',
+      de: 'Anfänger & Familien',
+      fr: 'Débutants & familles',
+      es: 'Principiantes y familias',
+    },
+    icon: '🟢',
+  },
+  {
+    id: 'rental',
+    name: {
+      cs: 'Půjčovna & servis',
+      en: 'Rental & workshop',
+      de: 'Verleih & Werkstatt',
+      fr: 'Location & atelier',
+      es: 'Alquiler y taller',
+    },
+    icon: '🔧',
+  },
+  {
+    id: 'trail_map',
+    name: {
+      cs: 'S mapou trailů',
+      en: 'With trail map',
+      de: 'Mit Trailkarte',
+      fr: 'Avec plan des pistes',
+      es: 'Con mapa de pistas',
+    },
+    icon: '🗺️',
+  },
 ];
 
 interface ArticleCategoryNavProps {
@@ -85,6 +132,8 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
     return [];
   }, [countryParam, resolvedPathCountryId]);
 
+  const getCategoryName = (c: typeof CATEGORIES[number]) => c.name[locale] || c.name.cs;
+
   const handleToggleCategory = (categoryId: string) => {
     const params = new URLSearchParams(searchParams.toString());
     
@@ -115,20 +164,20 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
     router.push(`/${locale}${queryString}`);
   };
 
-  let activeIcon = '✨';
-  let activeLabel = 'Vše';
+  let activeIcon = '🚵';
+  let activeLabel = CATEGORIES[0].name[locale] || 'Všechny bikeparky';
 
   if (activeCategories.length === 1) {
     const activeOption = CATEGORIES.find(c => c.id === activeCategories[0]);
     if (activeOption) {
       activeIcon = activeOption.icon;
-      activeLabel = activeOption.name;
+      activeLabel = getCategoryName(activeOption);
     }
   } else if (activeCategories.length > 1) {
     activeIcon = '✔️';
     const labels = activeCategories.map(cId => {
       const option = CATEGORIES.find(c => c.id === cId);
-      return option ? option.name : '';
+      return option ? getCategoryName(option) : '';
     });
     activeLabel = labels.filter(Boolean).join(', ');
   }
@@ -167,7 +216,7 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
                 >
                   <span className="flex items-center gap-2.5 truncate">
                     <span className="text-lg shrink-0">{category.icon}</span>
-                    <span className="truncate">{category.name}</span>
+                    <span className="truncate">{getCategoryName(category)}</span>
                   </span>
                   
                   {/* Custom Checkbox */}

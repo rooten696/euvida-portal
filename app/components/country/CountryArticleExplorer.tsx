@@ -36,7 +36,7 @@ export default function CountryArticleExplorer({
             {getDestinationLabel(locale, 'backToHome')}
           </Link>
           <Link
-            href={`/${locale}#countries`}
+            href={`/${locale}/countries`}
             className="inline-flex rounded-full border border-white/10 bg-white/5 px-5 py-2.5 text-sm font-extrabold text-slate-300 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
           >
             {getDestinationLabel(locale, 'countries')}

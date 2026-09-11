@@ -1,6 +1,9 @@
 {
   "Navigation": {
     "home": "Domů",
+    "bikeparks": "Bikeparky",
+    "countries": "Země",
+    "about": "O projektu",
     "destinations": "Destinace",
     "favorites": "Oblíbené",
     "profile": "Profil",
@@ -8,42 +11,42 @@
     "logout": "Odhlásit"
   },
   "HomePage": {
-    "title": "Objevte to nejlepší z Evropy.",
-    "subtitle": "Váš ultimátní průvodce pro cestování po Evropě.",
-    "cta": "Začít objevovat.🌍",
-    "feature1_title": "Cestování bez chyb",
-    "feature1_desc": "Autentické tipy na místa, která musíte vidět, a praktické rady pro dokonalou dovolenou bez stresu.",
-    "feature2_title": "Život a práce",
-    "feature2_desc": "Láká vás stěhování? Zjistěte vše o kultuře, bydlení a pracovních příležitostech v cizině.",
-    "feature3_title": "Kultura a chuť",
-    "feature3_desc": "Od španělských tapas po belgické pralinky. Ponořte se naplno do lokální gastronomie a zvyků.",
-    "where_to": "Kam se chystáte?",
-    "where_to_desc": "Vyberte si zemi a prozkoumejte její unikátní regiony, památky a aktuální počasí.",
-    "no_countries": "Zatím tu nejsou žádné země."
+    "title": "Evropské bikeparky a trailcentra.",
+    "subtitle": "Váš průvodce a plánovač trailů: lanovky, tratě od flow po downhill, půjčovny kol, ceny jízdenek a praktické tipy pro bikery.",
+    "cta": "Prozkoumat bikeparky.🚵",
+    "feature1_title": "Lanovky & vleky",
+    "feature1_desc": "Ověřené informace o lanovkovém servisu, provozu v sezóně, přepravě kol i lístcích bez zbytečného šlapání nahoru.",
+    "feature2_title": "Tratě & obtížnost",
+    "feature2_desc": "Od mírných flowtrailů pro děti a začátečníky až po černé sjezdové tratě, skoky a náročné technické pasáže.",
+    "feature3_title": "Půjčovny, servis & zázemí",
+    "feature3_desc": "Kde si půjčit sjezdové či trailové kolo a chrániče, kde využít servis a myčku kol nebo kde v okolí zaparkovat.",
+    "where_to": "Kam vyrazit na bike?",
+    "where_to_desc": "Vyberte si zemi a najděte nejlepší bikeparky, trailcentra a detailní informace o provozu a tratích.",
+    "no_countries": "Zatím tu nejsou žádné země s bikeparky."
   },
   "CountryDetail": {
     "back_button": "Zpět na přehled",
     "general_info": "Obecné informace",
-    "travel_tourism": "Cestování",
-    "life_work": "Život a práce",
-    "culture_food": "Kultura a jídlo",
-    "regions_title": "Regiony a oblasti",
-    "explore_region": "Prozkoumat region",
-    "practical_cautions": "Praktické rady a na co si dát pozor"
+    "travel_tourism": "Bikeparky & ježdění",
+    "life_work": "Doprava & pobyt",
+    "culture_food": "Zázemí & služby",
+    "regions_title": "Regiony s bikeparky",
+    "explore_region": "Prozkoumat bikeparky v regionu",
+    "practical_cautions": "Praktické rady pro bikery a bezpečnost"
   },
   "RegionDetail": {
     "back_button": "Zpět na zemi",
-    "general_info": "Obecně o regionu",
-    "nature": "Výlety a příroda",
-    "history": "Gastronomie a atmosféra",
-    "transport": "Pro koho to je a děti",
+    "general_info": "O regionu a trailech",
+    "nature": "Bikeparky a traily",
+    "history": "Zázemí a atmosféra",
+    "transport": "Obtížnost, děti a doprava",
     "weather_title": "Aktuální počasí",
-    "temp_title": "Průměrné teploty",
+    "temp_title": "Průměrné teploty v sezóně",
     "spring": "Jaro",
     "summer": "Léto",
     "autumn": "Podzim",
     "winter": "Zima",
     "air": "Vzduch",
-    "sea": "Moře"
+    "sea": "Voda"
   }
-   }
+}

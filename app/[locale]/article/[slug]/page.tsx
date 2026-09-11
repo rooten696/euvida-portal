@@ -14,6 +14,7 @@ import {
   isMissingArticleImage,
 } from '@/lib/articleFallbackImages';
 import { getArticleLabel } from '@/lib/articleLabels';
+import { getDestinationLabel } from '@/lib/destinationLabels';
 import { getCategoryLabel, getLocalizedArticle } from '@/lib/articleDisplay';
 import { formatDate } from '@/lib/articleFormatting';
 import {
@@ -47,7 +48,8 @@ export async function generateStaticParams() {
   const { data: articles } = await supabase
     .from('articles')
     .select('slug')
-    .eq('published', true);
+    .eq('published', true)
+    .eq('category', 'bike_trail');
 
   if (!articles) return [];
 
@@ -71,6 +73,8 @@ const getArticleBySlug = cache(async (slug: string) => {
     .from('articles')
     .select('*')
     .eq('slug', slug)
+    .eq('published', true)
+    .eq('category', 'bike_trail')
     .single();
 
   if (error || !data) {
@@ -120,8 +124,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const locale = normalizeLocale(routeLocale);
   const article = await getArticleBySlug(slug);
 
-  if (!article || article.published === false) {
-    return { title: 'Článek nenalezen | Euvida' };
+  if (!article || article.published === false || article.category !== 'bike_trail') {
+    return {
+      title: 'Článek nenalezen | Euvida',
+      robots: { index: false, follow: false },
+    };
   }
 
   const localizedArticle = getLocalizedArticle(article, locale);
@@ -179,6 +186,12 @@ function Breadcrumb({
         <li>
           <Link href={`/${locale}`} className="font-semibold text-emerald-400 hover:text-emerald-300">
             {getArticleLabel(locale, 'home')}
+          </Link>
+        </li>
+        <li aria-hidden="true">/</li>
+        <li>
+          <Link href={`/${locale}/articles`} className="font-semibold text-emerald-400 hover:text-emerald-300">
+            {getDestinationLabel(locale, 'allArticles')}
           </Link>
         </li>
         {country && countryName && (
@@ -314,7 +327,7 @@ export default async function ArticlePage({ params }: PageProps) {
   const locale = normalizeLocale(routeLocale);
   const article = await getArticleBySlug(slug);
 
-  if (!article || article.published === false) {
+  if (!article || article.published === false || article.category !== 'bike_trail') {
     notFound();
   }
 

@@ -1,6 +1,9 @@
 {
   "Navigation": {
     "home": "Startseite",
+    "bikeparks": "Bikeparks",
+    "countries": "Länder",
+    "about": "Über uns",
     "destinations": "Reiseziele",
     "favorites": "Favoriten",
     "profile": "Profil",
@@ -8,34 +11,35 @@
     "logout": "Abmelden"
   },
   "HomePage": {
-    "title": "Entdecke das Beste von Europa.",
-    "subtitle": "Dein ultimativer Begleiter für Reisen, Umzug und ein erfülltes Leben in den schönsten Reisezielen.",
-    "cta": "Jetzt entdecken.🌍",
-    "feature1_title": "Fehlerfreies Reisen",
-    "feature1_desc": "Authentische Tipps für Sehenswürdigkeiten und praktische Ratschläge für einen perfekten, stressfreien Urlaub.",
-    "feature2_title": "Leben und Arbeiten",
-    "feature2_desc": "Lust auf einen Umzug? Erfahre alles über Kultur, Wohnen und Jobmöglichkeiten im Ausland.",
-    "feature3_title": "Kultur und Geschmack",
-    "feature3_desc": "Von spanischen Tapas bis zu belgischen Pralinen. Tauche voll und ganz in die lokale Gastronomie und Bräuche ein.",
-    "where_to": "Wohin geht die Reise?",
-    "where_to_desc": "Wähle ein Land und entdecke seine einzigartigen Regionen, Sehenswürdigkeiten und das aktuelle Wetter.",
-    "no_countries": "Noch keine Länder verfügbar."
+    "title": "Europäische Bikeparks & Trailcenter.",
+    "subtitle": "Dein Planer für Mountainbike-Parks in Europa: Bergbahnen, Trails von Flow bis Downhill, Bikeverleih, Preise und Praxistipps.",
+    "cta": "Bikeparks entdecken.🚵",
+    "feature1_title": "Bergbahnen & Shuttles",
+    "feature1_desc": "Geprüfte Infos zu Seilbahnen, Sesselliften, Shuttlediensten, Betriebszeiten und Biketickets.",
+    "feature2_title": "Strecken & Schwierigkeit",
+    "feature2_desc": "Von leichten Flowlines für Einsteiger und Familien bis zu schweren Downhill-Strecken, Drops und Steinfeldern.",
+    "feature3_title": "Verleih, Werkstatt & Service",
+    "feature3_desc": "Wo du Downhill- und E-MTBs sowie Protektoren mieten kannst, inklusive Bikewash, Service und Parkplätzen.",
+    "where_to": "Wohin geht der nächste Bike-Trip?",
+    "where_to_desc": "Wähle ein Land und entdecke die besten Bikeparks, Streckennetze und Öffnungszeiten.",
+    "no_countries": "Noch keine Länder mit Bikeparks verfügbar."
   },
   "CountryDetail": {
     "back_button": "Zurück zur Übersicht",
     "general_info": "Allgemeine Informationen",
-    "travel_tourism": "Reisen & Tourismus",
-    "life_work": "Leben & Arbeiten",
-    "culture_food": "Kultur & Essen",
-    "regions_title": "Regionen und Gebiete",
-    "explore_region": "Region erkunden"
+    "travel_tourism": "Bikeparks & Strecken",
+    "life_work": "Anreise & Unterkunft",
+    "culture_food": "Infrastruktur & Service",
+    "regions_title": "Regionen mit Bikeparks",
+    "explore_region": "Bikeparks der Region erkunden",
+    "practical_cautions": "Sicherheitshinweise & Praxistipps"
   },
   "RegionDetail": {
     "back_button": "Zurück zum Land",
-    "general_info": "Allgemeines über die Region",
-    "nature": "Ausflüge und Natur",
-    "history": "Gastronomie und Atmosphäre",
-    "transport": "Für wen es ist und Kinder",
+    "general_info": "Über Region & Trails",
+    "nature": "Bikeparks und Strecken",
+    "history": "Infrastruktur und Atmosphäre",
+    "transport": "Schwierigkeit, Kinder & Anreise",
     "weather_title": "Aktuelles Wetter",
     "temp_title": "Durchschnittstemperaturen",
     "spring": "Frühling",
@@ -43,6 +47,6 @@
     "autumn": "Herbst",
     "winter": "Winter",
     "air": "Luft",
-    "sea": "Meer"
+    "sea": "Wasser"
   }
 }

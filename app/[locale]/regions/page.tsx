@@ -32,24 +32,24 @@ type CountMap = Map<string, number>;
 
 const regionsMetadata: Record<SupportedLocale, { title: string; description: string }> = {
   cs: {
-    title: 'Všechny regiony | Euvida',
-    description: 'Přehled evropských regionů na Euvidě s praktickými cestovatelskými články.',
+    title: 'Regiony s bikeparky v Evropě | Euvida',
+    description: 'Přehled evropských regionů s bikeparky, trailcentry a tipy na MTB výlety.',
   },
   en: {
-    title: 'All regions | Euvida',
-    description: 'Browse European regions on Euvida with practical travel articles.',
+    title: 'Regions with Bike Parks in Europe | Euvida',
+    description: 'Overview of European regions featuring bike parks, trail centers, and MTB routes.',
   },
   de: {
-    title: 'Alle Regionen | Euvida',
-    description: 'Europäische Regionen auf Euvida mit praktischen Reiseartikeln.',
+    title: 'Regionen mit Bikeparks in Europa | Euvida',
+    description: 'Übersicht europäischer Regionen mit Bikeparks, Trailcentern und MTB-Touren.',
   },
   fr: {
-    title: 'Toutes les régions | Euvida',
-    description: 'Parcourez les régions européennes sur Euvida avec des guides pratiques.',
+    title: 'Régions avec bike parks en Europe | Euvida',
+    description: 'Présentation des régions européennes avec des bike parks, des centres de pistes et des parcours VTT.',
   },
   es: {
-    title: 'Todas las regiones | Euvida',
-    description: 'Explora regiones europeas en Euvida con guías prácticas de viaje.',
+    title: 'Regiones con bike parks en Europa | Euvida',
+    description: 'Resumen de regiones europeas con bike parks, centros de senderos y rutas de MTB.',
   },
 };
 
@@ -111,7 +111,11 @@ export default async function RegionsPage({ params }: RegionsPageProps) {
       .from('countries')
       .select('id, name, flag, description, image_url, translations')
       .order('name'),
-    supabase.from('articles').select('region_id').eq('published', true),
+    supabase
+      .from('articles')
+      .select('region_id')
+      .eq('published', true)
+      .eq('category', 'bike_trail'),
   ]);
 
   if (regionsResult.error) {
@@ -141,6 +145,7 @@ export default async function RegionsPage({ params }: RegionsPageProps) {
       articleCount: articleCountByRegion.get(region.id) ?? 0,
       countryName: countryNameById.get(region.country_id) ?? null,
     }))
+    .filter((region) => region.articleCount > 0)
     .sort((left, right) => {
       if (right.articleCount !== left.articleCount) {
         return right.articleCount - left.articleCount;

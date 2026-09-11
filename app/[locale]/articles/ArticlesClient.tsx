@@ -18,6 +18,8 @@ type ArticlesClientProps = {
   locale: string;
   articles: ArticleCardData[];
   categories: FilterOption[];
+  countryNamesById?: Record<string, string>;
+  regionNamesById?: Record<string, string>;
 };
 
 const maxSearchQueryLength = 80;
@@ -69,24 +71,35 @@ function articleMatchesQuery(article: ArticleCardData, query: string): boolean {
 }
 
 function categoryOptions(articles: ArticleCardData[], locale: string): FilterOption[] {
-  const counts = new Map<string, number>();
+  let lift = 0;
+  let beginner = 0;
+  let rental = 0;
+  let trailMap = 0;
 
   for (const article of articles) {
-    if (article.category) {
-      counts.set(article.category, (counts.get(article.category) ?? 0) + 1);
-    }
+    if (article.categoryTags?.includes('lift')) lift++;
+    if (article.categoryTags?.includes('beginner')) beginner++;
+    if (article.categoryTags?.includes('rental')) rental++;
+    if (article.categoryTags?.includes('trail_map')) trailMap++;
   }
 
-  return [...counts.entries()]
-    .map(([category, count]) => ({
-      value: category,
-      label: getArticleCategoryLabel(category, locale) ?? category,
-      count,
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label, locale));
+  const options: FilterOption[] = [
+    { value: 'lift', label: getArticleCategoryLabel('lift', locale) ?? 'Lanovka & vlek', count: lift },
+    { value: 'beginner', label: getArticleCategoryLabel('beginner', locale) ?? 'Pro začátečníky & rodiny', count: beginner },
+    { value: 'rental', label: getArticleCategoryLabel('rental', locale) ?? 'Půjčovna & servis', count: rental },
+    { value: 'trail_map', label: getArticleCategoryLabel('trail_map', locale) ?? 'Mapa trailů', count: trailMap },
+  ];
+
+  return options.filter((opt) => (opt.count ?? 0) > 0);
 }
 
-function ArticlesClientInner({ locale, articles, categories }: ArticlesClientProps) {
+function ArticlesClientInner({
+  locale,
+  articles,
+  categories,
+  countryNamesById,
+  regionNamesById,
+}: ArticlesClientProps) {
   const searchParams = useSearchParams();
   const query = getSearchQuery(searchParams);
   const visibleArticles = useMemo(
@@ -161,6 +174,8 @@ function ArticlesClientInner({ locale, articles, categories }: ArticlesClientPro
             locale={locale}
             articles={visibleArticles}
             categories={visibleCategories}
+            countryNamesById={countryNamesById}
+            regionNamesById={regionNamesById}
           />
         ) : (
           <div className="rounded-2xl border border-white/10 bg-slate-900 p-8 text-center text-sm font-medium text-slate-400 shadow-md">

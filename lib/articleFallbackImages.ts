@@ -37,14 +37,14 @@ export function normalizeArticleFallbackCategory(
   const normalized = category?.trim().toLowerCase().replace(/-/g, '_');
 
   if (!normalized) {
-    return 'places';
+    return 'bike_trail';
   }
 
   if (normalized in ARTICLE_FALLBACK_IMAGES) {
     return normalized as ArticleFallbackCategory;
   }
 
-  return CATEGORY_ALIASES[normalized] ?? 'places';
+  return CATEGORY_ALIASES[normalized] ?? 'bike_trail';
 }
 
 export function isMissingArticleImage(imageUrl: string | null | undefined): boolean {

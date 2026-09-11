@@ -26,28 +26,15 @@ type ArticleCategoryExplorerProps = {
 };
 
 const categoryOrder = [
-  'places',
-  'place',
-  'landmark',
+  'lift',
+  'beginner',
+  'rental',
+  'trail_map',
   'bike_trail',
-  'natural_swimming',
-  'fkk',
-  'beach',
-  'camping',
-  'trail',
-  'cycling_route',
-  'cycling',
-  'castle',
-  'chateau',
-  'ski_area',
-  'ski',
-  'city_tip',
-  'city',
-  'nature',
 ];
 
 const filteredArticleSelect =
-  'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
+  'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, practical_info, visit_info, published, featured, created_at, reading_time_minutes';
 const maxFilteredArticles = 1000;
 
 function splitParam(value: string): string[] {
@@ -62,19 +49,13 @@ function getCategoryRank(category: string): number {
   return index === -1 ? categoryOrder.length : index;
 }
 
-function hasFkkCategory(article: ArticleCardData): boolean {
-  return article.category === 'fkk' || article.categoryTags?.includes('fkk') === true;
-}
-
 function matchesActiveCategories(article: ArticleCardData, activeCategories: string[]): boolean {
-  if (activeCategories.length === 0) {
+  if (activeCategories.length === 0 || activeCategories.includes('all')) {
     return true;
   }
 
   return activeCategories.some((activeCategory) =>
-    activeCategory === 'fkk'
-      ? hasFkkCategory(article)
-      : article.category === activeCategory || article.categoryTags?.includes(activeCategory) === true
+    article.categoryTags?.includes(activeCategory) === true || article.category === activeCategory
   );
 }
 
@@ -135,20 +116,13 @@ function ArticleCategoryExplorerInner({
       let query = supabase
         .from('articles')
         .select(filteredArticleSelect)
+        .eq('category', 'bike_trail')
         .eq('published', true)
         .order('created_at', { ascending: false })
         .limit(maxFilteredArticles);
 
       if (activeCountries.length > 0) {
         query = query.in('country_id', activeCountries);
-      }
-
-      if (
-        activeCategories.length > 0 &&
-        !activeCategories.includes('fkk') &&
-        !activeCategories.includes('natural_swimming')
-      ) {
-        query = query.in('category', activeCategories);
       }
 
       const { data, error } = await query;

@@ -1,6 +1,9 @@
-import { supportedLocales } from '@/lib/articleTypes';
+import { supportedLocales, type SupportedLocale } from '@/lib/articleTypes';
 import { setRequestLocale } from 'next-intl/server';
+import type { Metadata } from 'next';
 import Link from 'next/link';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
 export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
@@ -15,165 +18,196 @@ type PageProps = {
 const contentByLocale = {
   cs: {
     title: 'O projektu Euvida',
-    subtitle: 'Váš ultimátní průvodce pro cestování po Evropě.',
-    description: 'Euvida.eu se zaměřuje na poskytování autentických a praktických tipů na to, kam se v Evropě vydat a co od daných míst očekávat. Pomáháme vám objevovat nová místa a plánovat cesty bez chyb.',
-    categoriesTitle: 'Co u nás najdete?',
+    subtitle: 'Katalog a plánovač evropských bikeparků a trailcenter.',
+    description:
+      'Euvida.eu se zaměřuje na poskytování ověřených a praktických informací o evropských bikeparcích, trailových lokalitách a zázemí pro horská kola. Pomáháme bikerům plánovat výjezdy za ježděním bez zbytečného tápání.',
+    categoriesTitle: 'Co v katalogu najdete?',
     categories: [
       {
-        icon: '🏖️',
-        title: 'Příroda & Pláže',
-        desc: 'Tipy na úchvatná jezera, čisté pláže a chráněné přírodní parky.',
+        icon: '🚡',
+        title: 'Lanovky & vleky',
+        desc: 'Detailní přehled o provozu lanovek, gondol, vleků a shuttlů pro přepravu kol.',
       },
       {
-        icon: '🏰',
-        title: 'Hrady, zámky & památky',
-        desc: 'Objevte fascinující historii a nejkrásnější architektonické skvosty.',
+        icon: '🚵',
+        title: 'Tratě & náročnost',
+        desc: 'Profily lokalit od mírných rodinných flowtrailů až po technické downhillové a enduro tratě.',
       },
       {
-        icon: '🏙️',
-        title: 'Městská turistika (City tripy)',
-        desc: 'Průvodci evropskými metropolemi i malebnými skrytými městečky.',
+        icon: '🔧',
+        title: 'Půjčovny, servis & zázemí',
+        desc: 'Dostupnost půjčoven sjezdových i trailových kol, servisních stanic a myček kol.',
       },
       {
-        icon: '🏂',
-        title: 'Aktivní dovolená',
-        desc: 'Nejlepší bikeparky, lyžařská střediska, turistické trasy a tipy pro sportovce.',
+        icon: '🗺️',
+        title: 'Mapy, skipasy & sezona',
+        desc: 'Přímé odkazy na mapy trailů, otevírací kalendáře, ceny permic a praktické tipy pro cestu.',
       },
     ],
-    highlightTitle: 'Proč sledovat Euvida.eu?',
-    highlightDesc: 'Na rozdíl od běžných katalogů vám přinášíme reálné informace o počasí, průměrných teplotách v sezóně, cenách vstupů, dostupnosti služeb a reálné zkušenosti z míst. Chceme, abyste věděli přesně do čeho jdete, ještě než vyrazíte.',
-    cta: 'Prozkoumat tipy na výlety',
+    highlightTitle: 'Proč plánovat výlety s Euvida.eu?',
+    highlightDesc:
+      'Žádný generický turistický balast. Soustředíme se výhradně na praktické detaily, které biker potřebuje vědět před odjezdem: zda v lokalitě jezdí lanovka, jaké jsou traily, kde si půjčit vybavení a na kolik vyjde ježdění.',
+    cta: 'Prozkoumat bikeparky',
   },
   en: {
     title: 'About Euvida',
-    subtitle: 'Your ultimate travel guide to Europe.',
-    description: 'Euvida.eu focuses on providing authentic and practical tips on where to go in Europe and what to expect. We help you discover new destinations and plan trips without mistakes.',
-    categoriesTitle: 'What you can find here?',
+    subtitle: 'European bike parks and trail centers guide.',
+    description:
+      'Euvida.eu is dedicated to verified, practical information on European bike parks, trail networks, and mountain biking facilities. We help riders plan trail trips with confidence.',
+    categoriesTitle: 'What will you find in our catalog?',
     categories: [
       {
-        icon: '🏖️',
-        title: 'Nature & Beaches',
-        desc: 'Tips for breathtaking lakes, clean beaches, and protected national parks.',
+        icon: '🚡',
+        title: 'Lifts & Uplifts',
+        desc: 'Details on chairlifts, gondolas, and uplift shuttles for hassle-free gravity riding.',
       },
       {
-        icon: '🏰',
-        title: 'Castles & Historic Sights',
-        desc: 'Discover fascinating history and the most beautiful architectural gems.',
+        icon: '🚵',
+        title: 'Trails & Difficulty',
+        desc: 'Trail profiles from smooth family flow trails to rugged downhill and enduro lines.',
       },
       {
-        icon: '🏙️',
-        title: 'City Trips',
-        desc: 'Guides to famous European metropolises and picturesque hidden towns.',
+        icon: '🔧',
+        title: 'Rentals, Service & Facilities',
+        desc: 'Availability of bike rentals, workshops, bike washes, and parking.',
       },
       {
-        icon: '🏂',
-        title: 'Active Holidays',
-        desc: 'Best bike parks, ski resorts, hiking trails, and tips for active travelers.',
+        icon: '🗺️',
+        title: 'Maps, Passes & Season',
+        desc: 'Direct links to trail maps, operating calendars, pass prices, and rider essentials.',
       },
     ],
-    highlightTitle: 'Why follow Euvida.eu?',
-    highlightDesc: 'Unlike standard directories, we bring you real-time data about weather, seasonal average temperatures, entry prices, service availability, and authentic on-site experiences. We want you to know exactly what to expect before you set off.',
-    cta: 'Explore trip tips',
+    highlightTitle: 'Why plan your trip with Euvida.eu?',
+    highlightDesc:
+      'No generic tourism clutter. We focus exclusively on practical riding intel: lift status, trail characteristics, rental options, and current passes.',
+    cta: 'Explore bike parks',
   },
   de: {
     title: 'Über Euvida',
-    subtitle: 'Ihr ultimativer Reiseführer für Europa.',
-    description: 'Euvida.eu konzentriert sich darauf, authentische und praktische Tipps zu geben, wohin die Reise in Europa gehen soll und was Sie dort erwartet. Wir helfen Ihnen, neue Orte zu entdecken und Reisen fehlerfrei zu planen.',
+    subtitle: 'Katalog und Planer für europäische Bikeparks und Trailcenter.',
+    description:
+      'Euvida.eu bietet verifizierte, praxisnahe Informationen über europäische Bikeparks, Trail-Netzwerke und MTB-Infrastruktur.',
     categoriesTitle: 'Was finden Sie bei uns?',
     categories: [
       {
-        icon: '🏖️',
-        title: 'Natur & Strände',
-        desc: 'Tipps zu atemberaubenden Seen, sauberen Stränden und geschützten Naturparks.',
+        icon: '🚡',
+        title: 'Bergbahnen & Shuttles',
+        desc: 'Informationen zu Sesselliften, Gondeln und Shuttles für den Biketransport.',
       },
       {
-        icon: '🏰',
-        title: 'Burgen, Schlösser & Denkmäler',
-        desc: 'Entdecken Sie faszinierende Geschichte und die schönsten architektonischen Schätze.',
+        icon: '🚵',
+        title: 'Strecken & Schwierigkeit',
+        desc: 'Streckenprofile von leichten Flowtrails bis zu anspruchsvollen Downhill- und Endurolinien.',
       },
       {
-        icon: '🏙️',
-        title: 'Städtetrips',
-        desc: 'Führer durch europäische Metropolen und malerische, versteckte Kleinstädte.',
+        icon: '🔧',
+        title: 'Verleih, Service & Infrastruktur',
+        desc: 'Verfügbarkeit von Bikeverleih, Werkstätten, Waschplätzen und Parkmöglichkeiten.',
       },
       {
-        icon: '🏂',
-        title: 'Aktivurlaub',
-        desc: 'Die besten Bikeparks, Skigebiete, Wanderwege und Tipps für Sportler.',
+        icon: '🗺️',
+        title: 'Trailmaps & Tickets',
+        desc: 'Direkte Links zu Trailkarten, Saisonzeiten, Ticketpreisen und praktischen Infos.',
       },
     ],
-    highlightTitle: 'Warum Euvida.eu folgen?',
-    highlightDesc: 'Im Gegensatz zu Standardkatalogen bieten wir Ihnen echte Informationen über das Wetter, Durchschnittstemperaturen in der Saison, Eintrittspreise, Verfügbarkeit von Dienstleistungen und reale Erfahrungen vor Ort. Wir möchten, dass Sie genau wissen, worauf Sie sich einlassen, bevor Sie losfahren.',
-    cta: 'Ausflugstipps entdecken',
+    highlightTitle: 'Warum mit Euvida.eu planen?',
+    highlightDesc:
+      'Kein allgemeiner Tourismus-Ballast. Wir konzentrieren uns auf das, was Biker wirklich vor Ort wissen müssen.',
+    cta: 'Bikeparks entdecken',
   },
   fr: {
     title: 'À propos de Euvida',
-    subtitle: 'Votre guide de voyage ultime pour l\'Europe.',
-    description: 'Euvida.eu s\'attache à vous fournir des conseils authentiques et pratiques sur les destinations à visiter en Europe et ce qui vous y attend. Nous vous aidons à découvrir de nouveaux horizons et à planifier vos voyages sans stress.',
-    categoriesTitle: 'Que trouverez-vous chez nous ?',
+    subtitle: 'Guide et catalogue des bike parks et trail centers en Europe.',
+    description:
+      'Euvida.eu rassemble des informations vérifiées et pratiques sur les bike parks européens, réseaux de sentiers et services VTT.',
+    categoriesTitle: 'Que trouverez-vous dans notre catalogue ?',
     categories: [
       {
-        icon: '🏖️',
-        title: 'Nature & Plages',
-        desc: 'Conseils pour des lacs spectaculaires, des plages propres et des parcs naturels protégés.',
+        icon: '🚡',
+        title: 'Remontées & Shuttles',
+        desc: 'Toutes les infos sur les télésièges, télécabines et navettes équipés pour les vélos.',
       },
       {
-        icon: '🏰',
-        title: 'Châteaux & Monuments historiques',
-        desc: 'Découvrez une histoire passionnante et les plus beaux joyaux architecturaux.',
+        icon: '🚵',
+        title: 'Pistes & Niveaux',
+        desc: 'Des pistes flow familiales aux descentes engagées et traces enduro techniques.',
       },
       {
-        icon: '🏙️',
-        title: 'Escapades Urbaines',
-        desc: 'Guides des métropoles européennes et des villes pittoresques cachées.',
+        icon: '🔧',
+        title: 'Location, Atelier & Services',
+        desc: 'Où louer des VTT descente/enduro, trouver des stations de lavage et ateliers.',
       },
       {
-        icon: '🏂',
-        title: 'Vacances Actives',
-        desc: 'Les meilleurs bike parks, stations de ski, sentiers de randonnée et conseils pour sportifs.',
+        icon: '🗺️',
+        title: 'Plans, Tarifs & Saison',
+        desc: 'Accès direct aux plans de pistes, dates d\'ouverture et tarifs des forfaits.',
       },
     ],
-    highlightTitle: 'Pourquoi suivre Euvida.eu ?',
-    highlightDesc: 'Contrairement aux annuaires classiques, nous vous apportons des informations réelles sur le climat, les températures saisonnières moyennes, les prix d\'entrée, la disponibilité des services et des retours d\'expérience vécus. Nous voulons que vous sachiez exactement à quoi vous attendre avant de partir.',
-    cta: 'Découvrir les idées de sorties',
+    highlightTitle: 'Pourquoi préparer vos sorties avec Euvida.eu ?',
+    highlightDesc:
+      'Zéro contenu superflu. Tout ce qui compte pour rider en toute sérénité à travers l\'Europe.',
+    cta: 'Découvrir les bike parks',
   },
   es: {
     title: 'Sobre Euvida',
-    subtitle: 'Tu guía de viaje definitiva para Europa.',
-    description: 'Euvida.eu se enfoca en proporcionar consejos auténticos y prácticos sobre dónde ir en Europa y qué esperar. Te ayudamos a descubrir nuevos destinos y a planificar tus viajes sin sorpresas.',
-    categoriesTitle: '¿Qué puedes encontrar aquí?',
+    subtitle: 'Catálogo y guía de bike parks y trail centers en Europa.',
+    description:
+      'Euvida.eu ofrece información práctica y verificada sobre bike parks europeos, senderos y servicios para ciclistas de montaña.',
+    categoriesTitle: '¿Qué encontrarás en nuestro catálogo?',
     categories: [
       {
-        icon: '🏖️',
-        title: 'Naturaleza y Playas',
-        desc: 'Consejos para lagos impresionantes, playas limpias y parques naturales protegidos.',
+        icon: '🚡',
+        title: 'Remontes & Shuttles',
+        desc: 'Detalles sobre telecabinas, telesillas y remontes para transportar tu bicicleta.',
       },
       {
-        icon: '🏰',
-        title: 'Castillos y Monumentos',
-        desc: 'Descubre una historia fascinante y las joyas arquitectónicas más bellas.',
+        icon: '🚵',
+        title: 'Pistas & Dificultad',
+        desc: 'Desde senderos flow familiares hasta líneas técnicas de enduro y downhill.',
       },
       {
-        icon: '🏙️',
-        title: 'Viajes Urbanos',
-        desc: 'Guías de famosas metrópolis europeas y pintorescos pueblos escondidos.',
+        icon: '🔧',
+        title: 'Alquiler, Taller & Servicios',
+        desc: 'Disponibilidad de alquiler de bicicletas, estaciones de lavado y talleres.',
       },
       {
-        icon: '🏂',
-        title: 'Vacaciones Activas',
-        desc: 'Los mejores bike parks, estaciones de esquí, senderos y consejos para deportistas.',
+        icon: '🗺️',
+        title: 'Mapas, Pases & Temporada',
+        desc: 'Enlaces a mapas de pistas, calendarios de apertura, precios y consejos útiles.',
       },
     ],
-    highlightTitle: '¿Por qué seguir a Euvida.eu?',
-    highlightDesc: 'A diferencia de los directorios habituales, te ofrecemos información real sobre el clima, temperaturas medias de temporada, precios de entrada, disponibilidad de servicios y experiencias reales en el lugar. Queremos que sepas exactamente qué esperar antes de emprender tu viaje.',
-    cta: 'Explorar ideas de viajes',
+    highlightTitle: '¿Por qué planificar con Euvida.eu?',
+    highlightDesc:
+      'Sin relleno turístico genérico. Información precisa y enfocada exclusivamente en lo que importa al ciclista.',
+    cta: 'Explorar bike parks',
   },
 };
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const { locale: rawLocale } = await params;
+  const locale = (supportedLocales.includes(rawLocale as any) ? rawLocale : 'cs') as SupportedLocale;
+  const t = contentByLocale[locale];
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: `${t.title} | Euvida`,
+    description: t.description,
+    alternates: {
+      canonical: `/${locale}/about`,
+      languages: Object.fromEntries(
+        supportedLocales.map((supportedLocale) => [
+          supportedLocale,
+          `/${supportedLocale}/about`,
+        ])
+      ),
+    },
+  };
+}
 
 export default async function AboutPage({ params }: PageProps) {
   const { locale: rawLocale } = await params;
   const locale = (supportedLocales.includes(rawLocale as any) ? rawLocale : 'cs') as keyof typeof contentByLocale;
-  
+
   setRequestLocale(locale);
 
   const t = contentByLocale[locale];
@@ -181,15 +215,12 @@ export default async function AboutPage({ params }: PageProps) {
   return (
     <main className="min-h-screen bg-slate-950 py-16 px-4 font-sans text-slate-100">
       <div className="max-w-4xl mx-auto space-y-16">
-        
         {/* Header Section */}
         <header className="text-center space-y-4">
           <h1 className="text-4xl font-black md:text-6xl bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
             {t.title}
           </h1>
-          <p className="text-xl font-bold text-white/90">
-            {t.subtitle}
-          </p>
+          <p className="text-xl font-bold text-white/90">{t.subtitle}</p>
           <div className="w-12 h-1 bg-emerald-500 mx-auto rounded-full mt-4" />
           <p className="text-slate-400 max-w-2xl mx-auto text-base md:text-lg leading-relaxed pt-2">
             {t.description}
@@ -203,8 +234,8 @@ export default async function AboutPage({ params }: PageProps) {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {t.categories.map((cat, idx) => (
-              <div 
-                key={idx} 
+              <div
+                key={idx}
                 className="p-6 rounded-3xl bg-slate-900/40 border border-white/10 hover:border-emerald-500/30 transition-all duration-300 hover:shadow-xl hover:shadow-emerald-500/[0.02]"
               >
                 <div className="text-4xl mb-3">{cat.icon}</div>
@@ -227,14 +258,13 @@ export default async function AboutPage({ params }: PageProps) {
 
         {/* Bottom CTA */}
         <footer className="text-center">
-          <Link 
-            href={`/${locale}`} 
+          <Link
+            href={`/${locale}/articles`}
             className="inline-flex rounded-full bg-emerald-500 px-10 py-4 text-sm font-extrabold text-slate-950 hover:bg-emerald-400 transition-all hover:scale-105 shadow-lg shadow-emerald-500/20"
           >
             {t.cta} &rarr;
           </Link>
         </footer>
-
       </div>
     </main>
   );

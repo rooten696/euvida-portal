@@ -1,6 +1,9 @@
 {
   "Navigation": {
     "home": "Home",
+    "bikeparks": "Bike parks",
+    "countries": "Countries",
+    "about": "About",
     "destinations": "Destinations",
     "favorites": "Favorites",
     "profile": "Profile",
@@ -8,41 +11,42 @@
     "logout": "Logout"
   },
   "HomePage": {
-    "title": "Discover the best of Europe.",
-    "subtitle": "Your ultimate guide to traveling, moving, and living a fulfilling life in the most beautiful destinations.",
-    "cta": "Start exploring.🌍",
-    "feature1_title": "Flawless Travel",
-    "feature1_desc": "Authentic tips on must-see places and practical advice for a perfect, stress-free vacation.",
-    "feature2_title": "Life and Work",
-    "feature2_desc": "Tempted to move? Find out everything about culture, housing, and job opportunities abroad.",
-    "feature3_title": "Culture and Taste",
-    "feature3_desc": "From Spanish tapas to Belgian pralines. Dive fully into local gastronomy and customs.",
-    "where_to": "Where are you heading?",
-    "where_to_desc": "Choose a country and explore its unique regions, sights, and current weather.",
-    "no_countries": "No countries available yet."
+    "title": "European bike parks & trail centers.",
+    "subtitle": "Your ultimate guide and trail planner: lifts, trails from flow to downhill, bike rentals, prices, and practical rider tips.",
+    "cta": "Explore bike parks.🚵",
+    "feature1_title": "Lifts & Uplifts",
+    "feature1_desc": "Verified info on gondolas, chairlifts, uplift shuttles, seasonal operating dates, and bike pass options.",
+    "feature2_title": "Trails & Difficulty",
+    "feature2_desc": "From mellow family-friendly flow lines to black downhill tracks, big jumps, and technical root sections.",
+    "feature3_title": "Rentals, Service & Facilities",
+    "feature3_desc": "Where to rent downhill/enduro bikes and protective gear, find workshop service, bike washes, and parking.",
+    "where_to": "Where are you riding next?",
+    "where_to_desc": "Select a country to discover top bike parks, trail networks, operating hours, and trail maps.",
+    "no_countries": "No countries with bike parks available yet."
   },
   "CountryDetail": {
     "back_button": "Back to overview",
-    "general_info": "General Information",
-    "travel_tourism": "Travel & Tourism",
-    "life_work": "Life & Work",
-    "culture_food": "Culture & Food",
-    "regions_title": "Regions and areas",
-    "explore_region": "Explore region"
+    "general_info": "General info",
+    "travel_tourism": "Bike parks & riding",
+    "life_work": "Transport & stay",
+    "culture_food": "Services & facilities",
+    "regions_title": "Regions with bike parks",
+    "explore_region": "Explore regional bike parks",
+    "practical_cautions": "Rider safety & practical tips"
   },
   "RegionDetail": {
     "back_button": "Back to country",
-    "general_info": "General about the region",
-    "nature": "Trips and Nature",
-    "history": "Gastronomy and Atmosphere",
-    "transport": "For whom it is and children",
+    "general_info": "About the region & trails",
+    "nature": "Bike parks and trails",
+    "history": "Facilities and vibe",
+    "transport": "Difficulty, kids & access",
     "weather_title": "Current weather",
-    "temp_title": "Average temperatures",
+    "temp_title": "Average seasonal temperatures",
     "spring": "Spring",
     "summer": "Summer",
     "autumn": "Autumn",
     "winter": "Winter",
     "air": "Air",
-    "sea": "Sea"
+    "sea": "Water"
   }
 }

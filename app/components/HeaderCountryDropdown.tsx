@@ -78,7 +78,14 @@ export default function HeaderCountryDropdown({ locale, countries }: HeaderCount
     setIsOpen(false);
   };
 
-  const labelText = locale === 'cs' ? 'Země' : (locale === 'de' ? 'Länder' : 'Countries');
+  const countryLabelsMap: Record<string, string> = {
+    cs: 'Země',
+    de: 'Länder',
+    en: 'Countries',
+    fr: 'Pays',
+    es: 'Países',
+  };
+  const labelText = countryLabelsMap[locale] || 'Countries';
 
   return (
     <div className="relative inline-block text-left" ref={dropdownRef}>

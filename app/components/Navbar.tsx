@@ -70,8 +70,24 @@ export default function Navbar() {
 
   useEffect(() => {
     const fetchCountries = async () => {
-      // Stahujeme 'id' (pro SVG) i 'flag' (pro emoji na mobilu)
-      const { data } = await supabase.from('countries').select('id, name, flag, translations');
+      // Stahujeme pouze země, které mají publikované bikeparky
+      const { data: bikeArticles } = await supabase
+        .from('articles')
+        .select('country_id')
+        .eq('category', 'bike_trail')
+        .eq('published', true);
+
+      const bikeCountryIds = [...new Set(bikeArticles?.map(a => a.country_id).filter(Boolean))];
+
+      if (bikeCountryIds.length === 0) {
+        setCountries([]);
+        return;
+      }
+
+      const { data } = await supabase
+        .from('countries')
+        .select('id, name, flag, translations')
+        .in('id', bikeCountryIds);
       
       if (data) {
         const translatedData = data.map((country) => {
@@ -111,8 +127,8 @@ export default function Navbar() {
         
         {/* LEVÁ ČÁST: Logo a výběr obecných info o státech */}
         <div className="flex items-center gap-6">
-          <Link href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0">
-            EU<span className="text-emerald-400 transition-colors duration-200">VIDA</span><span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">.EU</span>
+          <Link href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0" title="Euvida Bikeparks">
+            EU<span className="text-emerald-400 transition-colors duration-200">VIDA</span><span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">BIKE</span>
           </Link>
           <div className="hidden md:block">
             <HeaderCountryDropdown locale={locale} countries={countries} />
@@ -122,16 +138,16 @@ export default function Navbar() {
         {/* STŘEDNÍ ČÁST: Hlavní navigace (Desktop) */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
           <Link href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
-            Domů
+            {t('home')}
           </Link>
-          <Link href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
-            Země
+          <Link href={`/${locale}/articles`} className="hover:text-emerald-400 transition-colors duration-150">
+            {t('bikeparks')}
           </Link>
-          <Link href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
-            Články
+          <Link href={`/${locale}/countries`} className="hover:text-emerald-400 transition-colors duration-150">
+            {t('countries')}
           </Link>
           <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors duration-150">
-            O nás
+            {t('about')}
           </Link>
         </nav>
 
@@ -217,6 +233,38 @@ export default function Navbar() {
                 {lang.flag}
               </Link>
             ))}
+          </div>
+
+          {/* MOBILNÍ HLAVNÍ ODKAZY */}
+          <div className="flex flex-col space-y-1 mb-4 pb-4 border-b border-white/10 shrink-0">
+            <Link
+              href={`/${locale}`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-4 py-2.5 text-base font-bold text-slate-200 hover:text-emerald-400 hover:bg-white/5 rounded-xl transition-colors"
+            >
+              {t('home')}
+            </Link>
+            <Link
+              href={`/${locale}/articles`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-4 py-2.5 text-base font-bold text-slate-200 hover:text-emerald-400 hover:bg-white/5 rounded-xl transition-colors"
+            >
+              {t('bikeparks')}
+            </Link>
+            <Link
+              href={`/${locale}/countries`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-4 py-2.5 text-base font-bold text-slate-200 hover:text-emerald-400 hover:bg-white/5 rounded-xl transition-colors"
+            >
+              {t('countries')}
+            </Link>
+            <Link
+              href={`/${locale}/about`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-4 py-2.5 text-base font-bold text-slate-200 hover:text-emerald-400 hover:bg-white/5 rounded-xl transition-colors"
+            >
+              {t('about')}
+            </Link>
           </div>
 
           <div className="px-2 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">

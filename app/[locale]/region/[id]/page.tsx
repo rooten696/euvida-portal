@@ -31,18 +31,21 @@ const supabase = createClient(
 );
 
 export async function generateStaticParams() {
-  const { data: regions } = await supabase
-    .from('regions')
-    .select('id');
+  const { data: articles } = await supabase
+    .from('articles')
+    .select('region_id')
+    .eq('published', true)
+    .eq('category', 'bike_trail');
 
-  if (!regions) return [];
+  if (!articles) return [];
 
+  const regionIds = Array.from(
+    new Set(articles.map((a) => a.region_id).filter((id): id is string => Boolean(id)))
+  );
   const params: { locale: string; id: string }[] = [];
   for (const locale of supportedLocales) {
-    for (const region of regions) {
-      if (region.id) {
-        params.push({ locale, id: region.id });
-      }
+    for (const id of regionIds) {
+      params.push({ locale, id });
     }
   }
   return params;
@@ -50,7 +53,7 @@ export async function generateStaticParams() {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, practical_info, visit_info, published, featured, created_at, reading_time_minutes';
 
 type RegionPageParams = {
   params: Promise<{ locale: string; id: string }>;
@@ -86,56 +89,56 @@ const regionMetadata: Record<
   cs: {
     title: (regionName, countryName) =>
       countryName
-        ? `${regionName}, ${countryName} – cestovní průvodce | Euvida`
-        : `${regionName} – cestovní průvodce | Euvida`,
+        ? `${regionName}, ${countryName} – bikeparky a traily | Euvida`
+        : `${regionName} – bikeparky a traily | Euvida`,
     description: (regionName, countryName) =>
       countryName
-        ? `Praktický průvodce regionem ${regionName} v zemi ${countryName}: články, témata a tipy na výlety.`
-        : `Praktický průvodce regionem ${regionName}: články, témata a tipy na výlety.`,
+        ? `Bikeparky a trailcentra v regionu ${regionName} (${countryName}): tratě, lanovky, servis a MTB tipy.`
+        : `Bikeparky a trailcentra v regionu ${regionName}: tratě, lanovky, servis a MTB tipy.`,
     notFound: 'Region nenalezen | Euvida',
   },
   en: {
     title: (regionName, countryName) =>
       countryName
-        ? `${regionName}, ${countryName} – travel guide | Euvida`
-        : `${regionName} – travel guide | Euvida`,
+        ? `${regionName}, ${countryName} – Bike Parks & Trails | Euvida`
+        : `${regionName} – Bike Parks & Trails | Euvida`,
     description: (regionName, countryName) =>
       countryName
-        ? `A practical guide to ${regionName} in ${countryName}: articles, topics, and trip ideas.`
-        : `A practical guide to ${regionName}: articles, topics, and trip ideas.`,
+        ? `Bike parks and trail centers in ${regionName} (${countryName}): uplifts, routes, bike rentals, and MTB riding.`
+        : `Bike parks and trail centers in ${regionName}: uplifts, routes, bike rentals, and MTB riding.`,
     notFound: 'Region not found | Euvida',
   },
   de: {
     title: (regionName, countryName) =>
       countryName
-        ? `${regionName}, ${countryName} – Reiseführer | Euvida`
-        : `${regionName} – Reiseführer | Euvida`,
+        ? `${regionName}, ${countryName} – Bikeparks & Trails | Euvida`
+        : `${regionName} – Bikeparks & Trails | Euvida`,
     description: (regionName, countryName) =>
       countryName
-        ? `Praktischer Reiseführer für ${regionName} in ${countryName}: Artikel, Themen und Ausflugsideen.`
-        : `Praktischer Reiseführer für ${regionName}: Artikel, Themen und Ausflugsideen.`,
+        ? `Bikeparks und Trailcenter in der Region ${regionName} (${countryName}): Bergbahnen, Strecken, Verleih und MTB-Tipps.`
+        : `Bikeparks und Trailcenter in der Region ${regionName}: Bergbahnen, Strecken, Verleih und MTB-Tipps.`,
     notFound: 'Region nicht gefunden | Euvida',
   },
   fr: {
     title: (regionName, countryName) =>
       countryName
-        ? `${regionName}, ${countryName} – guide de voyage | Euvida`
-        : `${regionName} – guide de voyage | Euvida`,
+        ? `${regionName}, ${countryName} – Bike parks et sentiers | Euvida`
+        : `${regionName} – Bike parks et sentiers | Euvida`,
     description: (regionName, countryName) =>
       countryName
-        ? `Guide pratique de ${regionName} en ${countryName} : articles, thèmes et idées de sorties.`
-        : `Guide pratique de ${regionName} : articles, thèmes et idées de sorties.`,
+        ? `Bike parks et trail centers dans la région ${regionName} (${countryName}) : pistes, remontées et location VTT.`
+        : `Bike parks et trail centers dans la région ${regionName} : pistes, remontées et location VTT.`,
     notFound: 'Région introuvable | Euvida',
   },
   es: {
     title: (regionName, countryName) =>
       countryName
-        ? `${regionName}, ${countryName} – guía de viaje | Euvida`
-        : `${regionName} – guía de viaje | Euvida`,
+        ? `${regionName}, ${countryName} – Bike parks y senderos | Euvida`
+        : `${regionName} – Bike parks y senderos | Euvida`,
     description: (regionName, countryName) =>
       countryName
-        ? `Guía práctica de ${regionName} en ${countryName}: artículos, temas e ideas para viajar.`
-        : `Guía práctica de ${regionName}: artículos, temas e ideas para viajar.`,
+        ? `Bike parks y centros de senderos en ${regionName} (${countryName}): pistas, remontes, alquiler y rutas MTB.`
+        : `Bike parks y centros de senderos en ${regionName}: pistas, remontes, alquiler y rutas MTB.`,
     notFound: 'Región no encontrada | Euvida',
   },
 };
@@ -189,28 +192,43 @@ function sortArticles(articles: Article[]): Article[] {
 }
 
 function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
-  const counts = new Map<string, number>();
+  let lift = 0;
+  let beginner = 0;
+  let rental = 0;
+  let trailMap = 0;
 
   for (const article of articles) {
-    incrementCount(counts, article.category);
-    if (article.category !== 'fkk' && article.visit_info?.nudist_beach === true) {
-      incrementCount(counts, 'fkk');
+    const v = (article.visit_info as Record<string, unknown>) || {};
+    const p = (article.practical_info as Record<string, Record<string, unknown>>) || {};
+    const pl = p[locale] || p.cs || p.en || {};
+
+    if (v.lift_available === true || Boolean(pl.lift)) {
+      lift++;
+    }
+    if (v.beginner_friendly === true || v.family_friendly === true) {
+      beginner++;
     }
     if (
-      (article.category === 'camping' || article.category === 'camp') &&
-      (article.visit_info?.public_beach_access === true || article.visit_info?.public_swimming_access === true)
+      v.bike_rental_available === true ||
+      v.service_available === true ||
+      Boolean(pl.rental_service) ||
+      Boolean(pl.bike_rental)
     ) {
-      incrementCount(counts, 'natural_swimming');
+      rental++;
+    }
+    if (Boolean(pl.trail_map_url) || Boolean(pl.trail_map)) {
+      trailMap++;
     }
   }
 
-  return [...counts.entries()]
-    .map(([category, count]) => ({
-      value: category,
-      label: getArticleCategoryLabel(category, locale) ?? category,
-      count,
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label, locale));
+  const options: FilterOption[] = [
+    { value: 'lift', label: getArticleCategoryLabel('lift', locale) ?? 'Lanovka & vlek', count: lift },
+    { value: 'beginner', label: getArticleCategoryLabel('beginner', locale) ?? 'Pro začátečníky & rodiny', count: beginner },
+    { value: 'rental', label: getArticleCategoryLabel('rental', locale) ?? 'Půjčovna & servis', count: rental },
+    { value: 'trail_map', label: getArticleCategoryLabel('trail_map', locale) ?? 'Mapa trailů', count: trailMap },
+  ];
+
+  return options.filter((opt) => (opt.count ?? 0) > 0);
 }
 
 async function getRegionAndCountry(id: string, locale: SupportedLocale) {
@@ -243,10 +261,22 @@ export async function generateMetadata({
   const { locale: rawLocale, id } = await params;
   const locale = normalizeLocale(rawLocale);
   const copy = regionMetadata[locale];
-  const { region, country } = await getRegionAndCountry(id, locale);
+  const [{ region, country }, bikeArticlesResult] = await Promise.all([
+    getRegionAndCountry(id, locale),
+    supabase
+      .from('articles')
+      .select('id')
+      .eq('published', true)
+      .eq('category', 'bike_trail')
+      .eq('region_id', id)
+      .limit(1),
+  ]);
 
-  if (!region) {
-    return { title: copy.notFound };
+  if (!region || !bikeArticlesResult.data || bikeArticlesResult.data.length === 0) {
+    return {
+      title: copy.notFound,
+      robots: { index: false, follow: false },
+    };
   }
 
   const title = copy.title(region.name, country?.name);
@@ -283,18 +313,19 @@ export default async function RegionPage({ params }: RegionPageParams) {
     locale
   );
 
-  if (!displayRegion) {
-    notFound();
-  }
-
   const { data: articleRows, error: articlesError } = await supabase
     .from('articles')
     .select(articleSelect)
     .eq('published', true)
+    .eq('category', 'bike_trail')
     .eq('region_id', id);
 
   if (articlesError) {
     console.error('Chyba při načítání článků:', articlesError);
+  }
+
+  if (!displayRegion || !articleRows || articleRows.length === 0) {
+    notFound();
   }
 
   const articles = sortArticles((articleRows ?? []) as Article[]);
@@ -383,7 +414,7 @@ export default async function RegionPage({ params }: RegionPageParams) {
                 {getDestinationLabel(locale, 'home')}
               </Link>
               <span aria-hidden="true">/</span>
-              <Link href={`/${locale}#countries`} className="transition hover:text-white">
+              <Link href={`/${locale}/countries`} className="transition hover:text-white">
                 {getDestinationLabel(locale, 'countries')}
               </Link>
               {displayCountry && (

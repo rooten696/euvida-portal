@@ -30,18 +30,21 @@ const supabase = createClient(
 );
 
 export async function generateStaticParams() {
-  const { data: countries } = await supabase
-    .from('countries')
-    .select('id');
+  const { data: articles } = await supabase
+    .from('articles')
+    .select('country_id')
+    .eq('published', true)
+    .eq('category', 'bike_trail');
 
-  if (!countries) return [];
+  if (!articles) return [];
 
+  const countryIds = Array.from(
+    new Set(articles.map((a) => a.country_id).filter((id): id is string => Boolean(id)))
+  );
   const params: { locale: string; id: string }[] = [];
   for (const locale of supportedLocales) {
-    for (const country of countries) {
-      if (country.id) {
-        params.push({ locale, id: country.id });
-      }
+    for (const id of countryIds) {
+      params.push({ locale, id });
     }
   }
   return params;
@@ -49,7 +52,7 @@ export async function generateStaticParams() {
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
+  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, practical_info, visit_info, published, featured, created_at, reading_time_minutes';
 
 type CountryPageParams = {
   params: Promise<{ locale: string; id: string }>;
@@ -76,33 +79,33 @@ const countryMetadata: Record<
   }
 > = {
   cs: {
-    title: (countryName) => `${countryName} – cestovní průvodce | Euvida`,
+    title: (countryName) => `${countryName} – bikeparky a trailcentra | Euvida`,
     description: (countryName) =>
-      `Praktický cestovní průvodce pro ${countryName}: regiony, články a tipy na výlety po Evropě.`,
+      `Přehled a průvodce bikeparky a trailcentry v zemi ${countryName}: lanovky, tratě, půjčovny a tipy pro ježdění.`,
     notFound: 'Země nenalezena | Euvida',
   },
   en: {
-    title: (countryName) => `${countryName} – travel guide | Euvida`,
+    title: (countryName) => `${countryName} – Bike Parks & Trail Centers | Euvida`,
     description: (countryName) =>
-      `A practical travel guide to ${countryName}: regions, articles, and trip ideas across Europe.`,
+      `Guide to bike parks and trail centers in ${countryName}: uplifts, trails, bike rentals, and trip planning.`,
     notFound: 'Country not found | Euvida',
   },
   de: {
-    title: (countryName) => `${countryName} – Reiseführer | Euvida`,
+    title: (countryName) => `${countryName} – Bikeparks & Trailcenter | Euvida`,
     description: (countryName) =>
-      `Praktischer Reiseführer für ${countryName}: Regionen, Artikel und Ideen für Ausflüge in Europa.`,
+      `Bikeparks und Trailcenter in ${countryName}: Bergbahnen, Strecken, Bikeverleih und Planungstipps.`,
     notFound: 'Land nicht gefunden | Euvida',
   },
   fr: {
-    title: (countryName) => `${countryName} – guide de voyage | Euvida`,
+    title: (countryName) => `${countryName} – Bike parks et trail centers | Euvida`,
     description: (countryName) =>
-      `Guide pratique pour ${countryName} : régions, articles et idées de sorties en Europe.`,
+      `Guide des bike parks et sentiers VTT en ${countryName} : remontées, pistes, location et conseils pratiques.`,
     notFound: 'Pays introuvable | Euvida',
   },
   es: {
-    title: (countryName) => `${countryName} – guía de viaje | Euvida`,
+    title: (countryName) => `${countryName} – Bike parks y trail centers | Euvida`,
     description: (countryName) =>
-      `Guía práctica de ${countryName}: regiones, artículos e ideas para viajar por Europa.`,
+      `Guía de bike parks y centros de senderos en ${countryName}: remontes, pistas, alquiler y consejos útiles.`,
     notFound: 'País no encontrado | Euvida',
   },
 };
@@ -150,28 +153,43 @@ function sortArticles(articles: Article[]): Article[] {
 }
 
 function categoryOptions(articles: Article[], locale: SupportedLocale): FilterOption[] {
-  const counts = new Map<string, number>();
+  let lift = 0;
+  let beginner = 0;
+  let rental = 0;
+  let trailMap = 0;
 
   for (const article of articles) {
-    incrementCount(counts, article.category);
-    if (article.category !== 'fkk' && article.visit_info?.nudist_beach === true) {
-      incrementCount(counts, 'fkk');
+    const v = (article.visit_info as Record<string, unknown>) || {};
+    const p = (article.practical_info as Record<string, Record<string, unknown>>) || {};
+    const pl = p[locale] || p.cs || p.en || {};
+
+    if (v.lift_available === true || Boolean(pl.lift)) {
+      lift++;
+    }
+    if (v.beginner_friendly === true || v.family_friendly === true) {
+      beginner++;
     }
     if (
-      (article.category === 'camping' || article.category === 'camp') &&
-      (article.visit_info?.public_beach_access === true || article.visit_info?.public_swimming_access === true)
+      v.bike_rental_available === true ||
+      v.service_available === true ||
+      Boolean(pl.rental_service) ||
+      Boolean(pl.bike_rental)
     ) {
-      incrementCount(counts, 'natural_swimming');
+      rental++;
+    }
+    if (Boolean(pl.trail_map_url) || Boolean(pl.trail_map)) {
+      trailMap++;
     }
   }
 
-  return [...counts.entries()]
-    .map(([category, count]) => ({
-      value: category,
-      label: getArticleCategoryLabel(category, locale) ?? category,
-      count,
-    }))
-    .sort((left, right) => left.label.localeCompare(right.label, locale));
+  const options: FilterOption[] = [
+    { value: 'lift', label: getArticleCategoryLabel('lift', locale) ?? 'Lanovka & vlek', count: lift },
+    { value: 'beginner', label: getArticleCategoryLabel('beginner', locale) ?? 'Pro začátečníky & rodiny', count: beginner },
+    { value: 'rental', label: getArticleCategoryLabel('rental', locale) ?? 'Půjčovna & servis', count: rental },
+    { value: 'trail_map', label: getArticleCategoryLabel('trail_map', locale) ?? 'Mapa trailů', count: trailMap },
+  ];
+
+  return options.filter((opt) => (opt.count ?? 0) > 0);
 }
 
 function hasMarkdownContent(
@@ -189,17 +207,29 @@ export async function generateMetadata({
   const locale = normalizeLocale(rawLocale);
   const copy = countryMetadata[locale];
 
-  const { data: country } = await supabase
-    .from('countries')
-    .select('id, name, description, image_url, translations')
-    .eq('id', id)
-    .single();
+  const [countryResult, bikeArticlesResult] = await Promise.all([
+    supabase
+      .from('countries')
+      .select('id, name, description, image_url, translations')
+      .eq('id', id)
+      .single(),
+    supabase
+      .from('articles')
+      .select('id')
+      .eq('published', true)
+      .eq('category', 'bike_trail')
+      .eq('country_id', id)
+      .limit(1),
+  ]);
 
-  if (!country) {
-    return { title: copy.notFound };
+  if (!countryResult.data || !bikeArticlesResult.data || bikeArticlesResult.data.length === 0) {
+    return {
+      title: copy.notFound,
+      robots: { index: false, follow: false },
+    };
   }
 
-  const displayCountry = getCountryDisplay(country as CountryDestination, locale);
+  const displayCountry = getCountryDisplay(countryResult.data as CountryDestination, locale);
   const title = copy.title(displayCountry.name);
   const description = displayCountry.description || copy.description(displayCountry.name);
   const canonical = `/${locale}/country/${displayCountry.id}`;
@@ -241,12 +271,9 @@ export default async function CountryPage({ params }: CountryPageParams) {
       .from('articles')
       .select(articleSelect)
       .eq('published', true)
+      .eq('category', 'bike_trail')
       .eq('country_id', id),
   ]);
-
-  if (!countryResult.data) {
-    notFound();
-  }
 
   if (regionsResult.error) {
     console.error('Chyba při načítání regionů:', regionsResult.error);
@@ -254,6 +281,10 @@ export default async function CountryPage({ params }: CountryPageParams) {
 
   if (articlesResult.error) {
     console.error('Chyba při načítání článků:', articlesResult.error);
+  }
+
+  if (!countryResult.data || !articlesResult.data || articlesResult.data.length === 0) {
+    notFound();
   }
 
   const displayCountry = getCountryDisplay(
@@ -269,6 +300,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
       ...getRegionDisplay(region, locale),
       articleCount: articleCountByRegion.get(region.id) ?? 0,
     }))
+    .filter((region) => region.articleCount > 0)
     .sort((left, right) => {
       if (right.articleCount !== left.articleCount) {
         return right.articleCount - left.articleCount;
@@ -345,7 +377,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
                 {getDestinationLabel(locale, 'home')}
               </Link>
               <span aria-hidden="true">/</span>
-              <Link href={`/${locale}#countries`} className="transition hover:text-white">
+              <Link href={`/${locale}/countries`} className="transition hover:text-white">
                 {getDestinationLabel(locale, 'countries')}
               </Link>
               <span aria-hidden="true">/</span>
