@@ -290,5 +290,68 @@
         "es": "Pensiones y apartamentos en Bouzov y los pueblos cercanos de Moravia central. Alojarse en el pueblo permite disfrutar de las visitas matinales al castillo antes de las aglomeraciones y visitar fácilmente Loštice o Javoříčko."
       }
     }
+  ],
+  "bikepark-kouty": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/kouty-nad-desnou.html",
+      "title": {
+        "cs": "Ubytování v Koutech nad Desnou",
+        "en": "Places to stay in Kouty nad Desnou",
+        "de": "Unterkünfte in Kouty nad Desnou",
+        "fr": "Hébergements à Kouty nad Desnou",
+        "es": "Alojamiento en Kouty nad Desnou"
+      },
+      "description": {
+        "cs": "Apartmány, penziony a horské chaty v Koutech nad Desnou v údolí pod Medvědí horou. Ubytování v docházkové vzdálenosti od dolní stanice lanovky Liščí potok je ideální pro celodenní ježdění i výlet k horní nádrži Dlouhé stráně. Před rezervací si ověřte možnost bezpečné úschovy a mytí kol.",
+        "en": "Apartments, guesthouses and mountain chalets in Kouty nad Desnou below Medvědí hora. Staying within walking distance of the Liščí potok chairlift base is ideal for full days on the trails and trips to the Dlouhé stráně reservoir. Check secure bike storage and wash facilities before booking.",
+        "de": "Ferienwohnungen, Pensionen und Berghütten in Kouty nad Desnou im Tal unter der Medvědí hora. Eine Unterkunft in Gehweite zur Talstation Liščí potok eignet sich ideal für Biketage und Ausflüge zum Stausee Dlouhé stráně. Prüfen Sie vor der Buchung sichere Radabstell- und Waschplätze.",
+        "fr": "Appartements, pensions et chalets de montagne à Kouty nad Desnou dans la vallée sous le mont Medvědí hora. Loger à distance de marche du télésiège Liščí potok est parfait pour profiter des pistes et du réservoir de Dlouhé stráně. Vérifiez le local à vélos sécurisé avant de réserver.",
+        "es": "Apartamentos, pensiones y cabañas de montaña en Kouty nad Desnou, bajo la Medvědí hora. Alojarte a poca distancia del telesilla Liščí potok resulta ideal para pedalear y visitar el embalse de Dlouhé stráně. Comprueba antes de reservar si disponen de guarda y lavado de bicicletas."
+      }
+    }
+  ],
+  "bikepark-lipno": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/lipno-nad-vltavou.html",
+      "title": {
+        "cs": "Ubytování v Lipně nad Vltavou",
+        "en": "Places to stay in Lipno nad Vltavou",
+        "de": "Unterkünfte in Lipno nad Vltavou",
+        "fr": "Hébergements à Lipno nad Vltavou",
+        "es": "Alojamiento en Lipno nad Vltavou"
+      },
+      "description": {
+        "cs": "Hotely, rodinné apartmány a penziony v Lipně nad Vltavou v blízkosti jezerní promenády i nástupní lanovky Střecha. Výborná základna pro kombinaci flow trailů, koupání a cyklovýletů kolem Lipna. Před rezervací si porovnejte vzdálenost k centrálnímu parkovišti a možnosti bezpečné úschovy kol.",
+        "en": "Hotels, family apartments and guesthouses in Lipno nad Vltavou close to the lakeside promenade and Střecha chairlift. An ideal base for combining flow trails, swimming and lakeside cycling. Compare distance to the central car park and verify secure bicycle storage before booking.",
+        "de": "Hotels, Familienapartments und Pensionen in Lipno nad Vltavou nahe Seepromenade und Sesselbahn Střecha. Eine ideale Basis, um Flowtrails, Baden und Radtouren am See zu verbinden. Vergleichen Sie vor der Buchung die Lage zum zentralen Parkplatz und sichere Fahrradstellplätze.",
+        "fr": "Hôtels, appartements familiaux et pensions à Lipno nad Vltavou, près de la promenade du lac et du télésiège Střecha. Une excellente base pour associer flow trails, baignade et balades à vélo. Vérifiez la distance au parking central et la présence d un local à vélos sécurisé avant de réserver.",
+        "es": "Hoteles, apartamentos familiares y pensiones en Lipno nad Vltavou, junto al paseo del lago y el telesilla Střecha. Una base estupenda para combinar flow trails, baño y excursiones ciclistas por el lago. Comprueba la cercanía al parking central y el espacio seguro para guardar bicicletas."
+      }
+    }
+  ],
+  "hrad-cesky-sternberk": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/cesky-sternberk.html",
+      "title": {
+        "cs": "Ubytování v Českém Šternberku",
+        "en": "Places to stay in Český Šternberk",
+        "de": "Unterkünfte in Český Šternberk",
+        "fr": "Hébergements à Český Šternberk",
+        "es": "Alojamiento en Český Šternberk"
+      },
+      "description": {
+        "cs": "Penziony, hotely a apartmány v Českém Šternberku v malebném údolí řeky Sázavy přímo pod hradem. Ubytování v obci umožňuje navštívit hradní expozici či Hladomornu hned dopoledne před příjezdem výletních autobusů a pohodlně prozkoumat okolní Posázaví. Před rezervací ověřte možnosti parkování.",
+        "en": "Guesthouses, hotels and apartments in Český Šternberk in the scenic Sázava river valley right below the castle. Staying locally allows you to tour the castle rooms or Gothic bastion early before tour buses arrive, and explore the Posázaví region at leisure. Check on-site parking options before booking.",
+        "de": "Pensionen, Hotels und Ferienwohnungen in Český Šternberk im malerischen Tal der Sázava direkt unter der Burg. Eine Unterkunft im Ort ermöglicht entspannte Besuche der Burgräume und der Bastion am Morgen vor den Ausflugsbussen. Prüfen Sie vor der Reservierung die Parkmöglichkeiten.",
+        "fr": "Pensions, hôtels et appartements à Český Šternberk dans la pittoresque vallée de la Sázava, au pied du château. Séjourner dans le bourg permet de visiter les salles historiques et la tour avant l arrivée des cars touristiques et de rayonner en Posázaví. Vérifiez les options de stationnement.",
+        "es": "Pensiones, hoteles y apartamentos en Český Šternberk, en el valle del río Sázava junto al castillo. Alojarse en el pueblo permite visitar los salones históricos o la torre a primera hora antes de los autobuses turísticos y recorrer el Posázaví con calma. Comprueba las opciones de aparcamiento."
+      }
+    }
   ]
 }

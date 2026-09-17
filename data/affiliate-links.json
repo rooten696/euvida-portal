@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-17T13:30:08.178Z",
+  "generatedAt": "2026-09-17T14:40:08.050Z",
   "project": 572910,
   "marker": 776456,
   "articles": {
@@ -506,6 +506,117 @@
           "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_hrad-bouzov_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fbouzov.es.html",
           "sourceUrl": "https://www.booking.com/city/cz/bouzov.es.html",
           "subId": "eu_es_hrad-bouzov_stay_end_v1"
+        }
+      }
+    },
+    "bikepark-kouty": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_bikepark-kouty_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fkouty-nad-desnou.cs.html",
+          "sourceUrl": "https://www.booking.com/city/cz/kouty-nad-desnou.cs.html",
+          "subId": "eu_cs_bikepark-kouty_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_bikepark-kouty_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fkouty-nad-desnou.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/cz/kouty-nad-desnou.en-gb.html",
+          "subId": "eu_en_bikepark-kouty_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_bikepark-kouty_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fkouty-nad-desnou.de.html",
+          "sourceUrl": "https://www.booking.com/city/cz/kouty-nad-desnou.de.html",
+          "subId": "eu_de_bikepark-kouty_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_bikepark-kouty_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fkouty-nad-desnou.fr.html",
+          "sourceUrl": "https://www.booking.com/city/cz/kouty-nad-desnou.fr.html",
+          "subId": "eu_fr_bikepark-kouty_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_bikepark-kouty_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fkouty-nad-desnou.es.html",
+          "sourceUrl": "https://www.booking.com/city/cz/kouty-nad-desnou.es.html",
+          "subId": "eu_es_bikepark-kouty_stay_end_v1"
+        }
+      }
+    },
+    "bikepark-lipno": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_bikepark-lipno_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Flipno-nad-vltavou.cs.html",
+          "sourceUrl": "https://www.booking.com/city/cz/lipno-nad-vltavou.cs.html",
+          "subId": "eu_cs_bikepark-lipno_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_bikepark-lipno_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Flipno-nad-vltavou.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/cz/lipno-nad-vltavou.en-gb.html",
+          "subId": "eu_en_bikepark-lipno_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_bikepark-lipno_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Flipno-nad-vltavou.de.html",
+          "sourceUrl": "https://www.booking.com/city/cz/lipno-nad-vltavou.de.html",
+          "subId": "eu_de_bikepark-lipno_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_bikepark-lipno_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Flipno-nad-vltavou.fr.html",
+          "sourceUrl": "https://www.booking.com/city/cz/lipno-nad-vltavou.fr.html",
+          "subId": "eu_fr_bikepark-lipno_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_bikepark-lipno_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Flipno-nad-vltavou.es.html",
+          "sourceUrl": "https://www.booking.com/city/cz/lipno-nad-vltavou.es.html",
+          "subId": "eu_es_bikepark-lipno_stay_end_v1"
+        }
+      }
+    },
+    "hrad-cesky-sternberk": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_hrad-cesky-sternberk_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fcesky-sternberk.cs.html",
+          "sourceUrl": "https://www.booking.com/city/cz/cesky-sternberk.cs.html",
+          "subId": "eu_cs_hrad-cesky-sternberk_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_hrad-cesky-sternberk_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fcesky-sternberk.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/cz/cesky-sternberk.en-gb.html",
+          "subId": "eu_en_hrad-cesky-sternberk_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_hrad-cesky-sternberk_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fcesky-sternberk.de.html",
+          "sourceUrl": "https://www.booking.com/city/cz/cesky-sternberk.de.html",
+          "subId": "eu_de_hrad-cesky-sternberk_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_hrad-cesky-sternberk_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fcesky-sternberk.fr.html",
+          "sourceUrl": "https://www.booking.com/city/cz/cesky-sternberk.fr.html",
+          "subId": "eu_fr_hrad-cesky-sternberk_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_hrad-cesky-sternberk_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fcesky-sternberk.es.html",
+          "sourceUrl": "https://www.booking.com/city/cz/cesky-sternberk.es.html",
+          "subId": "eu_es_hrad-cesky-sternberk_stay_end_v1"
         }
       }
     }
