@@ -164,5 +164,68 @@
         "es": "Hoteles y alojamientos en Doksy junto al lago Mácha, cerca del castillo de Bezděz. Compara en el mapa la ubicación, el aparcamiento y el acceso al lago antes de reservar."
       }
     }
+  ],
+  "bike-resort-peklak": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/ceska-trebova.html",
+      "title": {
+        "cs": "Ubytování v České Třebové",
+        "en": "Places to stay in Česká Třebová",
+        "de": "Unterkünfte in Česká Třebová",
+        "fr": "Hébergements à Česká Třebová",
+        "es": "Alojamiento en Česká Třebová"
+      },
+      "description": {
+        "cs": "Penziony a hotely v České Třebové v blízkosti Bike Resortu Peklák. Před rezervací si na mapě ověřte vzdálenost k areálu Pod Jelenicí a možnosti bezpečné úschovy kol.",
+        "en": "Hotels and guesthouses in Česká Třebová close to Bike Resort Peklák. Check property location relative to the Pod Jelenicí trail base and secure bike storage before booking.",
+        "de": "Hotels und Pensionen in Česká Třebová in der Nähe des Bike Resorts Peklák. Prüfen Sie vor der Buchung die Lage zum Areal Pod Jelenicí und sichere Fahrradabstellmöglichkeiten.",
+        "fr": "Hôtels et pensions à Česká Třebová près du Bike Resort Peklák. Vérifiez sur le plan la distance jusqu’au site de Pod Jelenicí et les possibilités de local à vélos avant de réserver.",
+        "es": "Hoteles y pensiones en Česká Třebová cerca del Bike Resort Peklák. Comprueba en el mapa la ubicación respecto a la base de Pod Jelenicí y el espacio para guardar bicicletas antes de reservar."
+      }
+    }
+  ],
+  "bikepark-jested": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/liberec.html",
+      "title": {
+        "cs": "Ubytování v Liberci pod Ještědem",
+        "en": "Places to stay in Liberec near Ještěd",
+        "de": "Unterkünfte in Liberec am Jeschken",
+        "fr": "Hébergements à Liberec près du Ještěd",
+        "es": "Alojamiento en Liberec junto al Ještěd"
+      },
+      "description": {
+        "cs": "Hotely a penziony v Liberci s rychlým spojením k lanovce Skalka pod Ještědem. Před rezervací si porovnejte polohu ubytování, dostupnost tramvaje číslo 3 a možnosti bezpečné úschovy kol.",
+        "en": "Hotels and guesthouses in Liberec with quick access to the Skalka chairlift at Ještěd. Compare property locations, tram line 3 connections and secure bike storage before booking.",
+        "de": "Hotels und Pensionen in Liberec mit schneller Anbindung an die Sesselbahn Skalka am Ještěd. Prüfen Sie vor der Buchung die Lage zur Straßenbahnlinie 3 und sichere Fahrradabstellmöglichkeiten.",
+        "fr": "Hôtels et pensions à Liberec avec accès rapide au télésiège Skalka sous le mont Ještěd. Vérifiez la proximité de la ligne 3 du tramway et les facilités de local à vélos avant de réserver.",
+        "es": "Hoteles y pensiones en Liberec con acceso rápido al telesilla Skalka bajo el monte Ještěd. Comprueba en el mapa la cercanía al tranvía 3 y el espacio para guardar bicicletas antes de reservar."
+      }
+    }
+  ],
+  "hrad-bitov": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/bitov.html",
+      "title": {
+        "cs": "Ubytování v Bítově u Vranovské přehrady",
+        "en": "Places to stay in Bítov near Vranov Reservoir",
+        "de": "Unterkünfte in Bítov an der Vranov-Talsperre",
+        "fr": "Hébergements à Bítov près du lac de Vranov",
+        "es": "Alojamiento en Bítov junto al embalse de Vranov"
+      },
+      "description": {
+        "cs": "Penziony a kempy v obci Bítov a u Bítovské zátoky Vranovské přehrady. Před rezervací si porovnejte vzdálenost k hradu Bítov, možnosti parkování a přístup k vodě.",
+        "en": "Guesthouses and holiday stays in Bítov village and along the Vranov Reservoir bay. Compare distance to Bítov Castle, parking options and lake access before booking.",
+        "de": "Pensionen und Ferienunterkünfte im Dorf Bítov und an der Bucht der Vranov-Talsperre. Prüfen Sie vor der Buchung die Entfernung zur Burg Bítov, Parkplätze und den Seezugang.",
+        "fr": "Pensions et hébergements de vacances dans le village de Bítov et le long du lac de Vranov. Vérifiez la distance jusqu’au château de Bítov, le parking et l’accès au lac avant de réserver.",
+        "es": "Casas rurales y pensiones en el pueblo de Bítov y junto a la bahía del embalse de Vranov. Compara la distancia al castillo de Bítov, el aparcamiento y el acceso al agua antes de reservar."
+      }
+    }
   ]
 }
