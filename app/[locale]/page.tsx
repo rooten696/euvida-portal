@@ -22,6 +22,8 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 
+import { canonicalMetadataBase } from '@/lib/siteConfig';
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -29,7 +31,6 @@ const supabase = createClient(
 
 const heroImage =
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const homepageArticleLimit = 120;
 const homepageArticleSelect =
   'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
@@ -165,7 +166,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const meta = homeMetadata[locale];
 
   return {
-    metadataBase: new URL(siteUrl),
+    metadataBase: canonicalMetadataBase,
     title: meta.title,
     description: meta.description,
     alternates: {

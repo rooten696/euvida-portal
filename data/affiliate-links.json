@@ -1,0 +1,291 @@
+{
+  "generatedAt": "2026-09-17T11:10:08.201Z",
+  "project": 572910,
+  "marker": 776456,
+  "articles": {
+    "fkk-strunjan-belveder": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_fkk-strunjan-belveder_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fstrunjan.cs.html",
+          "sourceUrl": "https://www.booking.com/city/si/strunjan.cs.html",
+          "subId": "eu_cs_fkk-strunjan-belveder_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_fkk-strunjan-belveder_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fstrunjan.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/si/strunjan.en-gb.html",
+          "subId": "eu_en_fkk-strunjan-belveder_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_fkk-strunjan-belveder_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fstrunjan.de.html",
+          "sourceUrl": "https://www.booking.com/city/si/strunjan.de.html",
+          "subId": "eu_de_fkk-strunjan-belveder_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_fkk-strunjan-belveder_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fstrunjan.fr.html",
+          "sourceUrl": "https://www.booking.com/city/si/strunjan.fr.html",
+          "subId": "eu_fr_fkk-strunjan-belveder_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_fkk-strunjan-belveder_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fstrunjan.es.html",
+          "sourceUrl": "https://www.booking.com/city/si/strunjan.es.html",
+          "subId": "eu_es_fkk-strunjan-belveder_stay_end_v1"
+        }
+      }
+    },
+    "bikepark-malino-brdo": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_bikepark-malino-brdo_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsk%2Fruzomberok.cs.html",
+          "sourceUrl": "https://www.booking.com/city/sk/ruzomberok.cs.html",
+          "subId": "eu_cs_bikepark-malino-brdo_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_bikepark-malino-brdo_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsk%2Fruzomberok.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/sk/ruzomberok.en-gb.html",
+          "subId": "eu_en_bikepark-malino-brdo_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_bikepark-malino-brdo_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsk%2Fruzomberok.de.html",
+          "sourceUrl": "https://www.booking.com/city/sk/ruzomberok.de.html",
+          "subId": "eu_de_bikepark-malino-brdo_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_bikepark-malino-brdo_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsk%2Fruzomberok.fr.html",
+          "sourceUrl": "https://www.booking.com/city/sk/ruzomberok.fr.html",
+          "subId": "eu_fr_bikepark-malino-brdo_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_bikepark-malino-brdo_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsk%2Fruzomberok.es.html",
+          "sourceUrl": "https://www.booking.com/city/sk/ruzomberok.es.html",
+          "subId": "eu_es_bikepark-malino-brdo_stay_end_v1"
+        }
+      }
+    },
+    "bledsky-hrad": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_bledsky-hrad_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fbled.cs.html",
+          "sourceUrl": "https://www.booking.com/city/si/bled.cs.html",
+          "subId": "eu_cs_bledsky-hrad_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_bledsky-hrad_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fbled.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/si/bled.en-gb.html",
+          "subId": "eu_en_bledsky-hrad_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_bledsky-hrad_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fbled.de.html",
+          "sourceUrl": "https://www.booking.com/city/si/bled.de.html",
+          "subId": "eu_de_bledsky-hrad_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_bledsky-hrad_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fbled.fr.html",
+          "sourceUrl": "https://www.booking.com/city/si/bled.fr.html",
+          "subId": "eu_fr_bledsky-hrad_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_bledsky-hrad_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fbled.es.html",
+          "sourceUrl": "https://www.booking.com/city/si/bled.es.html",
+          "subId": "eu_es_bledsky-hrad_stay_end_v1"
+        }
+      }
+    },
+    "piran-stare-mesto-a-hradby": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_piran-stare-mesto-a-hradby_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fpiran.cs.html",
+          "sourceUrl": "https://www.booking.com/city/si/piran.cs.html",
+          "subId": "eu_cs_piran-stare-mesto-a-hradby_stay_end_v1"
+        },
+        "food-walk": {
+          "url": "https://tp.media/r?campaign_id=108&marker=776456&p=3965&sub_id=eu_cs_piran-stare-mesto-a-hradby_food-walk_end_v1&trs=572910&u=https%3A%2F%2Fwww.getyourguide.com%2Fpiran-l1233%2Ffood-wine-gourmet-tour-in-piran-t447966%2F",
+          "sourceUrl": "https://www.getyourguide.com/piran-l1233/food-wine-gourmet-tour-in-piran-t447966/",
+          "subId": "eu_cs_piran-stare-mesto-a-hradby_food-walk_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_piran-stare-mesto-a-hradby_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fpiran.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/si/piran.en-gb.html",
+          "subId": "eu_en_piran-stare-mesto-a-hradby_stay_end_v1"
+        },
+        "food-walk": {
+          "url": "https://tp.media/r?campaign_id=108&marker=776456&p=3965&sub_id=eu_en_piran-stare-mesto-a-hradby_food-walk_end_v1&trs=572910&u=https%3A%2F%2Fwww.getyourguide.com%2Fpiran-l1233%2Ffood-wine-gourmet-tour-in-piran-t447966%2F",
+          "sourceUrl": "https://www.getyourguide.com/piran-l1233/food-wine-gourmet-tour-in-piran-t447966/",
+          "subId": "eu_en_piran-stare-mesto-a-hradby_food-walk_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_piran-stare-mesto-a-hradby_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fpiran.de.html",
+          "sourceUrl": "https://www.booking.com/city/si/piran.de.html",
+          "subId": "eu_de_piran-stare-mesto-a-hradby_stay_end_v1"
+        },
+        "food-walk": {
+          "url": "https://tp.media/r?campaign_id=108&marker=776456&p=3965&sub_id=eu_de_piran-stare-mesto-a-hradby_food-walk_end_v1&trs=572910&u=https%3A%2F%2Fwww.getyourguide.com%2Fpiran-l1233%2Ffood-wine-gourmet-tour-in-piran-t447966%2F",
+          "sourceUrl": "https://www.getyourguide.com/piran-l1233/food-wine-gourmet-tour-in-piran-t447966/",
+          "subId": "eu_de_piran-stare-mesto-a-hradby_food-walk_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_piran-stare-mesto-a-hradby_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fpiran.fr.html",
+          "sourceUrl": "https://www.booking.com/city/si/piran.fr.html",
+          "subId": "eu_fr_piran-stare-mesto-a-hradby_stay_end_v1"
+        },
+        "food-walk": {
+          "url": "https://tp.media/r?campaign_id=108&marker=776456&p=3965&sub_id=eu_fr_piran-stare-mesto-a-hradby_food-walk_end_v1&trs=572910&u=https%3A%2F%2Fwww.getyourguide.com%2Fpiran-l1233%2Ffood-wine-gourmet-tour-in-piran-t447966%2F",
+          "sourceUrl": "https://www.getyourguide.com/piran-l1233/food-wine-gourmet-tour-in-piran-t447966/",
+          "subId": "eu_fr_piran-stare-mesto-a-hradby_food-walk_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_piran-stare-mesto-a-hradby_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fsi%2Fpiran.es.html",
+          "sourceUrl": "https://www.booking.com/city/si/piran.es.html",
+          "subId": "eu_es_piran-stare-mesto-a-hradby_stay_end_v1"
+        },
+        "food-walk": {
+          "url": "https://tp.media/r?campaign_id=108&marker=776456&p=3965&sub_id=eu_es_piran-stare-mesto-a-hradby_food-walk_end_v1&trs=572910&u=https%3A%2F%2Fwww.getyourguide.com%2Fpiran-l1233%2Ffood-wine-gourmet-tour-in-piran-t447966%2F",
+          "sourceUrl": "https://www.getyourguide.com/piran-l1233/food-wine-gourmet-tour-in-piran-t447966/",
+          "subId": "eu_es_piran-stare-mesto-a-hradby_food-walk_end_v1"
+        }
+      }
+    },
+    "bike-area-zadov": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_bike-area-zadov_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fstachy.cs.html",
+          "sourceUrl": "https://www.booking.com/city/cz/stachy.cs.html",
+          "subId": "eu_cs_bike-area-zadov_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_bike-area-zadov_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fstachy.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/cz/stachy.en-gb.html",
+          "subId": "eu_en_bike-area-zadov_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_bike-area-zadov_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fstachy.de.html",
+          "sourceUrl": "https://www.booking.com/city/cz/stachy.de.html",
+          "subId": "eu_de_bike-area-zadov_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_bike-area-zadov_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fstachy.fr.html",
+          "sourceUrl": "https://www.booking.com/city/cz/stachy.fr.html",
+          "subId": "eu_fr_bike-area-zadov_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_bike-area-zadov_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fstachy.es.html",
+          "sourceUrl": "https://www.booking.com/city/cz/stachy.es.html",
+          "subId": "eu_es_bike-area-zadov_stay_end_v1"
+        }
+      }
+    },
+    "bike-arena-vsetin": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_bike-arena-vsetin_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fvsetin.cs.html",
+          "sourceUrl": "https://www.booking.com/city/cz/vsetin.cs.html",
+          "subId": "eu_cs_bike-arena-vsetin_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_bike-arena-vsetin_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fvsetin.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/cz/vsetin.en-gb.html",
+          "subId": "eu_en_bike-arena-vsetin_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_bike-arena-vsetin_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fvsetin.de.html",
+          "sourceUrl": "https://www.booking.com/city/cz/vsetin.de.html",
+          "subId": "eu_de_bike-arena-vsetin_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_bike-arena-vsetin_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fvsetin.fr.html",
+          "sourceUrl": "https://www.booking.com/city/cz/vsetin.fr.html",
+          "subId": "eu_fr_bike-arena-vsetin_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_bike-arena-vsetin_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fvsetin.es.html",
+          "sourceUrl": "https://www.booking.com/city/cz/vsetin.es.html",
+          "subId": "eu_es_bike-arena-vsetin_stay_end_v1"
+        }
+      }
+    },
+    "hrad-bezdez": {
+      "cs": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_cs_hrad-bezdez_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fdoksy.cs.html",
+          "sourceUrl": "https://www.booking.com/city/cz/doksy.cs.html",
+          "subId": "eu_cs_hrad-bezdez_stay_end_v1"
+        }
+      },
+      "en": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_en_hrad-bezdez_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fdoksy.en-gb.html",
+          "sourceUrl": "https://www.booking.com/city/cz/doksy.en-gb.html",
+          "subId": "eu_en_hrad-bezdez_stay_end_v1"
+        }
+      },
+      "de": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_de_hrad-bezdez_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fdoksy.de.html",
+          "sourceUrl": "https://www.booking.com/city/cz/doksy.de.html",
+          "subId": "eu_de_hrad-bezdez_stay_end_v1"
+        }
+      },
+      "fr": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_fr_hrad-bezdez_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fdoksy.fr.html",
+          "sourceUrl": "https://www.booking.com/city/cz/doksy.fr.html",
+          "subId": "eu_fr_hrad-bezdez_stay_end_v1"
+        }
+      },
+      "es": {
+        "stay": {
+          "url": "https://tp.media/r?campaign_id=84&marker=776456&p=2076&sub_id=eu_es_hrad-bezdez_stay_end_v1&trs=572910&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fdoksy.es.html",
+          "sourceUrl": "https://www.booking.com/city/cz/doksy.es.html",
+          "subId": "eu_es_hrad-bezdez_stay_end_v1"
+        }
+      }
+    }
+  }
+}

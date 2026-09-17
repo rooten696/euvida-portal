@@ -263,11 +263,19 @@ export function formatPriceValue(
 ): string | null {
   const currentLocale = normalizeLocale(locale);
   const priceType = item.price_type ?? 'text';
-  const legacy = legacyAmount(item);
-  const currency = item.currency ?? legacy?.currency ?? fallbackCurrency ?? 'EUR';
-  const amount = toNumber(item.amount) ?? legacy?.amount ?? null;
+  const modernAmount = toNumber(item.amount);
   const amountMin = toNumber(item.amount_min);
   const amountMax = toNumber(item.amount_max);
+  const hasModernAmount =
+    modernAmount !== null || amountMin !== null || amountMax !== null;
+
+  const legacy = hasModernAmount ? null : legacyAmount(item);
+  const amount = modernAmount ?? legacy?.amount ?? null;
+  const currency =
+    item.currency ??
+    fallbackCurrency ??
+    legacy?.currency ??
+    'EUR';
   const suffix = unitSuffix(item.unit, currentLocale);
 
   if (priceType === 'text') {

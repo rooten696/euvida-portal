@@ -19,12 +19,15 @@ import { Analytics } from '@vercel/analytics/next';
 
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
+import { canonicalMetadataBase } from '@/lib/siteConfig';
+
 const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-outfit',
 });
 
 export const metadata: Metadata = {
+  metadataBase: canonicalMetadataBase,
   title: 'Euvida | Vše o životě a cestování v Evropě',
   description: 'Prozkoumejte nejlepší destinace pro život, práci a cestování.',
 };
@@ -68,13 +71,6 @@ export default async function LocaleLayout({
         />
       </head>
       <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
-        <Script
-          id="adsense-loader"
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2225812723448265"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
-        />
         <Script
           id="theme-time-default"
           strategy="beforeInteractive"
