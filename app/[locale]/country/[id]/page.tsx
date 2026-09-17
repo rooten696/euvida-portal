@@ -19,6 +19,7 @@ import {
   getCountryDisplay,
   getRegionDisplay,
 } from '@/lib/destinationTypes';
+import { canonicalMetadataBase } from '@/lib/siteConfig';
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
 import Link from 'next/link';
@@ -47,7 +48,6 @@ export async function generateStaticParams() {
   return params;
 }
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleSelect =
   'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 
@@ -199,19 +199,25 @@ export async function generateMetadata({
     return { title: copy.notFound };
   }
 
-  const displayCountry = getCountryDisplay(country as CountryDestination, locale);
+  const rawCountry = country as CountryDestination;
+  const availableLocales = supportedLocales.filter((loc) => {
+    if (loc === 'cs') return Boolean(rawCountry.name && rawCountry.name.trim().length > 0);
+    const translatedName = rawCountry.translations?.[loc]?.name;
+    return Boolean(translatedName && translatedName.trim().length > 0);
+  });
+  const displayCountry = getCountryDisplay(rawCountry, locale);
   const title = copy.title(displayCountry.name);
   const description = displayCountry.description || copy.description(displayCountry.name);
   const canonical = `/${locale}/country/${displayCountry.id}`;
 
   return {
-    metadataBase: new URL(siteUrl),
+    metadataBase: canonicalMetadataBase,
     title,
     description,
     alternates: {
       canonical,
       languages: Object.fromEntries(
-        supportedLocales.map((supportedLocale) => [
+        availableLocales.map((supportedLocale) => [
           supportedLocale,
           `/${supportedLocale}/country/${displayCountry.id}`,
         ])

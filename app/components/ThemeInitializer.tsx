@@ -1,15 +1,12 @@
 'use client';
 
 import { useEffect } from 'react';
+import { applyTheme, getStoredOrAutomaticTheme } from './themePreference';
 
 export default function ThemeInitializer() {
   useEffect(() => {
     try {
-      if (localStorage.getItem('theme') === 'light') {
-        document.documentElement.classList.add('light');
-      } else {
-        document.documentElement.classList.remove('light');
-      }
+      applyTheme(getStoredOrAutomaticTheme());
     } catch {
       // Theme preference is optional; ignore unavailable storage.
     }

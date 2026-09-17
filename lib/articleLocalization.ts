@@ -148,3 +148,31 @@ export function getLocationName(
   const currentLocale = normalizeLocale(locale);
   return cleanText(location.translations?.[currentLocale]?.name) ?? cleanText(location.name);
 }
+
+/**
+ * Checks whether an article has a valid, non-fallback translation for the given locale.
+ * 'cs' is the primary base language and checks article.title.
+ * Other locales check for presence of both title and content in article.translations[locale].
+ */
+export function hasArticleTranslation(article: Article, locale: string): boolean {
+  const norm = normalizeLocale(locale);
+  if (norm === 'cs') {
+    return Boolean(cleanText(article.title));
+  }
+
+  const translation = article.translations?.[norm];
+  if (!translation) {
+    return false;
+  }
+
+  return Boolean(cleanText(translation.title) && cleanText(translation.content));
+}
+
+/**
+ * Returns the list of supported locales where this article actually has content,
+ * preventing sitemaps or hreflang from referencing non-existent translations.
+ */
+export function getAvailableArticleLocales(article: Article): SupportedLocale[] {
+  return supportedLocales.filter((loc) => hasArticleTranslation(article, loc));
+}
+

@@ -19,12 +19,15 @@ import { Analytics } from '@vercel/analytics/next';
 
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
+import { canonicalMetadataBase } from '@/lib/siteConfig';
+
 const outfit = Outfit({
   subsets: ['latin'],
   variable: '--font-outfit',
 });
 
 export const metadata: Metadata = {
+  metadataBase: canonicalMetadataBase,
   title: 'Euvida | Vše o životě a cestování v Evropě',
   description: 'Prozkoumejte nejlepší destinace pro život, práci a cestování.',
 };
@@ -48,11 +51,9 @@ export default async function LocaleLayout({
 
   return (
     <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
-      <head />
-      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
-        <Script
+      <head>
+        <script
           id="google-consent-default"
-          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.dataLayer = window.dataLayer || [];
@@ -68,12 +69,27 @@ export default async function LocaleLayout({
             `,
           }}
         />
+      </head>
+      <body className="flex flex-col min-h-screen bg-slate-950 text-slate-100 font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
         <Script
-          id="adsense-loader"
-          async
-          src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2225812723448265"
-          crossOrigin="anonymous"
-          strategy="afterInteractive"
+          id="theme-time-default"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                var savedTheme = localStorage.getItem('theme');
+                var hour = new Date().getHours();
+                var theme = savedTheme === 'dark' || savedTheme === 'light'
+                  ? savedTheme
+                  : (hour >= 7 && hour < 20 ? 'light' : 'dark');
+                if (theme === 'light') {
+                  document.documentElement.classList.add('light');
+                } else {
+                  document.documentElement.classList.remove('light');
+                }
+              } catch (_) {}
+            `,
+          }}
         />
         <ThemeInitializer />
         <NextIntlClientProvider messages={messages} locale={locale}>

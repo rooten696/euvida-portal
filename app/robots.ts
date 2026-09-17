@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
+import { getCanonicalUrl } from '@/lib/siteConfig';
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://euvida.eu';
   const blockedCrawlers = [
     'AhrefsBot',
     'SemrushBot',
@@ -40,6 +40,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: '/',
       })),
     ],
-    sitemap: `${siteUrl}/sitemap.xml`,
+    sitemap: getCanonicalUrl('/sitemap.xml'),
   };
 }

@@ -13,12 +13,12 @@ import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { canonicalMetadataBase } from '@/lib/siteConfig';
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
 type RegionsPageProps = {
   params: Promise<{ locale: string }>;
@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: RegionsPageProps): Promise<Me
   const meta = regionsMetadata[locale];
 
   return {
-    metadataBase: new URL(siteUrl),
+    metadataBase: canonicalMetadataBase,
     title: meta.title,
     description: meta.description,
     alternates: {

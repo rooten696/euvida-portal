@@ -312,8 +312,8 @@ export default function ArticleAccess({ locale, accessInfo }: ArticleAccessProps
   const notes = getLocalizedValue(accessInfo.notes, currentLocale);
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
-      <h2 className="text-lg font-extrabold text-emerald-400">
+    <section className="article-access-panel rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
+      <h2 className="article-panel-heading text-lg font-extrabold text-emerald-400">
         {getArticleLabel(currentLocale, 'access')}
       </h2>
 

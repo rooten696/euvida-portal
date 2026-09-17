@@ -9,6 +9,7 @@ const TEXT = {
   cs: {
     title: 'Kvalita vody',
     measured: 'Odběr',
+    classification: 'Klasifikace',
     source: 'Zdroj',
     checked: 'Načteno',
     notice: 'Aktuální stav se může měnit. Před koupáním berte jako rozhodující údaje hygienické stanice.',
@@ -16,6 +17,7 @@ const TEXT = {
   en: {
     title: 'Water Quality',
     measured: 'Sample date',
+    classification: 'Classification',
     source: 'Source',
     checked: 'Loaded',
     notice: 'Conditions can change. Before swimming, treat the public health authority data as decisive.',
@@ -23,6 +25,7 @@ const TEXT = {
   de: {
     title: 'Wasserqualität',
     measured: 'Probe',
+    classification: 'Einstufung',
     source: 'Quelle',
     checked: 'Geladen',
     notice: 'Der Zustand kann sich ändern. Vor dem Baden sind die Angaben der Hygiene-Behörde maßgeblich.',
@@ -30,6 +33,7 @@ const TEXT = {
   fr: {
     title: "Qualité de l'eau",
     measured: 'Prélèvement',
+    classification: 'Classement',
     source: 'Source',
     checked: 'Chargé',
     notice: "L'état peut changer. Avant la baignade, les données de l'autorité sanitaire font foi.",
@@ -37,6 +41,7 @@ const TEXT = {
   es: {
     title: 'Calidad del agua',
     measured: 'Muestra',
+    classification: 'Clasificación',
     source: 'Fuente',
     checked: 'Cargado',
     notice: 'El estado puede cambiar. Antes del baño, prevalecen los datos de la autoridad sanitaria.',
@@ -194,7 +199,9 @@ export default function WaterQualityBox({ status, locale }: WaterQualityBoxProps
           </div>
         </dl>
 
-        <p className="text-xs leading-relaxed text-slate-500">{t.notice}</p>
+        <p className="text-xs leading-relaxed text-slate-500">
+          {t.notice}
+        </p>
       </div>
     </section>
   );

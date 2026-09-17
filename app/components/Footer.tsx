@@ -5,16 +5,7 @@ type FooterProps = {
   locale?: string;
 };
 
-const aiContentNotice: Record<string, string> = {
-  cs: 'Část obsahu a některé ilustrační obrázky mohou být připravovány s pomocí AI a procházejí redakční kontrolou.',
-  en: 'Some content and selected illustrative images may be prepared with AI assistance and are editorially reviewed.',
-  de: 'Ein Teil der Inhalte und ausgewählte illustrative Bilder können mit KI-Unterstützung erstellt werden und werden redaktionell geprüft.',
-  fr: 'Une partie du contenu et certaines images illustratives peuvent être préparées avec l’aide de l’IA et font l’objet d’une vérification éditoriale.',
-  es: 'Parte del contenido y algunas imágenes ilustrativas pueden prepararse con ayuda de IA y pasan por revisión editorial.',
-};
-
 export default function Footer({ locale = 'cs' }: FooterProps) {
-  const notice = aiContentNotice[locale] ?? aiContentNotice.cs;
   const legalLocale = getLegalLocale(locale);
   const legalLinks = legalPages[legalLocale].links;
 
@@ -49,7 +40,6 @@ export default function Footer({ locale = 'cs' }: FooterProps) {
         <div className="mt-8 border-t border-white/5 pt-8 text-center text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="max-w-2xl text-center md:text-left">
             <div>&copy; {new Date().getFullYear()} EUVIDA.eu. Všechna práva vyhrazena.</div>
-            <div className="mt-2 text-slate-400">{notice}</div>
           </div>
           <div className="flex gap-4">
             <span className="cursor-pointer hover:text-white transition-colors">Instagram</span>

@@ -171,7 +171,7 @@ function PriceRow({
           )}
         </div>
         {price && (
-          <span className="max-w-full break-words rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-sm font-extrabold text-emerald-400 shadow-sm backdrop-blur sm:shrink-0">
+          <span className="article-price-badge max-w-full break-words rounded-full border border-emerald-500/30 bg-emerald-500/20 px-3 py-1 text-sm font-extrabold text-emerald-400 shadow-sm backdrop-blur sm:shrink-0">
             {price}
           </span>
         )}
@@ -213,8 +213,8 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
   }
 
   return (
-    <section className="rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
-      <h2 className="text-lg font-extrabold text-emerald-400">
+    <section className="article-price-panel rounded-2xl border border-white/10 bg-slate-900/50 p-5 shadow-xl backdrop-blur">
+      <h2 className="article-panel-heading text-lg font-extrabold text-emerald-400">
         {getArticleLabel(currentLocale, 'prices')}
       </h2>
 
@@ -229,7 +229,7 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
             href={bookingUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-400 hover:text-emerald-300 underline font-semibold break-all"
+            className="article-panel-link text-emerald-400 hover:text-emerald-300 underline font-semibold break-all"
           >
             {bookingUrl}
           </a>
@@ -247,7 +247,7 @@ export default function ArticlePrices({ locale, pricesInfo }: ArticlePricesProps
         {groups.map((group) => (
           <section key={group.key} className="min-w-0">
             {group.label && (
-              <h3 className="mb-2 text-sm font-extrabold uppercase tracking-wide text-emerald-400">
+              <h3 className="article-panel-subheading mb-2 text-sm font-extrabold uppercase tracking-wide text-emerald-400">
                 {group.label}
               </h3>
             )}

@@ -16,12 +16,13 @@ import {
 import { createClient } from '@supabase/supabase-js';
 import type { Metadata } from 'next';
 
+import { canonicalMetadataBase } from '@/lib/siteConfig';
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 const articleListSelect =
   'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, published, featured, created_at, reading_time_minutes';
 
@@ -102,7 +103,7 @@ export async function generateMetadata({ params }: ArticlesPageProps): Promise<M
   const meta = articlesMetadata[locale];
 
   return {
-    metadataBase: new URL(siteUrl),
+    metadataBase: canonicalMetadataBase,
     title: meta.title,
     description: meta.description,
     alternates: {

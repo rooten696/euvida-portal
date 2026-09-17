@@ -1,0 +1,168 @@
+{
+  "fkk-strunjan-belveder": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/si/strunjan.html",
+      "title": {
+        "cs": "Ubytování ve Strunjanu",
+        "en": "Places to stay in Strunjan",
+        "de": "Unterkünfte in Strunjan",
+        "fr": "Hébergements à Strunjan",
+        "es": "Alojamiento en Strunjan"
+      },
+      "description": {
+        "cs": "Hotely a apartmány ve Strunjanu. Před rezervací si na mapě ověřte cestu na vybranou pláž; nejde o výběr naturistického ubytování.",
+        "en": "Hotels and apartments in Strunjan. Check the route to your chosen beach before booking; these are not specifically naturist properties.",
+        "de": "Hotels und Ferienwohnungen in Strunjan. Prüfen Sie vor der Buchung den Weg zum gewünschten Strand; die Auswahl ist nicht auf FKK-Unterkünfte beschränkt.",
+        "fr": "Hôtels et appartements à Strunjan. Vérifiez le trajet jusqu'à la plage choisie avant de réserver ; cette sélection n'est pas réservée aux hébergements naturistes.",
+        "es": "Hoteles y apartamentos en Strunjan. Comprueba el trayecto hasta la playa elegida antes de reservar; no es una selección de alojamientos naturistas."
+      }
+    }
+  ],
+  "bikepark-malino-brdo": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/sk/ruzomberok.html",
+      "title": {
+        "cs": "Ubytování v Ružomberku",
+        "en": "Places to stay in Ružomberok",
+        "de": "Unterkünfte in Ružomberok",
+        "fr": "Hébergements à Ružomberok",
+        "es": "Alojamiento en Ružomberok"
+      },
+      "description": {
+        "cs": "Pobyt na víc dní ježdění. Při výběru ověřte úschovu kol a polohu vůči nástupu na lanovku v Hrabovu.",
+        "en": "Make time for another day on the trails. Check bike storage and the location relative to the gondola station in Hrabovo before booking.",
+        "de": "Bleiben Sie für einen weiteren Tag auf den Trails. Prüfen Sie die Fahrradaufbewahrung und die Lage zur Gondelstation in Hrabovo.",
+        "fr": "Prolongez le séjour pour profiter des pistes. Vérifiez le rangement des vélos et la distance jusqu'à la télécabine de Hrabovo avant de réserver.",
+        "es": "Quédate un día más para disfrutar de los senderos. Comprueba si hay espacio para guardar bicicletas y la ubicación respecto al teleférico de Hrabovo."
+      }
+    }
+  ],
+  "bledsky-hrad": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/si/bled.html",
+      "title": {
+        "cs": "Ubytování v Bledu",
+        "en": "Places to stay in Bled",
+        "de": "Unterkünfte in Bled",
+        "fr": "Hébergements à Bled",
+        "es": "Alojamiento en Bled"
+      },
+      "description": {
+        "cs": "Pro návštěvu hradu i procházku kolem jezera. Na mapě si porovnejte polohu ubytování, parkování a přístup k jezeru.",
+        "en": "Stay for the castle and a walk around the lake. Compare locations on the map, including parking and access to the lakeshore.",
+        "de": "Verbinden Sie den Burgbesuch mit einem Spaziergang um den See. Vergleichen Sie Lage, Parkmöglichkeiten und Zugang zum See auf der Karte.",
+        "fr": "Combinez la visite du château avec une promenade autour du lac. Comparez les emplacements, le stationnement et l'accès aux rives sur la carte.",
+        "es": "Combina la visita al castillo con un paseo junto al lago. Compara la ubicación, el aparcamiento y el acceso a la orilla en el mapa."
+      }
+    }
+  ],
+  "piran-stare-mesto-a-hradby": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/si/piran.html",
+      "title": {
+        "cs": "Ubytování v Piranu",
+        "en": "Places to stay in Piran",
+        "de": "Unterkünfte in Piran",
+        "fr": "Hébergements à Piran",
+        "es": "Alojamiento en Piran"
+      },
+      "description": {
+        "cs": "Zůstaňte i na večer u moře. Před rezervací porovnejte polohu ubytování a možnosti parkování.",
+        "en": "Stay for an evening by the sea. Compare the location and parking options before booking.",
+        "de": "Bleiben Sie auch für einen Abend am Meer. Vergleichen Sie vor der Buchung die Lage und die Parkmöglichkeiten.",
+        "fr": "Prolongez la visite par une soirée au bord de la mer. Vérifiez l'emplacement et les possibilités de stationnement avant de réserver.",
+        "es": "Quédate a pasar la tarde junto al mar. Compara la ubicación y las opciones de aparcamiento antes de reservar."
+      }
+    },
+    {
+      "id": "food-walk",
+      "provider": "GetYourGuide",
+      "url": "https://www.getyourguide.com/piran-l1233/food-wine-gourmet-tour-in-piran-t447966/",
+      "title": {
+        "cs": "Piran s průvodcem a ochutnávkou",
+        "en": "Piran food and wine walking tour",
+        "de": "Stadtführung durch Piran mit Verkostung",
+        "fr": "Visite guidée de Piran avec dégustation",
+        "es": "Visita guiada por Piran con degustación"
+      },
+      "description": {
+        "cs": "Procházka městem s ochutnávkou jídla a vína. U pořadatele si vyberte termín a ověřte jazyk prohlídky i místo setkání.",
+        "en": "Explore the town with food and wine tastings. Check available dates, the tour language and the meeting point with the provider.",
+        "de": "Entdecken Sie die Stadt bei Kostproben von Speisen und Wein. Prüfen Sie beim Anbieter Termin, Führungssprache und Treffpunkt.",
+        "fr": "Découvrez la ville en dégustant des spécialités et du vin. Vérifiez les dates, la langue de la visite et le point de rendez-vous auprès du prestataire.",
+        "es": "Descubre la ciudad con degustaciones de comida y vino. Consulta las fechas, el idioma de la visita y el punto de encuentro con el proveedor."
+      }
+    }
+  ],
+  "bike-area-zadov": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/stachy.html",
+      "title": {
+        "cs": "Ubytování ve Stachách a na Zadově",
+        "en": "Places to stay in Stachy and Zadov",
+        "de": "Unterkünfte in Stachy und Zadov",
+        "fr": "Hébergements à Stachy et Zadov",
+        "es": "Alojamiento en Stachy y Zadov"
+      },
+      "description": {
+        "cs": "Hotely a horské penziony ve Stachách a na Zadově. Před rezervací si na mapě ověřte polohu vůči lanovce Zadov–Kobyla a možnosti úschovy kol.",
+        "en": "Hotels and mountain guesthouses in Stachy and Zadov. Check property location relative to the Zadov–Kobyla lift and bike storage options before booking.",
+        "de": "Hotels und Berggasthöfe in Stachy und Zadov. Prüfen Sie vor der Buchung die Lage zur Sesselbahn Zadov–Kobyla und die Fahrradaufbewahrung.",
+        "fr": "Hôtels et pensions de montagne à Stachy et Zadov. Vérifiez l’emplacement par rapport au télésiège Zadov–Kobyla et le local à vélos avant de réserver.",
+        "es": "Hoteles y casas rurales en Stachy y Zadov. Comprueba en el mapa la ubicación respecto al telesilla Zadov–Kobyla y el espacio para bicicletas antes de reservar."
+      }
+    }
+  ],
+  "bike-arena-vsetin": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/vsetin.html",
+      "title": {
+        "cs": "Ubytování ve Vsetíně",
+        "en": "Places to stay in Vsetín",
+        "de": "Unterkünfte in Vsetín",
+        "fr": "Hébergements à Vsetín",
+        "es": "Alojamiento en Vsetín"
+      },
+      "description": {
+        "cs": "Hotely a penziony ve Vsetíně pro vícedenní ježdění na valašských singletrailech. Před rezervací si ověřte bezpečnou úschovu kol a dostupnost údolí Semetín.",
+        "en": "Hotels and guesthouses in Vsetín for a multi-day singletrail trip. Check secure bike storage and travel time to Semetín trail valley before booking.",
+        "de": "Hotels und Pensionen in Vsetín für mehrere Fahrtage auf den Singletrails. Prüfen Sie vor der Buchung die Fahrradaufbewahrung und die Lage zum Tal Semetín.",
+        "fr": "Hôtels et pensions à Vsetín pour prolonger vos sorties sur les singletrails. Vérifiez le local à vélos et l’accès à la vallée de Semetín avant de réserver.",
+        "es": "Hoteles y pensiones en Vsetín para pasar varios días recorriendo los singletrails. Comprueba el espacio para bicicletas y el acceso al valle de Semetín antes de reservar."
+      }
+    }
+  ],
+  "hrad-bezdez": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/doksy.html",
+      "title": {
+        "cs": "Ubytování v Doksech u Máchova jezera",
+        "en": "Places to stay in Doksy near Lake Mácha",
+        "de": "Unterkünfte in Doksy am Máchasee",
+        "fr": "Hébergements à Doksy près du lac de Mácha",
+        "es": "Alojamiento en Doksy junto al lago Mácha"
+      },
+      "description": {
+        "cs": "Hotely a penziony v Doksech u Máchova jezera, nedaleko hradu Bezděz. Před rezervací si porovnejte polohu ubytování, možnosti parkování a přístup k jezeru.",
+        "en": "Hotels and guesthouses in Doksy by Lake Mácha, close to Bezděz Castle. Compare property locations, parking facilities and lake access before booking.",
+        "de": "Hotels und Pensionen in Doksy am Máchasee, nahe der Burg Bezděz. Vergleichen Sie vor der Buchung Lage, Parkmöglichkeiten und Seezugang auf der Karte.",
+        "fr": "Hôtels et pensions à Doksy au bord du lac de Mácha, près du château de Bezděz. Comparez les emplacements, le parking et l’accès au lac avant de réserver.",
+        "es": "Hoteles y alojamientos en Doksy junto al lago Mácha, cerca del castillo de Bezděz. Compara en el mapa la ubicación, el aparcamiento y el acceso al lago antes de reservar."
+      }
+    }
+  ]
+}

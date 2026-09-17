@@ -36,6 +36,8 @@ const QUALITY_LABELS: Record<WaterQualityLevel, string> = {
   5: 'Voda nebezpečná ke koupání',
 };
 
+const MAX_STATUS_AGE_DAYS = 45;
+
 function decodeHtml(value: string): string {
   return value
     .replace(/<script[\s\S]*?<\/script>/gi, ' ')
@@ -183,7 +185,14 @@ function makeStatus(
 }
 
 function pickNewest(rows: WaterQualityStatus[]): WaterQualityStatus | null {
-  return rows.find((row) => row.level !== 0) ?? rows[0] ?? null;
+  const now = Date.now();
+  const recentRows = rows.filter((row) => {
+    const date = parseFullDate(row.date);
+    if (!date) return false;
+    return now - date.getTime() <= MAX_STATUS_AGE_DAYS * 24 * 60 * 60 * 1000;
+  });
+
+  return recentRows.find((row) => row.level !== 0) ?? recentRows[0] ?? null;
 }
 
 function parseLiberec(html: string, sourceUrl: string): WaterQualityStatus | null {
@@ -264,9 +273,10 @@ function parseWaterQualityHtml(html: string, sourceUrl: string): WaterQualitySta
   return parseTableRows(html, sourceUrl, host);
 }
 
-export async function getWaterQualityForArticle(sourceInfo: SourceInfo | null | undefined): Promise<WaterQualityStatus | null> {
+export async function getWaterQualityForArticle(
+  sourceInfo: SourceInfo | null | undefined,
+): Promise<WaterQualityStatus | null> {
   const urls = getWaterSourceUrls(sourceInfo);
-  if (urls.length === 0) return null;
 
   for (const sourceUrl of urls) {
     try {

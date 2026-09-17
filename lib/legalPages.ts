@@ -30,7 +30,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Jaké údaje můžeme zpracovávat', body: ['Při návštěvě webu se mohou zpracovávat technické údaje jako IP adresa, typ zařízení, prohlížeč, čas návštěvy a navštívené stránky. Pokud nám napíšete e-mail, zpracujeme údaje uvedené ve zprávě, abychom mohli odpovědět.'] },
-        { heading: 'Cookies, měření a reklama', body: ['Web může používat nezbytné cookies pro správné fungování, analytické nástroje pro pochopení návštěvnosti a reklamní služby Google AdSense. V souvislosti se zobrazováním reklam mohou Google a další třetí strany ukládat a číst cookies v prohlížeči, používat web beacony, IP adresu a další identifikátory pro doručování, měření a zabezpečení reklam.', 'Personalizaci reklam Google lze spravovat v nastavení reklam Google. Cookies lze také omezit nebo smazat v nastavení prohlížeče. Pokud v cookie liště odmítnete volitelné cookies, posíláme Googlu základní signál nesouhlasu pro reklamní a analytické úložiště.'] },
+        { heading: 'Cookies, měření a partnerské služby', body: ['Web používá nezbytné cookies pro správné fungování a analytické nástroje (např. Google Analytics) pro pochopení návštěvnosti a zlepšování obsahu. Na stránkách se mohou nacházet také partnerské a affiliate prvky (např. Travelpayouts), které mohou při interakci využívat technické identifikátory pro měření zprostředkování.', 'Cookies lze omezit nebo smazat v nastavení prohlížeče. Pokud v cookie liště odmítnete volitelné cookies, předává se základní signál nesouhlasu pro analytické a reklamní úložiště podle nastavení vašeho souhlasu.'] },
         { heading: 'Externí odkazy a zdroje', body: ['Články mohou odkazovat na oficiální weby provozovatelů, turistické portály, mapy a další externí zdroje. Za jejich obsah, dostupnost a zásady ochrany soukromí odpovídají jejich provozovatelé.'] },
         { heading: 'Kontakt', body: ['Dotazy k ochraně soukromí posílejte na euvida@seznam.cz.'] },
       ],
@@ -41,8 +41,8 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Informační charakter obsahu', body: ['Snažíme se pracovat s ověřenými zdroji, ale ceny, otevírací doby, dopravní spojení, kvalita vody a pravidla vstupu se mohou měnit. Před cestou si vždy ověřte aktuální stav u oficiálního provozovatele nebo příslušného úřadu.'] },
-        { heading: 'Autorská práva a obrázky', body: ['Texty, struktura webu a vlastní grafika jsou chráněny autorským právem. U převzatých obrázků uvádíme zdroje a licence tam, kde jsou dostupné. Ilustrační obrázky vytvořené pomocí AI jsou označovány jako ilustrační.'] },
-        { heading: 'Obsah připravený s pomocí AI', body: ['Část obsahu může vznikat s pomocí nástrojů umělé inteligence a následně prochází redakční kontrolou. I tak doporučujeme aktuální praktické údaje ověřit u primárního zdroje.'] },
+        { heading: 'Autorská práva a obrázky', body: ['Texty, struktura webu a vlastní grafika jsou chráněny autorským právem. U převzatých obrázků uvádíme zdroje a licence tam, kde jsou dostupné. Ilustrační obrázky jsou označovány jako ilustrační.'] },
+        { heading: 'Redakční kontrola', body: ['Obsah průběžně kontrolujeme a opíráme ho o dostupné zdroje. I tak doporučujeme aktuální praktické údaje ověřit u primárního zdroje.'] },
         { heading: 'Odpovědnost', body: ['Web nenahrazuje oficiální návštěvní řády, bezpečnostní pokyny, dopravní informace ani právní doporučení. Cestování a sportovní aktivity podnikáte na vlastní odpovědnost.'] },
       ],
     },
@@ -65,7 +65,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Data we may process', body: ['When you visit the site, technical data such as IP address, device type, browser, visit time and viewed pages may be processed. If you contact us by e-mail, we process the information in your message so we can reply.'] },
-        { heading: 'Cookies, analytics and advertising', body: ['The website may use essential cookies, analytics tools and Google AdSense advertising. In connection with ad serving, Google and other third parties may place and read cookies in your browser and may use web beacons, your IP address and other identifiers for ad delivery, measurement and security.', 'You can manage Google ad personalization in Google ad settings. You can also restrict or delete cookies in your browser. If you reject optional cookies in the cookie banner, we send Google a basic denied consent signal for advertising and analytics storage.'] },
+        { heading: 'Cookies, analytics and partner services', body: ['The website uses essential cookies for proper functionality and analytics tools (such as Google Analytics) to understand traffic and improve content. The site may also include partner and affiliate elements (such as Travelpayouts), which may process technical identifiers upon interaction for referral measurement.', 'You can restrict or delete cookies in your browser settings. If you reject optional cookies in the cookie banner, a basic denied consent signal is applied for analytics and advertising storage in accordance with your consent preferences.'] },
         { heading: 'External links and sources', body: ['Articles may link to official operators, tourism portals, maps and other external sources. Their content, availability and privacy rules are controlled by their operators.'] },
         { heading: 'Contact', body: ['Privacy questions can be sent to euvida@seznam.cz.'] },
       ],
@@ -76,8 +76,8 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Informational content', body: ['We aim to work with verified sources, but prices, opening hours, transport, water quality and access rules can change. Always check current information with the official operator or authority before travelling.'] },
-        { heading: 'Copyright and images', body: ['Texts, website structure and original graphics are protected by copyright. For third-party images, we provide sources and licence information where available. AI-generated illustrative images are marked as illustrative.'] },
-        { heading: 'AI-assisted content', body: ['Some content may be prepared with AI assistance and then editorially reviewed. Current practical details should still be checked against the primary source.'] },
+        { heading: 'Copyright and images', body: ['Texts, website structure and original graphics are protected by copyright. For third-party images, we provide sources and licence information where available. Illustrative images are marked as illustrative.'] },
+        { heading: 'Editorial review', body: ['We review content continuously and base it on available sources. Current practical details should still be checked against the primary source.'] },
         { heading: 'Liability', body: ['The website does not replace official visitor rules, safety instructions, transport information or legal advice. Travel and sports activities are undertaken at your own risk.'] },
       ],
     },
@@ -100,7 +100,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Welche Daten verarbeitet werden koennen', body: ['Beim Besuch der Website koennen technische Daten wie IP-Adresse, Geraetetyp, Browser, Besuchszeit und aufgerufene Seiten verarbeitet werden. Wenn Sie uns per E-Mail kontaktieren, verarbeiten wir die Angaben aus Ihrer Nachricht zur Beantwortung.'] },
-        { heading: 'Cookies, Analyse und Werbung', body: ['Die Website kann notwendige Cookies, Analysewerkzeuge und Google-AdSense-Werbung verwenden. Im Zusammenhang mit der Anzeigenschaltung koennen Google und andere Dritte Cookies in Ihrem Browser setzen und lesen sowie Web-Beacons, Ihre IP-Adresse und andere Kennungen fuer Auslieferung, Messung und Sicherheit von Anzeigen verwenden.', 'Die Personalisierung von Google-Anzeigen koennen Sie in den Google-Anzeigeneinstellungen verwalten. Cookies lassen sich auch im Browser beschraenken oder loeschen. Wenn Sie optionale Cookies im Banner ablehnen, senden wir Google ein grundlegendes Ablehnungssignal fuer Werbe- und Analyse-Speicher.'] },
+        { heading: 'Cookies, Analyse und Partnerdienste', body: ['Die Website verwendet notwendige Cookies fuer den ordnungsgemaessen Betrieb und Analysewerkzeuge (wie Google Analytics) zum Verstaendnis der Besucherzahlen und zur Verbesserung der Inhalte. Auf den Seiten koennen sich auch Partner- und Affiliate-Elemente (wie Travelpayouts) befinden, die bei Interaktion technische Kennungen zur Vermittlungsmessung verarbeiten koennen.', 'Cookies koennen Sie in den Browsereinstellungen einschraenken oder loeschen. Wenn Sie optionale Cookies im Cookie-Banner ablehnen, wird ein grundlegendes Ablehnungssignal fuer Analyse- und Werbespeicher gemaess Ihren Einstellungen uebermittelt.'] },
         { heading: 'Externe Links und Quellen', body: ['Artikel koennen auf offizielle Betreiber, Tourismusportale, Karten und andere externe Quellen verlinken. Fuer deren Inhalte, Verfuegbarkeit und Datenschutzregeln sind die jeweiligen Betreiber verantwortlich.'] },
         { heading: 'Kontakt', body: ['Fragen zum Datenschutz senden Sie bitte an euvida@seznam.cz.'] },
       ],
@@ -111,8 +111,8 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Informativer Charakter', body: ['Wir arbeiten moeglichst mit geprueften Quellen. Preise, Oeffnungszeiten, Verkehr, Wasserqualitaet und Zutrittsregeln koennen sich jedoch aendern. Pruefen Sie aktuelle Angaben vor der Reise immer beim offiziellen Betreiber oder der zustaendigen Behoerde.'] },
-        { heading: 'Urheberrecht und Bilder', body: ['Texte, Seitenstruktur und eigene Grafiken sind urheberrechtlich geschuetzt. Bei uebernommenen Bildern nennen wir Quellen und Lizenzen, soweit verfuegbar. Mit KI erstellte illustrative Bilder werden als illustrativ gekennzeichnet.'] },
-        { heading: 'KI-unterstuetzte Inhalte', body: ['Ein Teil der Inhalte kann mit KI-Unterstuetzung vorbereitet und anschliessend redaktionell geprueft werden. Aktuelle praktische Details sollten trotzdem an der Primaerquelle kontrolliert werden.'] },
+        { heading: 'Urheberrecht und Bilder', body: ['Texte, Seitenstruktur und eigene Grafiken sind urheberrechtlich geschuetzt. Bei uebernommenen Bildern nennen wir Quellen und Lizenzen, soweit verfuegbar. Illustrative Bilder werden als illustrativ gekennzeichnet.'] },
+        { heading: 'Redaktionelle Pruefung', body: ['Wir pruefen Inhalte laufend und stuetzen sie auf verfuegbare Quellen. Aktuelle praktische Details sollten trotzdem an der Primaerquelle kontrolliert werden.'] },
         { heading: 'Haftung', body: ['Die Website ersetzt keine offiziellen Besucherordnungen, Sicherheitshinweise, Verkehrsinformationen oder Rechtsberatung. Reisen und sportliche Aktivitaeten erfolgen auf eigene Verantwortung.'] },
       ],
     },
@@ -135,7 +135,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Datos que podemos tratar', body: ['Al visitar el sitio pueden tratarse datos tecnicos como direccion IP, tipo de dispositivo, navegador, hora de visita y paginas vistas. Si nos escribes por e-mail, tratamos la informacion del mensaje para poder responder.'] },
-        { heading: 'Cookies, analitica y publicidad', body: ['El sitio puede usar cookies necesarias, herramientas de analitica y publicidad de Google AdSense. En relacion con la publicacion de anuncios, Google y otros terceros pueden colocar y leer cookies en tu navegador y usar balizas web, tu direccion IP y otros identificadores para publicar, medir y proteger anuncios.', 'Puedes gestionar la personalizacion de anuncios de Google en la configuracion de anuncios de Google. Tambien puedes limitar o borrar cookies en tu navegador. Si rechazas las cookies opcionales en el banner, enviamos a Google una senal basica de consentimiento denegado para almacenamiento publicitario y analitico.'] },
+        { heading: 'Cookies, analitica y servicios asociados', body: ['El sitio web utiliza cookies necesarias para su correcto funcionamiento y herramientas de analitica (como Google Analytics) para comprender el trafico y mejorar el contenido. El sitio tambien puede incluir elementos de socios y afiliados (como Travelpayouts), que pueden procesar identificadores tecnicos al interactuar para medir la intermediacion.', 'Puedes restringir o eliminar las cookies en la configuracion de tu navegador. Si rechazas las cookies opcionales en el banner de cookies, se envia una senal basica de denegacion de consentimiento para el almacenamiento publicitario y analitico segun tus preferencias.'] },
         { heading: 'Enlaces y fuentes externas', body: ['Los articulos pueden enlazar a operadores oficiales, portales turisticos, mapas y otras fuentes externas. Su contenido, disponibilidad y normas de privacidad dependen de sus operadores.'] },
         { heading: 'Contacto', body: ['Las preguntas sobre privacidad se pueden enviar a euvida@seznam.cz.'] },
       ],
@@ -146,8 +146,8 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Contenido informativo', body: ['Intentamos trabajar con fuentes verificadas, pero precios, horarios, transporte, calidad del agua y normas de acceso pueden cambiar. Antes de viajar, comprueba siempre la informacion actual con el operador oficial o la autoridad competente.'] },
-        { heading: 'Derechos de autor e imagenes', body: ['Los textos, la estructura del sitio y los graficos propios estan protegidos por derechos de autor. En imagenes de terceros indicamos fuentes y licencias cuando estan disponibles. Las imagenes ilustrativas creadas con IA se marcan como ilustrativas.'] },
-        { heading: 'Contenido asistido por IA', body: ['Parte del contenido puede prepararse con ayuda de IA y despues pasar por revision editorial. Aun asi, los datos practicos actuales deben comprobarse en la fuente primaria.'] },
+        { heading: 'Derechos de autor e imagenes', body: ['Los textos, la estructura del sitio y los graficos propios estan protegidos por derechos de autor. En imagenes de terceros indicamos fuentes y licencias cuando estan disponibles. Las imagenes ilustrativas se marcan como ilustrativas.'] },
+        { heading: 'Revision editorial', body: ['Revisamos el contenido de forma continua y lo basamos en fuentes disponibles. Aun asi, los datos practicos actuales deben comprobarse en la fuente primaria.'] },
         { heading: 'Responsabilidad', body: ['El sitio no sustituye normas oficiales de visita, instrucciones de seguridad, informacion de transporte ni asesoramiento legal. Los viajes y actividades deportivas se realizan bajo tu propia responsabilidad.'] },
       ],
     },
@@ -170,7 +170,7 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Donnees pouvant etre traitees', body: ['Lors de votre visite, des donnees techniques comme l adresse IP, le type d appareil, le navigateur, l heure de visite et les pages consultees peuvent etre traitees. Si vous nous contactez par e-mail, nous traitons les informations de votre message afin de vous repondre.'] },
-        { heading: 'Cookies, mesure et publicite', body: ['Le site peut utiliser des cookies necessaires, des outils de mesure d audience et la publicite Google AdSense. Dans le cadre de la diffusion publicitaire, Google et d autres tiers peuvent deposer et lire des cookies dans votre navigateur et utiliser des balises web, votre adresse IP et d autres identifiants pour diffuser, mesurer et securiser les annonces.', 'Vous pouvez gerer la personnalisation des annonces Google dans les parametres publicitaires de Google. Vous pouvez aussi limiter ou supprimer les cookies dans votre navigateur. Si vous refusez les cookies optionnels dans le bandeau, nous envoyons a Google un signal de refus de base pour le stockage publicitaire et analytique.'] },
+        { heading: 'Cookies, mesure d audience et services partenaires', body: ['Le site utilise des cookies necessaires a son bon fonctionnement et des outils de mesure d audience (tels que Google Analytics) pour comprendre la frequentation et ameliorer le contenu. Le site peut egalement inclure des elements partenaires et d affiliation (tels que Travelpayouts), qui peuvent traiter des identifiants techniques lors des interactions pour mesurer l apport d affaires.', 'Vous pouvez limiter ou supprimer les cookies dans les parametres de votre navigateur. Si vous refusez les cookies optionnels dans le bandeau de cookies, un signal de refus de base est transmis pour le stockage analytique et publicitaire conformement a vos preferences de consentement.'] },
         { heading: 'Liens et sources externes', body: ['Les articles peuvent renvoyer vers des exploitants officiels, portails touristiques, cartes et autres sources externes. Leur contenu, disponibilite et regles de confidentialite relevent de leurs exploitants.'] },
         { heading: 'Contact', body: ['Les questions relatives a la confidentialite peuvent etre envoyees a euvida@seznam.cz.'] },
       ],
@@ -181,8 +181,8 @@ export const legalPages: Record<LegalLocale, {
       updated: commonUpdated,
       sections: [
         { heading: 'Contenu informatif', body: ['Nous essayons de travailler avec des sources verifiees, mais les prix, horaires, transports, qualite de l eau et regles d acces peuvent changer. Avant de voyager, verifiez toujours les informations actuelles aupres de l exploitant officiel ou de l autorite competente.'] },
-        { heading: 'Droits d auteur et images', body: ['Les textes, la structure du site et les graphismes originaux sont proteges par le droit d auteur. Pour les images tierces, nous indiquons les sources et licences lorsqu elles sont disponibles. Les images illustratives creees avec l IA sont signalees comme illustratives.'] },
-        { heading: 'Contenu assiste par IA', body: ['Une partie du contenu peut etre preparee avec l aide de l IA puis verifiee editorialement. Les details pratiques actuels doivent malgre tout etre controles a la source primaire.'] },
+        { heading: 'Droits d auteur et images', body: ['Les textes, la structure du site et les graphismes originaux sont proteges par le droit d auteur. Pour les images tierces, nous indiquons les sources et licences lorsqu elles sont disponibles. Les images illustratives sont signalees comme illustratives.'] },
+        { heading: 'Verification editoriale', body: ['Nous verifions le contenu de maniere continue et nous l appuyons sur les sources disponibles. Les details pratiques actuels doivent malgre tout etre controles a la source primaire.'] },
         { heading: 'Responsabilite', body: ['Le site ne remplace pas les reglements officiels de visite, consignes de securite, informations de transport ou conseils juridiques. Les voyages et activites sportives se font sous votre propre responsabilite.'] },
       ],
     },

@@ -88,11 +88,11 @@ export function getArticleImageWithFallback(
 
 export function getArticleFallbackAlt(locale: string, categoryLabel?: string | null): string {
   const labels: Record<string, string> = {
-    cs: 'AI ilustrace',
-    en: 'AI illustration',
-    de: 'KI-Illustration',
-    fr: 'Illustration IA',
-    es: 'Ilustración de IA',
+    cs: 'Ilustrační obrázek',
+    en: 'Illustrative image',
+    de: 'Illustratives Bild',
+    fr: 'Image illustrative',
+    es: 'Imagen ilustrativa',
   };
   const prefix = labels[locale] ?? labels.cs;
 

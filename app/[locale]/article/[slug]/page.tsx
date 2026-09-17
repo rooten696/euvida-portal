@@ -1,6 +1,7 @@
 import ArticleHero from '@/app/components/article/ArticleHero';
 import AccessSection from '@/app/components/article/AccessSection';
 import ArticleComments from '@/app/components/article/ArticleComments';
+import ArticlePartnerOffers from '@/app/components/article/ArticlePartnerOffers';
 import PracticalInfoGrid from '@/app/components/article/PracticalInfoGrid';
 import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
@@ -17,6 +18,7 @@ import { getArticleLabel } from '@/lib/articleLabels';
 import { getCategoryLabel, getLocalizedArticle } from '@/lib/articleDisplay';
 import { formatDate } from '@/lib/articleFormatting';
 import {
+  getAvailableArticleLocales,
   getLocationName,
   normalizeLocale,
   stripFirstMarkdownH1,
@@ -27,6 +29,7 @@ import {
   type LocationRecord,
   type SupportedLocale,
 } from '@/lib/articleTypes';
+import { canonicalMetadataBase } from '@/lib/siteConfig';
 import { createClient } from '@supabase/supabase-js';
 import { getWaterQualityForArticle } from '@/lib/waterQuality';
 import type { Metadata } from 'next';
@@ -39,7 +42,6 @@ import ReactMarkdown from 'react-markdown';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://euvida.eu';
 
 export const revalidate = 86400;
 
@@ -130,19 +132,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     descriptionFromContent(localizedArticle.content) ??
     'Přečtěte si článek na Euvida.eu';
   const metadataImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
+  const availableLocales = getAvailableArticleLocales(article);
+  const alternatesLanguages = Object.fromEntries(
+    availableLocales.map((supportedLocale) => [
+      supportedLocale,
+      `/${supportedLocale}/article/${slug}`,
+    ])
+  );
 
   return {
-    metadataBase: new URL(siteUrl),
+    metadataBase: canonicalMetadataBase,
     title: `${localizedArticle.title} | Euvida`,
     description,
     alternates: {
       canonical: `/${locale}/article/${slug}`,
-      languages: Object.fromEntries(
-        supportedLocales.map((supportedLocale) => [
-          supportedLocale,
-          `/${supportedLocale}/article/${slug}`,
-        ])
-      ),
+      languages: alternatesLanguages,
     },
     openGraph: {
       title: localizedArticle.title,
@@ -333,10 +337,9 @@ export default async function ArticlePage({ params }: PageProps) {
   const articleImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
   const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
   const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
-  const waterQuality =
-    article.country_id === 'CZE'
-      ? await getWaterQualityForArticle(article.source_info)
-      : null;
+  const waterQuality = ['natural_swimming', 'fkk'].includes(article.category ?? '')
+    ? await getWaterQualityForArticle(article.source_info)
+    : null;
 
   // Merge booking_url from practical_info into prices_info
   const dbPricesInfo = article.prices_info || {};
@@ -383,7 +386,7 @@ export default async function ArticlePage({ params }: PageProps) {
   ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   return (
-    <main className="min-h-screen bg-slate-950 pb-16 pt-8 font-sans text-slate-100">
+    <main className="article-detail-page min-h-screen bg-slate-950 pb-16 pt-8 font-sans text-slate-100">
       <article className="mx-auto max-w-[1360px] px-4 md:px-6">
         <ArticleHero
           locale={locale}
@@ -429,6 +432,8 @@ export default async function ArticlePage({ params }: PageProps) {
                 {markdownContent}
               </ReactMarkdown>
             </section>
+
+            <ArticlePartnerOffers slug={slug} locale={locale} />
 
             <SourcesSection
               locale={locale}
