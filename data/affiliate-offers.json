@@ -227,5 +227,68 @@
         "es": "Casas rurales y pensiones en el pueblo de Bítov y junto a la bahía del embalse de Vranov. Compara la distancia al castillo de Bítov, el aparcamiento y el acceso al agua antes de reservar."
       }
     }
+  ],
+  "bikepark-kares": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/loucna-nad-desnou.html",
+      "title": {
+        "cs": "Ubytování v Loučné nad Desnou",
+        "en": "Places to stay in Loučná nad Desnou",
+        "de": "Unterkünfte in Loučná nad Desnou",
+        "fr": "Hébergements à Loučná nad Desnou",
+        "es": "Alojamiento en Loučná nad Desnou"
+      },
+      "description": {
+        "cs": "Penziony, apartmány a horské chaty v Loučné nad Desnou a místní části Rejhotice v blízkosti Bikeparku Kareš. Před rezervací si na mapě ověřte vzdálenost k areálu a možnosti bezpečné úschovy kol.",
+        "en": "Guesthouses, apartments and mountain chalets in Loučná nad Desnou and Rejhotice near Bikepark Kareš. Check property location relative to the resort and secure bike storage facilities before booking.",
+        "de": "Pensionen, Ferienwohnungen und Berghütten in Loučná nad Desnou und Rejhotice nahe dem Bikepark Kareš. Prüfen Sie vor der Buchung die Lage zum Areal und sichere Abstellmöglichkeiten für Fahrräder.",
+        "fr": "Pensions, appartements et chalets de montagne à Loučná nad Desnou et Rejhotice près du Bikepark Kareš. Vérifiez sur la carte la distance jusqu'au domaine et les locaux sécurisés pour vélos avant de réserver.",
+        "es": "Pensiones, apartamentos y cabañas de montaña en Loučná nad Desnou y Rejhotice, junto al Bikepark Kareš. Comprueba en el mapa la cercanía a la estación y el espacio seguro para guardar bicicletas antes de reservar."
+      }
+    }
+  ],
+  "bikepark-koprivna": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/mala-moravka.html",
+      "title": {
+        "cs": "Ubytování v Malé Morávce pod Pradědem",
+        "en": "Places to stay in Malá Morávka near Praděd",
+        "de": "Unterkünfte in Malá Morávka am Praděd",
+        "fr": "Hébergements à Malá Morávka sous le mont Praděd",
+        "es": "Alojamiento en Malá Morávka bajo el Praděd"
+      },
+      "description": {
+        "cs": "Hotely, penziony a horské chalupy v Malé Morávce a Karlově pod Pradědem v těsné blízkosti areálu Kopřivná. Před rezervací si ověřte polohu ubytování vůči lanovce a možnosti bezpečné úschovy kol či servisu.",
+        "en": "Hotels, guesthouses and mountain cottages in Malá Morávka and Karlov pod Pradědem close to Kopřivná Resort. Check property location relative to the chairlift and secure bike storage or wash facilities before booking.",
+        "de": "Hotels, Pensionen und Berghütten in Malá Morávka und Karlov pod Pradědem in unmittelbarer Nähe des Areals Kopřivná. Prüfen Sie vor der Buchung die Lage zur Sesselbahn sowie sichere Fahrradabstell- und Waschplätze.",
+        "fr": "Hôtels, maisons d'hôtes et chalets à Malá Morávka et Karlov pod Pradědem à proximité directe de la station Kopřivná. Vérifiez l'accès au télésiège débrayable et les équipements de local à vélos ou de lavage avant de réserver.",
+        "es": "Hoteles, casas rurales y chalets en Malá Morávka y Karlov pod Pradědem, muy cerca de la estación Kopřivná. Comprueba antes de reservar la cercanía al telesilla y los servicios de guardabicicletas o lavado."
+      }
+    }
+  ],
+  "hrad-bouzov": [
+    {
+      "id": "stay",
+      "provider": "Booking.com",
+      "url": "https://www.booking.com/city/cz/bouzov.html",
+      "title": {
+        "cs": "Ubytování v Bouzově a okolí hradu",
+        "en": "Places to stay in Bouzov near the Castle",
+        "de": "Unterkünfte in Bouzov nahe der Burg",
+        "fr": "Hébergements à Bouzov près du château",
+        "es": "Alojamiento en Bouzov cerca del castillo"
+      },
+      "description": {
+        "cs": "Penziony a apartmány v Bouzově a okolních obcích střední Moravy. Ubytování v obci umožňuje navštívit hradní nádvoří i ranní prohlídky před příjezdem hlavních skupin, s pohodlným výletem do Loštic či Javoříčka.",
+        "en": "Guesthouses and apartments in Bouzov and surrounding Central Moravian villages. Staying locally allows you to enjoy early castle tours and quiet courtyards before peak crowds, with easy trips to Loštice or Javoříčko caves.",
+        "de": "Pensionen und Apartments in Bouzov und den umliegenden Dörfern Mittelmährens. Eine Unterkunft vor Ort ermöglicht entspannte Schlossbesuche am Morgen vor den großen Reisegruppen sowie Ausflüge nach Loštice oder Javoříčko.",
+        "fr": "Chambres d'hôtes et appartements à Bouzov et dans les villages voisins de Moravie centrale. Séjourner sur place permet de visiter les cours du château dès le matin avant l'affluence, avec accès facile à Loštice ou Javoříčko.",
+        "es": "Pensiones y apartamentos en Bouzov y los pueblos cercanos de Moravia central. Alojarse en el pueblo permite disfrutar de las visitas matinales al castillo antes de las aglomeraciones y visitar fácilmente Loštice o Javoříčko."
+      }
+    }
   ]
 }
