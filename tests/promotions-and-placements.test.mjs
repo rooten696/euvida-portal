@@ -56,6 +56,176 @@ function loadTs(relativePath, customMocks = {}) {
   return moduleObj.exports;
 }
 
+function createAdminPanelHarness(relativePath, accessToken = 'test-session', props = {}) {
+  const states = [];
+  let cursor = 0;
+  let reload;
+  const Panel = loadTs(relativePath, {
+    react: {
+      ...React,
+      useState(initial) {
+        const index = cursor++;
+        if (!(index in states)) states[index] = initial;
+        return [states[index], value => {
+          states[index] = typeof value === 'function' ? value(states[index]) : value;
+        }];
+      },
+      useRef(initial) {
+        const index = cursor++;
+        if (!(index in states)) states[index] = { current: initial };
+        return states[index];
+      },
+      useEffect() {},
+      useCallback(callback) { reload = callback; return callback; },
+    },
+  }).default;
+  return {
+    render() {
+      cursor = 0;
+      return renderToStaticMarkup(Panel({ accessToken, ...props }));
+    },
+    async refresh() { await reload(); return this.render(); },
+  };
+}
+
+function deferred() {
+  let resolve;
+  const promise = new Promise(resolvePromise => { resolve = resolvePromise; });
+  return { promise, resolve };
+}
+
+for (const [panel, key, emptyMessage, record] of [
+  ['AdminPromotionsPanel', 'promotions', 'Žádné promoce nenalezeny.', {
+    id: 'promo-1', article_slug: 'test-castle', campaign_id: 'stay',
+    provider: 'Booking.com', title: { cs: 'Test offer' }, active: true,
+  }],
+  ['AdminPlacementsPanel', 'placements', 'Žádná reklamní umístění nenalezena.', {
+    id: 'placement-1', name: 'Test placement', slot: 'footer',
+    provider: 'travelpayouts', widget_type: 'travelpayouts_banner', active: true,
+  }],
+]) {
+  const path = `app/components/admin/${panel}.tsx`;
+
+  test(`${panel}: failed loads are errors, not empty lists`, async t => {
+    const cases = [
+      [401, { ok: false }, /Přihlášení vypršelo/],
+      [403, { ok: false }, /nemá oprávnění správce/],
+      [500, { ok: true, [key]: [] }, /HTTP 500/],
+      [200, { ok: false, [key]: [] }, /neplatný seznam/],
+      [200, { ok: true }, /neplatný seznam/],
+      [200, null, /neplatný seznam/],
+    ];
+    for (const [status, body, message] of cases) {
+      await t.test(`HTTP ${status}: ${JSON.stringify(body)}`, async t => {
+        t.mock.method(globalThis, 'fetch', async () => Response.json(body, { status }));
+        const harness = createAdminPanelHarness(path);
+        assert.ok(!harness.render().includes(emptyMessage));
+        const html = await harness.refresh();
+        assert.match(html, /role="alert"/);
+        assert.match(html, message);
+        assert.ok(!html.includes(emptyMessage));
+        assert.match(html, />Obnovit<\/button>/);
+      });
+    }
+  });
+
+  test(`${panel}: network and malformed JSON failures are visible`, async t => {
+    const harness = createAdminPanelHarness(path);
+    harness.render();
+    const fetchMock = t.mock.method(globalThis, 'fetch', async () => new Response('<html>Error</html>'));
+    let html = await harness.refresh();
+    assert.match(html, /role="alert"/);
+    assert.ok(!html.includes(emptyMessage));
+    fetchMock.mock.mockImplementation(async () => { throw new TypeError('Failed to fetch'); });
+    html = await harness.refresh();
+    assert.match(html, /role="alert"/);
+    assert.ok(!html.includes(emptyMessage));
+  });
+
+  test(`${panel}: refresh recovers and errors clear stale rows`, async t => {
+    const fetchMock = t.mock.method(globalThis, 'fetch', async (_url, options) => {
+      assert.equal(options.cache, 'no-store');
+      assert.equal(options.headers.authorization, 'Bearer test-session');
+      return Response.json({ ok: true, [key]: [record] });
+    });
+    const harness = createAdminPanelHarness(path);
+    harness.render();
+    const label = key === 'promotions' ? record.article_slug : record.name;
+    let html = await harness.refresh();
+    assert.ok(html.includes(label));
+    fetchMock.mock.mockImplementation(async () => Response.json({ ok: false }, { status: 403 }));
+    html = await harness.refresh();
+    assert.match(html, /role="alert"/);
+    assert.ok(!html.includes(label));
+    assert.ok(!html.includes(emptyMessage));
+    fetchMock.mock.mockImplementation(async () => Response.json({ ok: true, [key]: [] }));
+    html = await harness.refresh();
+    assert.doesNotMatch(html, /role="alert"/);
+    assert.ok(html.includes(emptyMessage));
+  });
+
+  test(`${panel}: missing session does not fetch or show an empty list`, async t => {
+    const fetchMock = t.mock.method(globalThis, 'fetch', () => assert.fail('Unexpected request'));
+    const harness = createAdminPanelHarness(path, '');
+    harness.render();
+    const html = await harness.refresh();
+    assert.match(html, /role="alert"/);
+    assert.match(html, /Přihlaste se/);
+    assert.ok(!html.includes(emptyMessage));
+    assert.equal(fetchMock.mock.callCount(), 0);
+  });
+
+  test(`${panel}: latest request wins when overlapping refreshes finish out of order`, async t => {
+    const first = deferred();
+    const second = deferred();
+    const oldRecord = key === 'promotions'
+      ? { ...record, id: 'old-promo', article_slug: 'old-article' }
+      : { ...record, id: 'old-placement', name: 'Old placement' };
+    const newRecord = key === 'promotions'
+      ? { ...record, id: 'new-promo', article_slug: 'new-article' }
+      : { ...record, id: 'new-placement', name: 'New placement' };
+    let request = 0;
+    t.mock.method(globalThis, 'fetch', () => (++request === 1 ? first.promise : second.promise));
+
+    const harness = createAdminPanelHarness(path);
+    harness.render();
+    const firstRefresh = harness.refresh();
+    const secondRefresh = harness.refresh();
+
+    first.resolve(Response.json({ ok: true, [key]: [oldRecord] }));
+    let html = await firstRefresh;
+    assert.match(html, /Načítám/);
+    assert.ok(!html.includes(key === 'promotions' ? oldRecord.article_slug : oldRecord.name));
+
+    second.resolve(Response.json({ ok: true, [key]: [newRecord] }));
+    html = await secondRefresh;
+    assert.doesNotMatch(html, /Načítám/);
+    assert.ok(html.includes(key === 'promotions' ? newRecord.article_slug : newRecord.name));
+    assert.ok(!html.includes(key === 'promotions' ? oldRecord.article_slug : oldRecord.name));
+  });
+}
+
+test('AdminPromotionsPanel: article slug opens the localized public article safely in a new tab', async t => {
+  t.mock.method(globalThis, 'fetch', async () => Response.json({
+    ok: true,
+    promotions: [{
+      id: 'promo-link', article_slug: 'castle/with space?', campaign_id: 'stay',
+      provider: 'Booking.com', title: { cs: 'Test offer' }, active: true,
+    }],
+  }));
+  const harness = createAdminPanelHarness(
+    'app/components/admin/AdminPromotionsPanel.tsx',
+    'test-session',
+    { locale: 'de' },
+  );
+  harness.render();
+  const html = await harness.refresh();
+  assert.match(html, /<a[^>]+href="\/de\/article\/castle%2Fwith%20space%3F"/);
+  assert.match(html, /<a[^>]+target="_blank"/);
+  assert.match(html, /<a[^>]+rel="noopener noreferrer"/);
+  assert.match(html, /<a[^>]+class="[^"]*text-emerald-400[^"]*hover:text-emerald-300/);
+});
+
 // 1. Authz tests
 test('authz: verifyAdminRequest rejects unauthenticated requests and non-admin users', async () => {
   const { verifyAdminRequest } = loadTs('lib/adminAuth.ts');

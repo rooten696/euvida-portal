@@ -1490,7 +1490,10 @@ export default function AdminPage() {
 
         {activeImageTab === 'promotions' && session?.access_token && (
           <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20 md:p-8">
-            <AdminPromotionsPanel accessToken={session.access_token} />
+            <AdminPromotionsPanel
+              accessToken={session.access_token}
+              locale={locale as SupportedLocale}
+            />
           </section>
         )}
 
