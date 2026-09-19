@@ -33,6 +33,8 @@ export default function CookieBanner() {
   const handleAccept = () => {
     localStorage.setItem('cookie_consent', 'granted');
     updateGoogleConsent(true);
+    window.dispatchEvent(new Event('euvida:cookie-consent'));
+    window.dispatchEvent(new Event('cookie_consent_updated'));
     setShowBanner(false);
     // Refreshne stránku, aby mohl naskočit Google Analytics
     window.location.reload(); 
@@ -41,6 +43,8 @@ export default function CookieBanner() {
   const handleDecline = () => {
     localStorage.setItem('cookie_consent', 'denied');
     updateGoogleConsent(false);
+    window.dispatchEvent(new Event('euvida:cookie-consent'));
+    window.dispatchEvent(new Event('cookie_consent_updated'));
     setShowBanner(false);
   };
 

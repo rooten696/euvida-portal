@@ -200,6 +200,68 @@ export type SourceInfo = {
   last_checked?: string | null;
 };
 
+export type PartnerOfferLink = {
+  url: string;
+  sourceUrl?: string;
+  subId: string;
+};
+
+export type PartnerOffer = {
+  id: string;
+  provider: string;
+  url?: string;
+  title: Record<string, string>;
+  description: Record<string, string>;
+  links?: Record<string, PartnerOfferLink>;
+};
+
+// Temporary compatibility shape for rows written before partner_offers became
+// a top-level articles column. Do not add new fields to practical_info this way.
+export type LegacyPracticalInfoPartnerOffers = {
+  partner_offers?: PartnerOffer[] | null;
+};
+
+export type ArticlePromotion = {
+  id?: string;
+  article_slug: string;
+  article_id?: string | null;
+  campaign_id: string;
+  provider: string;
+  placement?: string;
+  title: Record<SupportedLocale, string>;
+  description: Record<SupportedLocale, string>;
+  call_to_action: Record<SupportedLocale, string>;
+  links: Record<SupportedLocale, PartnerOfferLink>;
+  active?: boolean;
+  sort_order?: number;
+  start_at?: string | null;
+  end_at?: string | null;
+  version?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
+export type AdPlacementSlot = 'header' | 'panel' | 'footer';
+export type AdPlacementProvider = 'travelpayouts' | 'internal' | 'custom_partner';
+export type AdConsentCategory = 'marketing' | 'statistics' | 'functional';
+
+export type AdPlacement = {
+  id?: string;
+  slot: AdPlacementSlot;
+  name: string;
+  provider: AdPlacementProvider;
+  widget_type: string;
+  params: Record<string, unknown>;
+  consent_category: AdConsentCategory;
+  active?: boolean;
+  sort_order?: number;
+  start_at?: string | null;
+  end_at?: string | null;
+  version?: number;
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type Article = {
   id?: string | null;
   slug: string;
@@ -217,6 +279,8 @@ export type Article = {
   access_info?: AccessInfo | null;
   visit_info?: VisitInfo | null;
   source_info?: SourceInfo | null;
+  promotions?: ArticlePromotion[] | null;
+  partner_offers?: PartnerOffer[] | null;
   last_checked_at?: string | null;
   updated_at?: string | null;
   reading_time_minutes?: number | string | null;

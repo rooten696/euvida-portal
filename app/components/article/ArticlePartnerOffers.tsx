@@ -1,8 +1,16 @@
 import { affiliateLabels, getAffiliateOffers } from '@/lib/affiliateOffers';
-import type { SupportedLocale } from '@/lib/articleTypes';
+import type { Article, SupportedLocale } from '@/lib/articleTypes';
 
-export default function ArticlePartnerOffers({ slug, locale }: { slug: string; locale: SupportedLocale }) {
-  const offers = getAffiliateOffers(slug, locale);
+export default function ArticlePartnerOffers({
+  slug,
+  locale,
+  article,
+}: {
+  slug: string;
+  locale: SupportedLocale;
+  article?: Article | null;
+}) {
+  const offers = getAffiliateOffers(slug, locale, article);
   if (offers.length === 0) return null;
   const text = affiliateLabels[locale];
 

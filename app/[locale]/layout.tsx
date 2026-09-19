@@ -5,11 +5,52 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import banneru
 import ThemeInitializer from '../components/ThemeInitializer';
+import GlobalAdPlacement from '../components/ads/GlobalAdPlacement';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
-import { supportedLocales } from '@/lib/articleTypes';
+import { supportedLocales, type AdPlacement, type SupportedLocale } from '@/lib/articleTypes';
 import Script from 'next/script';
+import { cache } from 'react';
+import { createClient } from '@supabase/supabase-js';
+
+const getHeaderPlacement = cache(async () => {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from('ad_placements')
+      .select('*')
+      .eq('slot', 'header')
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return (data as AdPlacement) || null;
+  } catch {
+    return null;
+  }
+});
+
+const getFooterPlacement = cache(async () => {
+  try {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    const { data } = await supabase
+      .from('ad_placements')
+      .select('*')
+      .eq('slot', 'footer')
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return (data as AdPlacement) || null;
+  } catch {
+    return null;
+  }
+});
 
 export async function generateStaticParams() {
   return supportedLocales.map((locale) => ({ locale }));
@@ -23,6 +64,7 @@ import { canonicalMetadataBase } from '@/lib/siteConfig';
 
 const outfit = Outfit({
   subsets: ['latin'],
+
   variable: '--font-outfit',
 });
 
@@ -47,7 +89,12 @@ export default async function LocaleLayout({
   // Nastavíme locale pro static rendering na serveru
   setRequestLocale(locale);
 
-  const messages = await getMessages({ locale });
+  const [messages, headerPlacement, footerPlacement] = await Promise.all([
+    getMessages({ locale }),
+    getHeaderPlacement(),
+    getFooterPlacement(),
+  ]);
+
 
   return (
     <html lang={locale} className={`${outfit.variable} h-full scroll-smooth`} suppressHydrationWarning>
@@ -99,10 +146,21 @@ export default async function LocaleLayout({
             <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-[150px] pointer-events-none" />
             
             <Navbar /> 
+            {headerPlacement && (
+              <div className="mx-auto w-full max-w-[1360px] px-4 md:px-6 z-20">
+                <GlobalAdPlacement slot="header" placement={headerPlacement} locale={locale as SupportedLocale} />
+              </div>
+            )}
             <div className="flex-grow flex flex-col z-10">
-            {children}
-          </div>
+              {children}
+            </div>
+            {footerPlacement && (
+              <div className="mx-auto w-full max-w-[1360px] px-4 md:px-6 z-20">
+                <GlobalAdPlacement slot="footer" placement={footerPlacement} locale={locale as SupportedLocale} />
+              </div>
+            )}
             <Footer locale={locale} />
+
             {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
             <CookieBanner />
           </div>

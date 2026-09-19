@@ -7,6 +7,8 @@ import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseBrowserClient';
 import ImageManager from '@/app/components/admin/ImageManager';
 import AdminCommentsPanel from '../../components/admin/AdminCommentsPanel';
+import AdminPromotionsPanel from '../../components/admin/AdminPromotionsPanel';
+import AdminPlacementsPanel from '../../components/admin/AdminPlacementsPanel';
 import type {
   ImageCredit,
   LocalizedText,
@@ -31,7 +33,8 @@ type ArticleImageData = {
 
 type ArticleImageFilter = 'all' | 'missing' | 'has_image' | 'unpublished';
 type LocationImageFilter = 'all' | 'missing' | 'has_image';
-type ImageAdminTab = 'articles' | 'regions' | 'countries';
+type ImageAdminTab = 'articles' | 'regions' | 'countries' | 'promotions' | 'placements';
+
 
 type ArticleImageDraft = {
   image_url: string;
@@ -879,11 +882,14 @@ export default function AdminPage() {
     { id: 'has_image', label: 'S obrázkem', count: countryImageCounts.has_image },
   ];
 
-  const imageAdminTabs: { id: ImageAdminTab; label: string; count: number }[] = [
+  const imageAdminTabs: { id: ImageAdminTab; label: string; count?: number }[] = [
     { id: 'articles', label: 'Obrázky článků', count: articleImageCounts.missing },
     { id: 'regions', label: 'Obr. regionů', count: regionImageCounts.missing },
     { id: 'countries', label: 'Obr. zemí', count: countryImageCounts.missing },
+    { id: 'promotions', label: 'Promoce článků' },
+    { id: 'placements', label: 'Globální reklamy' },
   ];
+
 
   if (!session) {
     return (
@@ -972,7 +978,7 @@ export default function AdminPage() {
         <AdminCommentsPanel />
 
         <section className="rounded-3xl border border-white/10 bg-slate-900/60 p-3 shadow-xl shadow-slate-950/20">
-          <div className="grid gap-2 md:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {imageAdminTabs.map((tab) => (
               <button
                 key={tab.id}
@@ -985,13 +991,16 @@ export default function AdminPage() {
                 }`}
               >
                 {tab.label}
-                <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">
-                  bez obr.: {tab.count}
-                </span>
+                {tab.count !== undefined && (
+                  <span className="ml-2 rounded-full bg-black/10 px-2 py-0.5 text-xs">
+                    bez obr.: {tab.count}
+                  </span>
+                )}
               </button>
             ))}
           </div>
         </section>
+
 
         {activeImageTab === 'articles' && (
         <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20 md:p-8">
@@ -1477,6 +1486,20 @@ export default function AdminPage() {
           </div>
         </section>
         )}
+
+
+        {activeImageTab === 'promotions' && session?.access_token && (
+          <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20 md:p-8">
+            <AdminPromotionsPanel accessToken={session.access_token} />
+          </section>
+        )}
+
+        {activeImageTab === 'placements' && session?.access_token && (
+          <section className="rounded-3xl border border-white/10 bg-slate-950/95 p-6 shadow-xl shadow-slate-950/20 md:p-8">
+            <AdminPlacementsPanel accessToken={session.access_token} />
+          </section>
+        )}
+
 
         {status && (
           <div className="sticky bottom-4 z-50 rounded-2xl border border-white/10 bg-slate-900 px-5 py-4 text-center text-sm font-black text-slate-100 shadow-2xl">

@@ -5,7 +5,6 @@ import ArticlePartnerOffers from '@/app/components/article/ArticlePartnerOffers'
 import PracticalInfoGrid from '@/app/components/article/PracticalInfoGrid';
 import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
-import QuickOverview from '@/app/components/article/QuickOverview';
 import SourcesSection from '@/app/components/article/SourcesSection';
 import WaterQualityBox from '@/app/components/article/WaterQualityBox';
 import {
@@ -23,8 +22,10 @@ import {
   normalizeLocale,
   stripFirstMarkdownH1,
 } from '@/lib/articleLocalization';
+import GlobalAdPlacement from '@/app/components/ads/GlobalAdPlacement';
 import {
   supportedLocales,
+  type AdPlacement,
   type Article,
   type LocationRecord,
   type SupportedLocale,
@@ -43,7 +44,8 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-export const revalidate = 86400;
+// DB-only affiliate batches become visible through ISR within approximately five minutes.
+export const revalidate = 300;
 
 export async function generateStaticParams() {
   const { data: articles } = await supabase
@@ -79,8 +81,43 @@ const getArticleBySlug = cache(async (slug: string) => {
     return null;
   }
 
-  return data as Article;
+  let promotions = null;
+  try {
+    const { data: promoData, error: promoError } = await supabase
+      .from('article_promotions')
+      .select('*')
+      .eq('article_slug', slug)
+      .eq('active', true)
+      .order('sort_order', { ascending: true });
+    if (!promoError && promoData && promoData.length > 0) {
+      promotions = promoData;
+    }
+  } catch {
+    promotions = null;
+  }
+
+  return {
+    ...data,
+    promotions,
+  } as Article;
 });
+
+const getPanelPlacement = cache(async () => {
+  try {
+    const { data } = await supabase
+      .from('ad_placements')
+      .select('*')
+      .eq('slot', 'panel')
+      .eq('active', true)
+      .order('sort_order', { ascending: true })
+      .limit(1)
+      .maybeSingle();
+    return (data as AdPlacement) || null;
+  } catch {
+    return null;
+  }
+});
+
 
 async function getLocationData(article: Article) {
   const [countryResult, regionResult] = await Promise.all([
@@ -323,6 +360,8 @@ export default async function ArticlePage({ params }: PageProps) {
   }
 
   const { country, region } = await getLocationData(article);
+  const panelPlacement = await getPanelPlacement();
+
 
   const localizedArticle = getLocalizedArticle(article, locale);
   const { title, excerpt, content: rawContent, imageAlt } = localizedArticle;
@@ -335,16 +374,24 @@ export default async function ArticlePage({ params }: PageProps) {
   const articleHasRealImage = !isMissingArticleImage(article.image_url);
   const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug);
   const articleImageUrl = getArticleImageWithFallback(article.image_url, article.category, article.slug);
-  const weatherLocation = (article.access_info as any)?.[locale]?.address || (article.access_info as any)?.cs?.address || regionName || countryName;
-  const gpsCoords = (article.access_info as any)?.[locale]?.gps || (article.access_info as any)?.cs?.gps || (article.access_info as any)?.en?.gps || null;
+  const accessRecord = article.access_info as Record<string, { address?: string; gps?: unknown } | undefined> | null | undefined;
+  const weatherLocation = accessRecord?.[locale]?.address || accessRecord?.cs?.address || regionName || countryName;
+  const rawGps = accessRecord?.[locale]?.gps || accessRecord?.cs?.gps || accessRecord?.en?.gps;
+  const gpsCoords: string | null = typeof rawGps === 'string'
+    ? rawGps
+    : rawGps && typeof rawGps === 'object' && 'lat' in (rawGps as Record<string, unknown>) && 'lng' in (rawGps as Record<string, unknown>)
+      ? `${(rawGps as Record<string, unknown>).lat}, ${(rawGps as Record<string, unknown>).lng}`
+      : null;
   const waterQuality = ['natural_swimming', 'fkk'].includes(article.category ?? '')
     ? await getWaterQualityForArticle(article.source_info)
     : null;
 
   // Merge booking_url from practical_info into prices_info
-  const dbPricesInfo = article.prices_info || {};
-  const dbPracticalInfo = article.practical_info || {};
-  const dbBookingUrl = (dbPricesInfo as any)?.booking_url || (dbPracticalInfo as any)?.[locale]?.booking_url || (dbPracticalInfo as any)?.cs?.booking_url;
+  const dbPricesInfo = (article.prices_info || {}) as Record<string, unknown>;
+  const dbPracticalInfo = (article.practical_info || {}) as Record<string, Record<string, unknown> | undefined>;
+  const dbBookingUrl = (typeof dbPricesInfo.booking_url === 'string' ? dbPricesInfo.booking_url : undefined) ||
+    (typeof dbPracticalInfo[locale]?.booking_url === 'string' ? (dbPracticalInfo[locale]?.booking_url as string) : undefined) ||
+    (typeof dbPracticalInfo.cs?.booking_url === 'string' ? (dbPracticalInfo.cs?.booking_url as string) : undefined);
 
   const pricesInfo = article.prices_info || dbBookingUrl
     ? {
@@ -433,7 +480,7 @@ export default async function ArticlePage({ params }: PageProps) {
               </ReactMarkdown>
             </section>
 
-            <ArticlePartnerOffers slug={slug} locale={locale} />
+            <ArticlePartnerOffers slug={slug} locale={locale} article={article} />
 
             <SourcesSection
               locale={locale}
@@ -450,8 +497,10 @@ export default async function ArticlePage({ params }: PageProps) {
               {waterQuality && <WaterQualityBox status={waterQuality} locale={locale} />}
               <PricesSection locale={locale} pricesInfo={pricesInfo} />
               <AccessSection locale={locale} accessInfo={article.access_info} />
+              <GlobalAdPlacement slot="panel" placement={panelPlacement} locale={locale} />
             </div>
           </aside>
+
         </div>
 
         <MobileInfoDrawer
