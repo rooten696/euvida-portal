@@ -1,22 +1,26 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { ArticlePromotion, SupportedLocale } from '@/lib/articleTypes';
 
 const LOCALES: SupportedLocale[] = ['cs', 'en', 'de', 'fr', 'es'];
 
 export default function AdminPromotionsPanel({
   accessToken,
+  locale,
 }: {
   accessToken: string;
+  locale: SupportedLocale;
 }) {
   const [promotions, setPromotions] = useState<ArticlePromotion[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [filterSlug, setFilterSlug] = useState('');
   const [statusMessage, setStatusMessage] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingVersion, setEditingVersion] = useState<number | null>(null);
+  const latestRequestId = useRef(0);
   const [editingMetadata, setEditingMetadata] = useState<{
     active: boolean;
     sort_order: number;
@@ -36,25 +40,49 @@ export default function AdminPromotionsPanel({
   const [formSourceUrls, setFormSourceUrls] = useState<Record<string, string>>({ cs: '', en: '', de: '', fr: '', es: '' });
 
   const fetchPromotions = useCallback(async () => {
-    if (!accessToken) return;
+    const requestId = ++latestRequestId.current;
+    if (!accessToken) {
+      setPromotions([]);
+      setLoadError('Přihlaste se prosím znovu do administrace.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setLoadError('');
     try {
       const res = await fetch('/api/admin/promotions', {
         headers: { authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
       });
-      const data = await res.json();
-      if (data.ok && Array.isArray(data.promotions)) {
-        setPromotions(data.promotions);
+      if (!res.ok) {
+        throw new Error(res.status === 401
+          ? 'Přihlášení vypršelo. Přihlaste se prosím znovu.'
+          : res.status === 403
+            ? 'Tento účet nemá oprávnění správce pro správu promocí.'
+            : `Promoce se nepodařilo načíst (HTTP ${res.status}). Zkuste Obnovit.`);
       }
-    } catch {
-      setStatusMessage('Chyba při načítání promocí.');
+      const data = await res.json();
+      if (data?.ok !== true || !Array.isArray(data.promotions)) {
+        throw new Error('Server vrátil neplatný seznam promocí. Zkuste Obnovit.');
+      }
+      if (requestId !== latestRequestId.current) return;
+      setPromotions(data.promotions);
+    } catch (error) {
+      if (requestId !== latestRequestId.current) return;
+      setPromotions([]);
+      setLoadError(error instanceof Error && !(error instanceof SyntaxError)
+        ? error.message
+        : 'Chyba při načítání promocí. Zkuste Obnovit.');
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestId.current) setLoading(false);
     }
   }, [accessToken]);
 
   useEffect(() => {
-    fetchPromotions();
+    void fetchPromotions();
+    return () => {
+      latestRequestId.current += 1;
+    };
   }, [fetchPromotions]);
 
   const handleToggleActive = async (promo: ArticlePromotion) => {
@@ -227,6 +255,12 @@ export default function AdminPromotionsPanel({
         </div>
       )}
 
+      {loadError && (
+        <div role="alert" className="rounded-lg border border-red-500/40 bg-red-950 p-3 text-sm text-red-100">
+          {loadError}
+        </div>
+      )}
+
       {showCreateForm && (
         <form onSubmit={handleSave} className="space-y-4 rounded-2xl border border-white/10 bg-slate-900 p-5">
           <h4 className="font-bold text-emerald-400">
@@ -333,7 +367,7 @@ export default function AdminPromotionsPanel({
         </form>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <input
           type="text"
           placeholder="Hledat podle slugu článku..."
@@ -341,6 +375,14 @@ export default function AdminPromotionsPanel({
           onChange={e => setFilterSlug(e.target.value)}
           className="w-full max-w-sm rounded-xl border border-white/10 bg-slate-900 px-4 py-2 text-xs text-white placeholder:text-slate-500"
         />
+        <button
+          type="button"
+          onClick={fetchPromotions}
+          disabled={loading}
+          className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50"
+        >
+          Obnovit
+        </button>
         {loading && <span className="text-xs text-slate-400">Načítám...</span>}
       </div>
 
@@ -359,7 +401,17 @@ export default function AdminPromotionsPanel({
           <tbody className="divide-y divide-white/5">
             {filtered.map(promo => (
               <tr key={promo.id} className="hover:bg-slate-800/40">
-                <td className="p-3 font-mono font-medium text-emerald-400">{promo.article_slug}</td>
+                <td className="p-3 font-mono font-medium">
+                  <a
+                    href={`/${locale}/article/${encodeURIComponent(promo.article_slug)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-emerald-400 underline-offset-4 hover:text-emerald-300 hover:underline focus-visible:underline"
+                    aria-label={`Otevřít článek ${promo.article_slug} v novém okně`}
+                  >
+                    {promo.article_slug}
+                  </a>
+                </td>
                 <td className="p-3 text-slate-300">{promo.campaign_id}</td>
                 <td className="p-3 text-slate-300">{promo.provider}</td>
                 <td className="p-3 text-white">{promo.title?.['cs'] || '-'}</td>
@@ -399,7 +451,7 @@ export default function AdminPromotionsPanel({
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && !loading && (
+            {filtered.length === 0 && !loading && !loadError && (
               <tr>
                 <td colSpan={6} className="p-6 text-center text-slate-400">
                   Žádné promoce nenalezeny.

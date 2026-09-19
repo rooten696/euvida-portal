@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdPlacement, AdPlacementSlot } from '@/lib/articleTypes';
 import { ALLOWED_AD_SLOTS, ALLOWED_AD_PROVIDERS, ALLOWED_CONSENT_CATEGORIES, WIDGET_CATALOG } from '@/lib/ad-placement-catalog';
 
@@ -10,12 +10,14 @@ export default function AdminPlacementsPanel({
   accessToken: string;
 }) {
   const [placements, setPlacements] = useState<AdPlacement[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [filterSlot, setFilterSlot] = useState<string>('all');
   const [statusMessage, setStatusMessage] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingVersion, setEditingVersion] = useState<number | null>(null);
+  const latestRequestId = useRef(0);
   const [editingMetadata, setEditingMetadata] = useState<{
     active: boolean;
     start_at: string | null;
@@ -32,26 +34,50 @@ export default function AdminPlacementsPanel({
   const [formParamsJson, setFormParamsJson] = useState('{\n  "title": "Doporučené ubytování",\n  "label": "Rezervovat",\n  "url": "https://tp.media/r?marker=776456&trs=572910&sub_id=eu_cs_global_banner&u=https%3A%2F%2Fwww.booking.com%2Fcity%2Fcz%2Fprague.html"\n}');
 
   const fetchPlacements = useCallback(async () => {
-    if (!accessToken) return;
+    const requestId = ++latestRequestId.current;
+    if (!accessToken) {
+      setPlacements([]);
+      setLoadError('Přihlaste se prosím znovu do administrace.');
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setLoadError('');
     try {
       const url = filterSlot !== 'all' ? `/api/admin/placements?slot=${filterSlot}` : '/api/admin/placements';
       const res = await fetch(url, {
         headers: { authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
       });
-      const data = await res.json();
-      if (data.ok && Array.isArray(data.placements)) {
-        setPlacements(data.placements);
+      if (!res.ok) {
+        throw new Error(res.status === 401
+          ? 'Přihlášení vypršelo. Přihlaste se prosím znovu.'
+          : res.status === 403
+            ? 'Tento účet nemá oprávnění správce pro správu reklamních umístění.'
+            : `Reklamní umístění se nepodařilo načíst (HTTP ${res.status}). Zkuste Obnovit.`);
       }
-    } catch {
-      setStatusMessage('Chyba při načítání umístění reklam.');
+      const data = await res.json();
+      if (data?.ok !== true || !Array.isArray(data.placements)) {
+        throw new Error('Server vrátil neplatný seznam reklamních umístění. Zkuste Obnovit.');
+      }
+      if (requestId !== latestRequestId.current) return;
+      setPlacements(data.placements);
+    } catch (error) {
+      if (requestId !== latestRequestId.current) return;
+      setPlacements([]);
+      setLoadError(error instanceof Error && !(error instanceof SyntaxError)
+        ? error.message
+        : 'Chyba při načítání umístění reklam. Zkuste Obnovit.');
     } finally {
-      setLoading(false);
+      if (requestId === latestRequestId.current) setLoading(false);
     }
   }, [accessToken, filterSlot]);
 
   useEffect(() => {
-    fetchPlacements();
+    void fetchPlacements();
+    return () => {
+      latestRequestId.current += 1;
+    };
   }, [fetchPlacements]);
 
   const handleToggleActive = async (placement: AdPlacement) => {
@@ -205,6 +231,12 @@ export default function AdminPlacementsPanel({
         </div>
       )}
 
+      {loadError && (
+        <div role="alert" className="rounded-lg border border-red-500/40 bg-red-950 p-3 text-sm text-red-100">
+          {loadError}
+        </div>
+      )}
+
       {showCreateForm && (
         <form onSubmit={handleSave} className="space-y-4 rounded-2xl border border-white/10 bg-slate-900 p-5">
           <h4 className="font-bold text-emerald-400">
@@ -312,7 +344,7 @@ export default function AdminPlacementsPanel({
         </form>
       )}
 
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <span className="text-xs text-slate-400">Filtrovat slot:</span>
         <div className="inline-flex rounded-lg border border-white/10 bg-slate-950 p-1">
           {['all', ...ALLOWED_AD_SLOTS].map(slotOption => (
@@ -328,6 +360,14 @@ export default function AdminPlacementsPanel({
             </button>
           ))}
         </div>
+        <button
+          type="button"
+          onClick={fetchPlacements}
+          disabled={loading}
+          className="rounded-lg bg-slate-800 px-3 py-2 text-xs font-semibold text-slate-200 hover:bg-slate-700 disabled:opacity-50"
+        >
+          Obnovit
+        </button>
         {loading && <span className="text-xs text-slate-400">Načítám...</span>}
       </div>
 
@@ -388,7 +428,7 @@ export default function AdminPlacementsPanel({
                 </td>
               </tr>
             ))}
-            {placements.length === 0 && !loading && (
+            {placements.length === 0 && !loading && !loadError && (
               <tr>
                 <td colSpan={7} className="p-6 text-center text-slate-400">
                   Žádná reklamní umístění nenalezena.
