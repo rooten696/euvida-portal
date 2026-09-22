@@ -8,6 +8,9 @@ import {
 } from './ad-placement-catalog';
 import { isValidAffiliateUrl } from './affiliate-link-validation.mjs';
 import type { SupportedLocale } from './articleTypes';
+import { ADMIN_EMAIL, isUserAdmin } from './adminIdentity';
+
+export { ADMIN_EMAIL, isUserAdmin };
 
 const LOCALES: SupportedLocale[] = ['cs', 'en', 'de', 'fr', 'es'];
 
@@ -18,12 +21,6 @@ export interface AdminAuthResult {
   user?: User;
   client?: SupabaseClient;
   writeClient?: SupabaseClient;
-}
-
-export function isUserAdmin(user?: User | null): boolean {
-  if (!user) return false;
-  const appMetadata = user.app_metadata ?? {};
-  return appMetadata.role === 'admin' || appMetadata.is_admin === true;
 }
 
 export async function verifyAdminRequest(
@@ -56,7 +53,7 @@ export async function verifyAdminRequest(
     return {
       authorized: false,
       status: 403,
-      error: 'Forbidden: admin role required in app_metadata',
+      error: 'Forbidden: admin role required; authorized administrator account required',
     };
   }
 
@@ -234,6 +231,12 @@ export function validatePlacementRecord(data: Record<string, unknown>): { valid:
     !ALLOWED_CONSENT_CATEGORIES.includes(consent_category as typeof ALLOWED_CONSENT_CATEGORIES[number])
   ) {
     return { valid: false, error: `consent_category must be one of: ${ALLOWED_CONSENT_CATEGORIES.join(', ')}` };
+  }
+  if (consent_category !== catalogEntry.defaultConsentCategory) {
+    return {
+      valid: false,
+      error: `consent_category must be ${catalogEntry.defaultConsentCategory} for widget type ${widget_type}`,
+    };
   }
 
   const paramCheck = validateAdPlacementParams(widget_type, params || {});

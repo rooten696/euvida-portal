@@ -1,44 +1,14 @@
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { verifyAdminRequest } from '@/lib/adminAuth';
 import sharp from 'sharp';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
 const maxSourceImageBytes = 40 * 1024 * 1024;
 const maxOptimizedImageBytes = 12 * 1024 * 1024;
 const optimizedImageContentType = 'image/webp';
 
-const authClient = createClient(supabaseUrl, supabaseAnonKey);
-
-function getWriteClient(accessToken: string) {
-  return supabaseServiceKey
-    ? createClient(supabaseUrl, supabaseServiceKey)
-    : createClient(supabaseUrl, supabaseAnonKey, {
-        global: {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        },
-      });
-}
-
-async function getAccessToken(request: NextRequest) {
-  const authorization = request.headers.get('authorization') ?? '';
-  const accessToken = authorization.startsWith('Bearer ')
-    ? authorization.slice('Bearer '.length)
-    : '';
-
-  if (!accessToken) {
-    return null;
-  }
-
-  const { data, error } = await authClient.auth.getUser(accessToken);
-  return error || !data.user ? null : accessToken;
-}
 
 function safePathSegment(value: string): string {
   return value
@@ -64,10 +34,6 @@ async function optimizeImage(buffer: Buffer): Promise<Buffer> {
 }
 
 function uploadErrorMessage(message: string): string {
-  if (!supabaseServiceKey && /violates row-level security|row-level security|RLS/i.test(message)) {
-    return 'Chyba uploadu: Storage RLS blokuje zápis. Nastavte SUPABASE_SERVICE_ROLE_KEY ve Vercelu pro tento web.';
-  }
-
   return `Chyba uploadu: ${message}`;
 }
 
@@ -85,10 +51,9 @@ function revalidateArticlePaths(slug?: string | null) {
 }
 
 export async function POST(request: NextRequest) {
-  const accessToken = await getAccessToken(request);
-
-  if (!accessToken) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
+  const auth = await verifyAdminRequest(request);
+  if (!auth.authorized || !auth.writeClient) {
+    return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }
 
   const formData = await request.formData().catch(() => null);
@@ -109,7 +74,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const writeClient = getWriteClient(accessToken);
+  const writeClient = auth.writeClient;
   const entityType = safePathSegment(String(formData?.get('entityType') || 'articles'));
   const entityId = safePathSegment(String(formData?.get('entityId') || 'article'));
   const articleId = String(formData?.get('articleId') || '').trim();

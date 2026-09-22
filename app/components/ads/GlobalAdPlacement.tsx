@@ -6,6 +6,7 @@ import {
   type AdPlacementSlot,
   validateAdPlacementParams,
   isAllowlistedAdHost,
+  parseTravelpayoutsWidgetSnippet,
 } from '@/lib/ad-placement-catalog';
 import { isPlacementPubliclyVisible } from '@/lib/affiliateOffers';
 
@@ -22,6 +23,55 @@ export interface GlobalAdPlacementProps {
   locale: SupportedLocale;
   className?: string;
   slot?: AdPlacementSlot;
+}
+
+function TravelpayoutsScriptWidget({
+  scriptSrc,
+  slot,
+  consentCategory,
+  className,
+}: {
+  scriptSrc: string;
+  slot: AdPlacementSlot;
+  consentCategory: AdConsentCategory;
+  className: string;
+}) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    const parsed = parseTravelpayoutsWidgetSnippet(scriptSrc);
+    const container = containerRef.current;
+    if (!parsed.valid || !container) return;
+
+    let consent: string | null = null;
+    try {
+      consent = window.localStorage.getItem('cookie_consent');
+    } catch {
+      return;
+    }
+    if (!hasConsentForPlacement(consentCategory, consent)) return;
+
+    container.replaceChildren();
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = parsed.scriptSrc;
+    script.referrerPolicy = 'strict-origin-when-cross-origin';
+    container.appendChild(script);
+
+    return () => container.replaceChildren();
+  }, [consentCategory, scriptSrc]);
+
+  return (
+    <aside
+      data-ad-slot={slot}
+      data-provider="travelpayouts"
+      data-consent={consentCategory}
+      data-widget-type="travelpayouts_script_widget"
+      className={`my-4 min-h-16 overflow-hidden ${className}`}
+    >
+      <div ref={containerRef} />
+    </aside>
+  );
 }
 
 export function GlobalAdPlacementContent({
@@ -48,6 +98,20 @@ export function GlobalAdPlacementContent({
   }
 
   const params = placement.params;
+
+  if (placement.widget_type === 'travelpayouts_script_widget') {
+    const parsed = parseTravelpayoutsWidgetSnippet(String(params.script_src || ''));
+    if (!parsed.valid) return null;
+
+    return (
+      <TravelpayoutsScriptWidget
+        scriptSrc={parsed.scriptSrc}
+        slot={slot}
+        consentCategory={placement.consent_category}
+        className={className}
+      />
+    );
+  }
 
   // Render internal promotional card/banner
   if (placement.widget_type === 'internal_promo') {

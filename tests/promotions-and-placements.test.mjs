@@ -32,6 +32,9 @@ function loadTs(relativePath, customMocks = {}) {
     if (id === '@/lib/adminAuth' || id === '@/lib/adminAuth.ts' || id === './adminAuth' || id === './adminAuth.ts') {
       return loadTs('lib/adminAuth.ts', customMocks);
     }
+    if (id === '@/lib/adminIdentity' || id === '@/lib/adminIdentity.ts' || id === './adminIdentity' || id === './adminIdentity.ts') {
+      return loadTs('lib/adminIdentity.ts', customMocks);
+    }
     if (id === '@/lib/affiliateOffers' || id === '@/lib/affiliateOffers.ts' || id === './affiliateOffers' || id === './affiliateOffers.ts') {
       return loadTs('lib/affiliateOffers.ts', customMocks);
     }
@@ -271,19 +274,35 @@ test('authz: verifyAdminRequest rejects unauthenticated requests and non-admin u
   assert.equal(resRegular.status, 403);
   assert.match(resRegular.error, /admin role required/i);
 
-  // Case 4: Authenticated user with explicit admin role in app_metadata
+  // Case 4: Even an authenticated user with the admin role is denied for any other email.
+  const otherAdminUser = {
+    id: 'admin-rogue',
+    email: 'admin@euvida.cz',
+    app_metadata: { role: 'admin' },
+  };
+  const mockAuthClientOtherAdmin = {
+    auth: {
+      getUser: async () => ({ data: { user: otherAdminUser }, error: null }),
+    },
+  };
+  const reqAdmin = {
+    headers: { get: (name) => (name.toLowerCase() === 'authorization' ? 'Bearer admin-token' : null) },
+  };
+  const resOtherAdmin = await verifyAdminRequest(reqAdmin, mockAuthClientOtherAdmin);
+  assert.equal(resOtherAdmin.authorized, false);
+  assert.equal(resOtherAdmin.status, 403);
+  assert.match(resOtherAdmin.error, /authorized administrator account required/i);
+
+  // Case 5: Only rooten@seznam.cz with the explicit admin role is authorized.
   const adminUser = {
     id: 'admin-456',
-    email: 'admin@euvida.cz',
+    email: 'ROOTEN@SEZNAM.CZ',
     app_metadata: { role: 'admin' },
   };
   const mockAuthClientAdmin = {
     auth: {
       getUser: async () => ({ data: { user: adminUser }, error: null }),
     },
-  };
-  const reqAdmin = {
-    headers: { get: (name) => (name.toLowerCase() === 'authorization' ? 'Bearer admin-token' : null) },
   };
   const resAdmin = await verifyAdminRequest(reqAdmin, mockAuthClientAdmin);
   assert.equal(resAdmin.authorized, true);
@@ -298,7 +317,7 @@ test('authz: verifyAdminRequest fails closed for write paths when SUPABASE_SERVI
   try {
     const adminUser = {
       id: 'admin-456',
-      email: 'admin@euvida.cz',
+      email: 'rooten@seznam.cz',
       app_metadata: { role: 'admin' },
     };
     const mockAuthClient = {
@@ -380,6 +399,7 @@ test('XSS and script rejection: ad placement catalog rejects stored JS, HTML and
 
   assert.ok(WIDGET_CATALOG['travelpayouts_search_widget']);
   assert.ok(WIDGET_CATALOG['travelpayouts_banner']);
+  assert.ok(WIDGET_CATALOG['travelpayouts_script_widget']);
   assert.ok(WIDGET_CATALOG['internal_promo']);
 
   // Rejects arbitrary HTML / JS injection in params
@@ -402,6 +422,47 @@ test('XSS and script rejection: ad placement catalog rejects stored JS, HTML and
   const unknownResult = validateAdPlacementParams('unknown_evil_widget', {});
   assert.equal(unknownResult.valid, false);
   assert.match(unknownResult.error, /unknown widget type/i);
+});
+
+test('Travelpayouts script snippets are normalized to one allowlisted widget URL', () => {
+  const {
+    parseTravelpayoutsWidgetSnippet,
+    validateAdPlacementParams,
+  } = loadTs('lib/ad-placement-catalog.ts');
+  const scriptSrc = 'https://tpwgt.com/content?currency=EUR&trs=572910&shmarker=776456&locale=cs';
+  const snippet = `<script async src="${scriptSrc}"></script>`;
+
+  assert.deepEqual(parseTravelpayoutsWidgetSnippet(snippet), {
+    valid: true,
+    scriptSrc,
+  });
+  assert.deepEqual(parseTravelpayoutsWidgetSnippet(scriptSrc), {
+    valid: true,
+    scriptSrc,
+  });
+  assert.equal(
+    validateAdPlacementParams('travelpayouts_script_widget', { script_src: scriptSrc }).valid,
+    true
+  );
+
+  const rejected = [
+    '<script async src="https://evil.example/content?trs=572910&shmarker=776456"></script>',
+    '<script async src="https://tpwgt.com/content?trs=1&shmarker=776456"></script>',
+    '<script async src="https://tpwgt.com/content?trs=572910&shmarker=1"></script>',
+    '<script async src="https://tpwgt.com/other?trs=572910&shmarker=776456"></script>',
+    `<script async src="${scriptSrc}">alert(1)</script>`,
+    `<script async src="${scriptSrc}"></script><script src="${scriptSrc}"></script>`,
+  ];
+  for (const candidate of rejected) {
+    assert.equal(parseTravelpayoutsWidgetSnippet(candidate).valid, false, candidate);
+  }
+
+  assert.equal(
+    validateAdPlacementParams('travelpayouts_script_widget', {
+      script_src: 'https://tpwgt.com/content?trs=572910&shmarker=1',
+    }).valid,
+    false
+  );
 });
 
 // 3. URL allowlist tests for ad_placements and promotions
@@ -582,6 +643,19 @@ test('admin CRUD validation: enforces strict validation and optimistic locking',
   assert.equal(checkProviderWidget.valid, false);
   assert.match(checkProviderWidget.error, /provider|widget/i);
 
+  const scriptWidgetPlacement = {
+    ...mismatchedProviderPlacement,
+    provider: 'travelpayouts',
+    widget_type: 'travelpayouts_script_widget',
+    params: {
+      script_src: 'https://tpwgt.com/content?currency=EUR&trs=572910&shmarker=776456&locale=cs',
+    },
+    consent_category: 'functional',
+  };
+  assert.equal(validatePlacementRecord(scriptWidgetPlacement).valid, false);
+  scriptWidgetPlacement.consent_category = 'marketing';
+  assert.equal(validatePlacementRecord(scriptWidgetPlacement).valid, true);
+
   // Optimistic locking helper
   const { verifyOptimisticLock } = loadTs('lib/adminAuth.ts');
   assert.equal(verifyOptimisticLock({ version: 2 }, 2), true);
@@ -651,6 +725,22 @@ test('frontend placements: GlobalAdPlacement renders declarative markup and fail
   assert.match(html, /href="\/cs\/articles"/);
   // MUST NOT contain dangerouslySetInnerHTML or <script
   assert.doesNotMatch(html, /<script|<iframe|dangerouslySetInnerHTML|eval/);
+
+  const scriptPlacement = {
+    ...placement,
+    provider: 'travelpayouts',
+    widget_type: 'travelpayouts_script_widget',
+    consent_category: 'marketing',
+    params: {
+      script_src: 'https://tpwgt.com/content?currency=EUR&trs=572910&shmarker=776456&locale=cs',
+    },
+  };
+  const scriptWidgetHtml = renderToStaticMarkup(
+    React.createElement(PlacementContent, { placement: scriptPlacement, locale: 'cs' })
+  );
+  assert.match(scriptWidgetHtml, /data-widget-type="travelpayouts_script_widget"/);
+  assert.match(scriptWidgetHtml, /data-consent="marketing"/);
+  assert.doesNotMatch(scriptWidgetHtml, /<script|tpwgt\.com|dangerouslySetInnerHTML/);
 
   // Fail closed: invalid or null placement returns empty string
   assert.equal(renderToStaticMarkup(React.createElement(PlacementContent, { placement: null, locale: 'cs' })), '');

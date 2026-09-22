@@ -1,6 +1,7 @@
 'use client';
 
 import { supabase } from '@/lib/supabaseBrowserClient';
+import { isUserAdmin, loadAdminDataForSession } from '@/lib/adminIdentity';
 import { useState, useEffect, useCallback } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import ImageManager from '@/app/components/admin/ImageManager';
@@ -209,10 +210,23 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
-    fetchCountries();
-    fetchArticles();
+    const applySession = (nextSession: Session | null) => {
+      const authorized = isUserAdmin(nextSession?.user);
+      setSession(authorized ? nextSession : null);
+
+      if (nextSession && !authorized) {
+        setAuthError('Tento účet nemá přístup do administrace.');
+        return;
+      }
+
+      if (authorized) {
+        setAuthError('');
+        void loadAdminDataForSession(nextSession, [fetchCountries, fetchArticles]);
+      }
+    };
+
+    void supabase.auth.getSession().then(({ data: { session } }) => applySession(session));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => applySession(session));
     return () => subscription.unsubscribe();
   }, [fetchArticles, fetchCountries]);
 

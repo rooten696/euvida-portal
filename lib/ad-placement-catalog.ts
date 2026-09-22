@@ -12,6 +12,7 @@ export type AdConsentCategory = (typeof ALLOWED_CONSENT_CATEGORIES)[number];
 
 export const ALLOWED_HTTPS_HOSTS = new Set([
   'tp.media',
+  'tpwgt.com',
   'c104.travelpayouts.com',
   'whitelabel.travelpayouts.com',
   'euvida.cz',
@@ -64,6 +65,71 @@ export function isAllowlistedAdHost(urlString: string): boolean {
     return ALLOWED_HTTPS_HOSTS.has(parsed.hostname);
   } catch {
     return false;
+  }
+}
+
+export type ParsedTravelpayoutsWidgetSnippet =
+  | { valid: true; scriptSrc: string }
+  | { valid: false; error: string };
+
+export function parseTravelpayoutsWidgetSnippet(
+  value: string
+): ParsedTravelpayoutsWidgetSnippet {
+  if (typeof value !== 'string') {
+    return { valid: false, error: 'Travelpayouts widget code must be text' };
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed || trimmed.length > 8_192) {
+    return { valid: false, error: 'Travelpayouts widget code is empty or too long' };
+  }
+
+  let scriptSrc = trimmed;
+  if (!/^https:\/\//i.test(trimmed)) {
+    const scriptMatch = trimmed.match(/^<script\b([^>]*)>\s*<\/script>$/i);
+    if (!scriptMatch) {
+      return { valid: false, error: 'Paste one external <script ...></script> widget without inline code' };
+    }
+    const srcMatches = [...scriptMatch[1].matchAll(/\bsrc\s*=\s*(["'])(.*?)\1/gi)];
+    if (srcMatches.length !== 1 || !srcMatches[0][2]) {
+      return { valid: false, error: 'Travelpayouts widget must contain exactly one quoted src attribute' };
+    }
+    scriptSrc = srcMatches[0][2].replaceAll('&amp;', '&');
+  }
+
+  if (scriptSrc.length > 4_096) {
+    return { valid: false, error: 'Travelpayouts widget URL is too long' };
+  }
+
+  try {
+    const parsed = new URL(scriptSrc);
+    if (
+      parsed.protocol !== 'https:' ||
+      parsed.hostname !== 'tpwgt.com' ||
+      parsed.port !== '' ||
+      parsed.username ||
+      parsed.password ||
+      parsed.pathname !== '/content' ||
+      parsed.hash
+    ) {
+      return { valid: false, error: 'Widget URL must use exactly https://tpwgt.com/content' };
+    }
+
+    const trs = parsed.searchParams.getAll('trs');
+    const shmarker = parsed.searchParams.getAll('shmarker');
+    if (trs.length !== 1 || trs[0] !== '572910') {
+      return { valid: false, error: 'Widget URL must contain exactly one trs=572910' };
+    }
+    if (
+      shmarker.length !== 1 ||
+      !/^776456(?:\.[A-Za-z0-9_-]{1,64})?$/.test(shmarker[0])
+    ) {
+      return { valid: false, error: 'Widget URL must use shmarker=776456 (optional safe submarker allowed)' };
+    }
+
+    return { valid: true, scriptSrc: parsed.toString() };
+  } catch {
+    return { valid: false, error: 'Invalid Travelpayouts widget URL' };
   }
 }
 
@@ -124,6 +190,19 @@ export const WIDGET_CATALOG: Record<string, WidgetCatalogEntry> = {
         }
       }
       return { valid: true };
+    },
+  },
+  travelpayouts_script_widget: {
+    widgetType: 'travelpayouts_script_widget',
+    provider: 'travelpayouts',
+    allowedSlots: ['header', 'panel', 'footer'],
+    defaultConsentCategory: 'marketing',
+    validateParams: (params: Record<string, unknown>) => {
+      if (Object.keys(params).length !== 1 || typeof params.script_src !== 'string') {
+        return { valid: false, error: 'Travelpayouts script widget requires only script_src' };
+      }
+      const parsed = parseTravelpayoutsWidgetSnippet(params.script_src);
+      return parsed.valid ? { valid: true } : { valid: false, error: parsed.error };
     },
   },
   internal_promo: {

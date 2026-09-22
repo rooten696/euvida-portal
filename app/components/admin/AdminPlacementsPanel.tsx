@@ -2,7 +2,13 @@
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import type { AdPlacement, AdPlacementSlot } from '@/lib/articleTypes';
-import { ALLOWED_AD_SLOTS, ALLOWED_AD_PROVIDERS, ALLOWED_CONSENT_CATEGORIES, WIDGET_CATALOG } from '@/lib/ad-placement-catalog';
+import {
+  ALLOWED_AD_SLOTS,
+  ALLOWED_AD_PROVIDERS,
+  ALLOWED_CONSENT_CATEGORIES,
+  WIDGET_CATALOG,
+  parseTravelpayoutsWidgetSnippet,
+} from '@/lib/ad-placement-catalog';
 
 export default function AdminPlacementsPanel({
   accessToken,
@@ -155,11 +161,42 @@ export default function AdminPlacementsPanel({
     setStatusMessage('Ukládám...');
 
     let parsedParams: Record<string, unknown>;
-    try {
-      parsedParams = JSON.parse(formParamsJson);
-    } catch {
-      setStatusMessage('Chyba: parametry musí být platný JSON formát.');
-      return;
+    const rawParams = formParamsJson.trim();
+    if (
+      formWidgetType === 'travelpayouts_script_widget' &&
+      (rawParams.startsWith('<script') || /^https:\/\/tpwgt\.com\//i.test(rawParams))
+    ) {
+      const parsedWidget = parseTravelpayoutsWidgetSnippet(rawParams);
+      if (!parsedWidget.valid) {
+        setStatusMessage(`Chyba: ${parsedWidget.error}`);
+        return;
+      }
+      parsedParams = { script_src: parsedWidget.scriptSrc };
+    } else {
+      try {
+        parsedParams = JSON.parse(formParamsJson);
+      } catch {
+        setStatusMessage(
+          formWidgetType === 'travelpayouts_script_widget'
+            ? 'Chyba: vložte celý Travelpayouts <script> kód, URL widgetu nebo platný JSON.'
+            : 'Chyba: parametry musí být platný JSON formát.'
+        );
+        return;
+      }
+    }
+
+    if (formWidgetType === 'travelpayouts_script_widget') {
+      const scriptSrc = parsedParams.script_src;
+      if (typeof scriptSrc !== 'string') {
+        setStatusMessage('Chyba: Travelpayouts widget vyžaduje script_src.');
+        return;
+      }
+      const parsedWidget = parseTravelpayoutsWidgetSnippet(scriptSrc);
+      if (!parsedWidget.valid) {
+        setStatusMessage(`Chyba: ${parsedWidget.error}`);
+        return;
+      }
+      parsedParams = { script_src: parsedWidget.scriptSrc };
     }
 
     const payload = {
@@ -282,7 +319,15 @@ export default function AdminPlacementsPanel({
               <label className="text-[11px] font-semibold text-slate-400">Typ widgetu (z katalogu)</label>
               <select
                 value={formWidgetType}
-                onChange={e => setFormWidgetType(e.target.value)}
+                onChange={e => {
+                  const widgetType = e.target.value;
+                  const catalogEntry = WIDGET_CATALOG[widgetType];
+                  setFormWidgetType(widgetType);
+                  if (catalogEntry) {
+                    setFormProvider(catalogEntry.provider);
+                    setFormConsent(catalogEntry.defaultConsentCategory);
+                  }
+                }}
                 className="mt-1 w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-xs text-white"
               >
                 {Object.keys(WIDGET_CATALOG).map(widgetKey => (
@@ -315,13 +360,20 @@ export default function AdminPlacementsPanel({
 
           <div>
             <label className="text-[11px] font-semibold text-slate-400">
-              Parametry widgetu (JSON - ověřeno katalogem a allowlistem)
+              {formWidgetType === 'travelpayouts_script_widget'
+                ? 'Travelpayouts kód (<script> snippet, přímá tpwgt.com URL nebo uložený JSON)'
+                : 'Parametry widgetu (JSON - ověřeno katalogem a allowlistem)'}
             </label>
             <textarea
-              rows={5}
+              rows={formWidgetType === 'travelpayouts_script_widget' ? 7 : 5}
               required
               value={formParamsJson}
               onChange={e => setFormParamsJson(e.target.value)}
+              placeholder={
+                formWidgetType === 'travelpayouts_script_widget'
+                  ? '<script async src="https://tpwgt.com/content?..."></script>'
+                  : undefined
+              }
               className="mt-1 w-full font-mono rounded-lg border border-slate-700 bg-slate-950 p-3 text-xs text-emerald-300"
             />
           </div>
