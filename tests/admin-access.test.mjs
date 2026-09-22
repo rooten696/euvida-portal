@@ -30,6 +30,7 @@ test('all admin API routes use the centralized root-email authorization gate', (
     'app/api/admin/promotions/route.ts',
     'app/api/admin/region-image/route.ts',
     'app/api/admin/upload-image/route.ts',
+    'app/api/revalidate/route.ts',
   ];
 
   for (const routePath of routePaths) {

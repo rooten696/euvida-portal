@@ -1,12 +1,8 @@
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { verifyAdminRequest } from '@/lib/adminAuth';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 function revalidateCommonPaths(slug?: string | null) {
   revalidatePath('/', 'layout');
@@ -25,19 +21,9 @@ function revalidateCommonPaths(slug?: string | null) {
 }
 
 export async function POST(request: NextRequest) {
-  const authorization = request.headers.get('authorization') ?? '';
-  const accessToken = authorization.startsWith('Bearer ')
-    ? authorization.slice('Bearer '.length)
-    : '';
-
-  if (!accessToken) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
-  }
-
-  const { data, error } = await supabase.auth.getUser(accessToken);
-
-  if (error || !data.user) {
-    return NextResponse.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
+  const auth = await verifyAdminRequest(request, undefined, { requireWrite: false });
+  if (!auth.authorized) {
+    return NextResponse.json({ ok: false, error: auth.error }, { status: auth.status });
   }
 
   const body = (await request.json().catch(() => ({}))) as { slug?: string };
