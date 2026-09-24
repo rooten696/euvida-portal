@@ -238,6 +238,9 @@ export function parseTravelpayoutsDriveSnippet(value: string): ParsedTravelpayou
   if (scriptSrc.length > 2_048) {
     return { valid: false, error: 'Drive script URL is too long' };
   }
+  if (scriptSrc.includes('#')) {
+    return { valid: false, error: 'Drive script URL cannot contain a fragment delimiter' };
+  }
 
   try {
     const parsed = new URL(scriptSrc);

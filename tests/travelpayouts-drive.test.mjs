@@ -286,7 +286,8 @@ test('snippet validation: rejects wrong host, wrong path, wrong scheme, and wron
     '<script async src="https://emrldco.com/NTcyOTEw.js?t=572910">alert(1)</script>',
     '<script async src="https://emrldco.com/NTcyOTEw.js?t=572910"></script><script src="https://evil.com/x.js"></script>',
     '<script>eval("evil")</script>',
-    // Hash fragments
+    // Hash fragments, including an empty fragment delimiter
+    'https://emrldco.com/NTcyOTEw.js?t=572910#',
     'https://emrldco.com/NTcyOTEw.js?t=572910#malicious-fragment',
   ];
 
