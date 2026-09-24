@@ -243,20 +243,22 @@ test('snippet validation: accepts exact official Drive URL and snippet with expe
     assert.equal(parsedSnippet.trs, '572910');
   }
 
-  // URL with marker and sub_id
-  const urlWithSubId = 'https://emrldco.com/NTcyOTEw.js?t=572910&marker=776456.eu_cs_article_strunjan_drive&sub_id=eu_cs_article_strunjan_drive';
-  const parsedWithSubId = parseTravelpayoutsDriveSnippet(urlWithSubId);
-  assert.equal(parsedWithSubId.valid, true);
-  if (parsedWithSubId.valid) {
-    assert.equal(parsedWithSubId.marker, '776456.eu_cs_article_strunjan_drive');
-    assert.equal(parsedWithSubId.subId, 'eu_cs_article_strunjan_drive');
+  // Drive supports page-level tracking as a marker submarker, not a separate sub_id query parameter.
+  const urlWithMarker = 'https://emrldco.com/NTcyOTEw.js?t=572910&marker=776456.eu_cs_article_strunjan_drive';
+  const parsedWithMarker = parseTravelpayoutsDriveSnippet(urlWithMarker);
+  assert.equal(parsedWithMarker.valid, true);
+  if (parsedWithMarker.valid) {
+    assert.equal(parsedWithMarker.marker, '776456.eu_cs_article_strunjan_drive');
   }
 
-  // URL builder produces valid URL
+  // URL builder emits only parameters consumed by the official loader.
   const built = buildDriveScriptUrl({
     subId: 'eu_cs_article_strunjan_drive',
   });
   assert.equal(parseTravelpayoutsDriveSnippet(built).valid, true);
+  const builtUrl = new URL(built);
+  assert.equal(builtUrl.searchParams.get('marker'), '776456.eu_cs_article_strunjan_drive');
+  assert.equal(builtUrl.searchParams.has('sub_id'), false);
 });
 
 test('snippet validation: rejects wrong host, wrong path, wrong scheme, and wrong account', () => {
@@ -305,7 +307,8 @@ test('snippet validation: rejects duplicate query parameters and unknown paramet
     'https://emrldco.com/NTcyOTEw.js?t=572910&t=123456',
     // Duplicate marker
     'https://emrldco.com/NTcyOTEw.js?t=572910&marker=776456&marker=776456',
-    // Duplicate sub_id
+    // Unsupported sub_id parameter (Drive uses marker submarkers)
+    'https://emrldco.com/NTcyOTEw.js?t=572910&sub_id=sub1',
     'https://emrldco.com/NTcyOTEw.js?t=572910&sub_id=sub1&sub_id=sub2',
     // Unexpected query parameter
     'https://emrldco.com/NTcyOTEw.js?t=572910&injected=true',
@@ -438,7 +441,7 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
       };
 
       // Simulate the inner component effect execution
-      const scriptSrc = 'https://emrldco.com/NTcyOTEw.js?t=572910&marker=776456.test&sub_id=test';
+      const scriptSrc = 'https://emrldco.com/NTcyOTEw.js?t=572910&marker=776456.test';
       const subId = 'test';
 
       // Verify double-check logic

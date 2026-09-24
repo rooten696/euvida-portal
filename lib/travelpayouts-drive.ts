@@ -187,7 +187,6 @@ export type ParsedTravelpayoutsDriveSnippet =
       scriptSrc: string;
       trs: string;
       marker?: string;
-      subId?: string;
     }
   | {
       valid: false;
@@ -202,6 +201,7 @@ export type ParsedTravelpayoutsDriveSnippet =
  * - exact path /NTcyOTEw.js (Base64 of TRS 572910)
  * - exact project account t=572910
  * - marker matching project affiliate marker 776456 (or 776456.submarker)
+ * - only parameters consumed by the official loader (`t` and `marker`)
  * - duplicate parameter rejection
  * - no raw HTML or inline script bodies
  */
@@ -258,7 +258,7 @@ export function parseTravelpayoutsDriveSnippet(value: string): ParsedTravelpayou
     }
 
     // Verify allowed search param keys
-    const allowedKeys = new Set(['t', 'marker', 'sub_id']);
+    const allowedKeys = new Set(['t', 'marker']);
     for (const key of parsed.searchParams.keys()) {
       if (!allowedKeys.has(key)) {
         return { valid: false, error: `Disallowed query parameter: ${key}` };
@@ -287,25 +287,11 @@ export function parseTravelpayoutsDriveSnippet(value: string): ParsedTravelpayou
       }
     }
 
-    // Optional sub_id parameter
-    let subId: string | undefined;
-    const subIdValues = parsed.searchParams.getAll('sub_id');
-    if (subIdValues.length > 1) {
-      return { valid: false, error: 'Drive URL cannot contain duplicate sub_id parameters' };
-    }
-    if (subIdValues.length === 1) {
-      subId = subIdValues[0];
-      if (!/^[a-zA-Z0-9_.-]{1,64}$/.test(subId)) {
-        return { valid: false, error: 'sub_id contains invalid characters or exceeds 64 chars' };
-      }
-    }
-
     return {
       valid: true,
       scriptSrc: parsed.toString(),
       trs: DRIVE_TRS,
       marker,
-      subId,
     };
   } catch {
     return { valid: false, error: 'Invalid Drive script URL' };
@@ -323,10 +309,6 @@ export function buildDriveScriptUrl(options?: { subId?: string; marker?: string 
     url.searchParams.set('marker', options.marker);
   } else if (options?.subId) {
     url.searchParams.set('marker', `${DRIVE_DEFAULT_MARKER}.${options.subId}`);
-  }
-
-  if (options?.subId) {
-    url.searchParams.set('sub_id', options.subId);
   }
 
   return url.toString();
