@@ -474,6 +474,9 @@ test('URL allowlist: validates exact HTTPS host and path allowlists', () => {
   assert.equal(isAllowlistedAdHost('https://whitelabel.travelpayouts.com/search'), true);
   assert.equal(isAllowlistedAdHost('https://euvida.cz/about'), true);
 
+  // Drive's executable origin is purpose-specific and must never widen the generic URL boundary.
+  assert.equal(isAllowlistedAdHost('https://emrldco.com/arbitrary-target'), false);
+
   // Rejected non-allowlisted or malformed URLs
   assert.equal(isAllowlistedAdHost('http://tp.media/content'), false); // plain http
   assert.equal(isAllowlistedAdHost('https://evil-tp.media/content'), false);

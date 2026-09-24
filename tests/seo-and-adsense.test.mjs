@@ -163,6 +163,9 @@ test('integrations: preserve GA4 and render contextual affiliate offers without 
 
   const footerContent = fs.readFileSync(path.resolve(rootDir, 'app/components/Footer.tsx'), 'utf8');
   assert.doesNotMatch(footerContent, /tpwgt\.com|emrldco\.com/, 'No unconditional affiliate script');
+  const cookieBannerContent = fs.readFileSync(path.resolve(rootDir, 'app/components/CookieBanner.tsx'), 'utf8');
+  assert.match(cookieBannerContent, /Nastavení cookies/, 'Users must be able to reopen cookie settings');
+  assert.match(cookieBannerContent, /setShowBanner\(true\)/, 'Cookie settings control must reopen the choices');
   const articleContent = fs.readFileSync(path.resolve(rootDir, 'app/[locale]/article/[slug]/page.tsx'), 'utf8');
   assert.match(articleContent, /<ArticlePartnerOffers slug=\{slug\} locale=\{locale\}/);
 });

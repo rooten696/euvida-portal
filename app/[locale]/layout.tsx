@@ -6,6 +6,7 @@ import Footer from '../components/Footer';
 import CookieBanner from '../components/CookieBanner'; // 🍪 Přidán import banneru
 import ThemeInitializer from '../components/ThemeInitializer';
 import GlobalAdPlacement from '../components/ads/GlobalAdPlacement';
+import TravelpayoutsDriveExperiment from '../components/ads/TravelpayoutsDriveExperiment';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
 import { GoogleAnalytics } from '@next/third-parties/google';
@@ -163,6 +164,9 @@ export default async function LocaleLayout({
 
             {/* 🍪 COOKIE BANNER musí být uvnitř Provideru, aby měl přístup k překladům */}
             <CookieBanner />
+
+            {/* 🚗 TRAVELPAYOUTS DRIVE EXPERIMENT (Consent-gated client widget) */}
+            <TravelpayoutsDriveExperiment />
           </div>
         </NextIntlClientProvider>
 
