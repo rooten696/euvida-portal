@@ -16,6 +16,28 @@ export function hasDriveMarketingConsent(cookieConsentValue?: string | null): bo
   return cookieConsentValue === COOKIE_CONSENT_GRANTED;
 }
 
+interface DriveReloadDecision {
+  driveWasEnabled: boolean;
+  routeEligible: boolean;
+  hasConsent: boolean;
+  pathnameChanged: boolean;
+}
+
+/**
+ * Once a third-party script has executed, removing its script tag cannot undo
+ * listeners or global state. A full document reload is therefore required when
+ * consent is revoked, the route leaves the allowlist, or an SPA navigation
+ * needs a fresh page URL and marker.
+ */
+export function shouldReloadDriveDocument({
+  driveWasEnabled,
+  routeEligible,
+  hasConsent,
+  pathnameChanged,
+}: DriveReloadDecision): boolean {
+  return driveWasEnabled && (!routeEligible || !hasConsent || pathnameChanged);
+}
+
 interface TravelpayoutsDriveInnerProps {
   scriptSrc: string;
   subId: string;
@@ -80,22 +102,19 @@ export function TravelpayoutsDriveInner({ scriptSrc, subId }: TravelpayoutsDrive
  * - Route eligibility (public articles, regions, and places only; excludes homepage, admin, legal, system)
  * - Strict marketing cookie consent gating (never loads on denied/missing consent)
  * - Zero SSR vendor scripts
- * - Immediate cleanup and removal on consent revocation
+ * - Full document purge on consent revocation or client-side route changes after activation
  * - Per-page deterministic SubID without PII
  */
 export function TravelpayoutsDriveExperiment() {
   const pathname = usePathname();
   const [canRender, setCanRender] = React.useState(false);
+  const driveWasEnabledRef = React.useRef(false);
+  const activePathRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
     const refreshState = () => {
       // 1. Route eligibility check
       const eligibility = isDriveEligibleRoute(pathname || '');
-      if (!eligibility.eligible) {
-        setCanRender(false);
-        return;
-      }
-
       // 2. Marketing consent check
       let consent: string | null = null;
       try {
@@ -104,7 +123,30 @@ export function TravelpayoutsDriveExperiment() {
         // Storage disabled or unavailable
       }
 
-      setCanRender(hasDriveMarketingConsent(consent));
+      const hasConsent = hasDriveMarketingConsent(consent);
+      const pathnameChanged =
+        activePathRef.current !== null && activePathRef.current !== (pathname || '');
+
+      if (
+        shouldReloadDriveDocument({
+          driveWasEnabled: driveWasEnabledRef.current,
+          routeEligible: eligibility.eligible,
+          hasConsent,
+          pathnameChanged,
+        })
+      ) {
+        window.location.reload();
+        return;
+      }
+
+      if (!eligibility.eligible || !hasConsent) {
+        setCanRender(false);
+        return;
+      }
+
+      driveWasEnabledRef.current = true;
+      activePathRef.current = pathname || '';
+      setCanRender(true);
     };
 
     // Keep SSR and first client mount empty; synchronize after hydration

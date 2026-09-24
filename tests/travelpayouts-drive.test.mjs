@@ -353,6 +353,33 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
   assert.equal(hasDriveMarketingConsent('denied'), false);
   assert.equal(hasDriveMarketingConsent('granted'), true);
 
+  const { shouldReloadDriveDocument } = loadTs('app/components/ads/TravelpayoutsDriveExperiment.tsx');
+  assert.equal(
+    shouldReloadDriveDocument({ driveWasEnabled: false, routeEligible: false, hasConsent: false, pathnameChanged: true }),
+    false,
+    'Never reload before Drive has been enabled in this document'
+  );
+  assert.equal(
+    shouldReloadDriveDocument({ driveWasEnabled: true, routeEligible: true, hasConsent: true, pathnameChanged: false }),
+    false,
+    'Keep the current document while consent and pathname remain unchanged'
+  );
+  assert.equal(
+    shouldReloadDriveDocument({ driveWasEnabled: true, routeEligible: true, hasConsent: false, pathnameChanged: false }),
+    true,
+    'Consent revocation must purge already-executed vendor state with a full reload'
+  );
+  assert.equal(
+    shouldReloadDriveDocument({ driveWasEnabled: true, routeEligible: false, hasConsent: true, pathnameChanged: true }),
+    true,
+    'Leaving the allowlisted route scope must purge vendor state'
+  );
+  assert.equal(
+    shouldReloadDriveDocument({ driveWasEnabled: true, routeEligible: true, hasConsent: true, pathnameChanged: true }),
+    true,
+    'SPA navigation between eligible pages must reload Drive with the new page URL and marker'
+  );
+
   // Full DOM effect lifecycle verification
   const { TravelpayoutsDriveInner } = loadTs('app/components/ads/TravelpayoutsDriveExperiment.tsx');
   assert.ok(TravelpayoutsDriveInner, 'TravelpayoutsDriveInner component must be exported for direct verification');
