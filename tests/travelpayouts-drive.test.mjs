@@ -477,4 +477,3 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
     }
   }
 });
-
