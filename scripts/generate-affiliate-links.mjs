@@ -1,7 +1,7 @@
 import { readFile, stat, writeFile, rename, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { reusableAffiliateLink } from './affiliate-link-utils.mjs';
+import { normalizeAffiliateSource, reusableAffiliateLink } from './affiliate-link-utils.mjs';
 
 const root = new URL('../', import.meta.url);
 const locales = ['cs', 'en', 'de', 'fr', 'es'];
@@ -28,15 +28,9 @@ try {
   catch (error) { if (error.code !== 'ENOENT') throw error; }
   const requests = Object.entries(offers).flatMap(([slug, entries]) => locales.flatMap(locale =>
     entries.map(offer => {
-      const source = new URL(offer.url);
-      if (!['www.booking.com', 'www.getyourguide.com', 'www.viator.com'].includes(source.hostname) || source.protocol !== 'https:' || source.username || source.password) {
-        throw new Error('source host');
-      }
-      if (offer.provider === 'Booking.com') {
-        source.pathname = source.pathname.replace(/\.html$/, `.${locale === 'en' ? 'en-gb' : locale}.html`);
-      }
-      // Keep the verified GetYourGuide product URL; the UI is localized separately.
-      return { slug, locale, id: offer.id, url: source.href, sub_id: `eu_${locale}_${slug}_${offer.id}_end_v1` };
+      const sourceUrl = normalizeAffiliateSource(offer, locale);
+      // Keep verified non-Booking product or destination URLs; the UI is localized separately.
+      return { slug, locale, id: offer.id, url: sourceUrl, sub_id: `eu_${locale}_${slug}_${offer.id}_end_v1` };
     })
   ));
   const output = { generatedAt: new Date().toISOString(), project: 572910, marker: 776456, articles: {} };

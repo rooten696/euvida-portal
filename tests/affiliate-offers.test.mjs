@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createRequire } from 'node:module';
 import ts from 'typescript';
-import { reusableAffiliateLink } from '../scripts/affiliate-link-utils.mjs';
+import { normalizeAffiliateSource, reusableAffiliateLink } from '../scripts/affiliate-link-utils.mjs';
 
 const require = createRequire(import.meta.url);
 const { renderToStaticMarkup } = require('react-dom/server');
@@ -61,6 +61,21 @@ test('all curated offers have five complete translations and distinct tracked de
     }
   }
   assert.equal(seen.size, Object.values(catalog).reduce((sum, offers) => sum + offers.length * locales.length, 0));
+});
+
+test('affiliate generator accepts every approved provider while rejecting unapproved hosts', () => {
+  assert.equal(
+    normalizeAffiliateSource({ provider: 'Tiqets', url: 'https://www.tiqets.com/en/postojna-attractions-c71597/' }, 'cs'),
+    'https://www.tiqets.com/en/postojna-attractions-c71597/',
+  );
+  assert.equal(
+    normalizeAffiliateSource({ provider: 'Booking.com', url: 'https://www.booking.com/city/si/postojna.html' }, 'de'),
+    'https://www.booking.com/city/si/postojna.de.html',
+  );
+  assert.throws(
+    () => normalizeAffiliateSource({ provider: 'Unknown', url: 'https://example.com/place' }, 'cs'),
+    /source host/,
+  );
 });
 
 test('cached links are reused only for the exact destination, locale, placement and account', () => {
