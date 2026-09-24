@@ -13,7 +13,6 @@ export type AdConsentCategory = (typeof ALLOWED_CONSENT_CATEGORIES)[number];
 export const ALLOWED_HTTPS_HOSTS = new Set([
   'tp.media',
   'tpwgt.com',
-  'emrldco.com',
   'c104.travelpayouts.com',
   'whitelabel.travelpayouts.com',
   'euvida.cz',

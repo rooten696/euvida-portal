@@ -38,16 +38,30 @@ export function shouldReloadDriveDocument({
   return driveWasEnabled && (!routeEligible || !hasConsent || pathnameChanged);
 }
 
+interface DriveRenderDecision {
+  canRender: boolean;
+  activePathname: string | null;
+  pathname: string;
+}
+
+/** Prevents a new route's vendor script from mounting before the reload effect runs. */
+export function shouldSuppressDriveRender({
+  canRender,
+  activePathname,
+  pathname,
+}: DriveRenderDecision): boolean {
+  return !canRender || (activePathname !== null && activePathname !== pathname);
+}
+
 interface TravelpayoutsDriveInnerProps {
   scriptSrc: string;
-  subId: string;
 }
 
 /**
  * Inner widget component enforcing defense-in-depth consent self-check,
  * runtime URL re-validation, controlled script attributes and DOM cleanup.
  */
-export function TravelpayoutsDriveInner({ scriptSrc, subId }: TravelpayoutsDriveInnerProps) {
+export function TravelpayoutsDriveInner({ scriptSrc }: TravelpayoutsDriveInnerProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
@@ -77,7 +91,6 @@ export function TravelpayoutsDriveInner({ scriptSrc, subId }: TravelpayoutsDrive
     const script = document.createElement('script');
     script.async = true;
     script.setAttribute('data-cmp-ab', '2');
-    script.setAttribute('data-sub-id', subId);
     script.id = 'travelpayouts-drive-script';
     script.referrerPolicy = 'strict-origin-when-cross-origin';
     script.src = parsed.scriptSrc;
@@ -90,7 +103,7 @@ export function TravelpayoutsDriveInner({ scriptSrc, subId }: TravelpayoutsDrive
         script.remove();
       }
     };
-  }, [scriptSrc, subId]);
+  }, [scriptSrc]);
 
   return <div id="travelpayouts-drive-container" ref={containerRef} data-testid="travelpayouts-drive-container" />;
 }
@@ -108,8 +121,9 @@ export function TravelpayoutsDriveInner({ scriptSrc, subId }: TravelpayoutsDrive
 export function TravelpayoutsDriveExperiment() {
   const pathname = usePathname();
   const [canRender, setCanRender] = React.useState(false);
+  const [activePathname, setActivePathname] = React.useState<string | null>(null);
   const driveWasEnabledRef = React.useRef(false);
-  const activePathRef = React.useRef<string | null>(null);
+  const reloadRequestedRef = React.useRef(false);
 
   React.useEffect(() => {
     const refreshState = () => {
@@ -125,7 +139,7 @@ export function TravelpayoutsDriveExperiment() {
 
       const hasConsent = hasDriveMarketingConsent(consent);
       const pathnameChanged =
-        activePathRef.current !== null && activePathRef.current !== (pathname || '');
+        activePathname !== null && activePathname !== (pathname || '');
 
       if (
         shouldReloadDriveDocument({
@@ -135,7 +149,11 @@ export function TravelpayoutsDriveExperiment() {
           pathnameChanged,
         })
       ) {
-        window.location.reload();
+        setCanRender(false);
+        if (!reloadRequestedRef.current) {
+          reloadRequestedRef.current = true;
+          window.location.reload();
+        }
         return;
       }
 
@@ -145,7 +163,7 @@ export function TravelpayoutsDriveExperiment() {
       }
 
       driveWasEnabledRef.current = true;
-      activePathRef.current = pathname || '';
+      setActivePathname(pathname || '');
       setCanRender(true);
     };
 
@@ -162,13 +180,20 @@ export function TravelpayoutsDriveExperiment() {
         window.removeEventListener(evt, refreshState);
       }
     };
-  }, [pathname]);
+  }, [pathname, activePathname]);
 
-  if (!canRender) {
+  const normalizedPathname = pathname || '';
+  if (
+    shouldSuppressDriveRender({
+      canRender,
+      activePathname,
+      pathname: normalizedPathname,
+    })
+  ) {
     return null;
   }
 
-  const eligibility = isDriveEligibleRoute(pathname || '');
+  const eligibility = isDriveEligibleRoute(normalizedPathname);
   if (!eligibility.eligible || !eligibility.pageType || !eligibility.locale || !eligibility.id) {
     return null;
   }
@@ -182,7 +207,7 @@ export function TravelpayoutsDriveExperiment() {
 
   const scriptSrc = buildDriveScriptUrl({ subId });
 
-  return <TravelpayoutsDriveInner scriptSrc={scriptSrc} subId={subId} />;
+  return <TravelpayoutsDriveInner scriptSrc={scriptSrc} />;
 }
 
 export default TravelpayoutsDriveExperiment;

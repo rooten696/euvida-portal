@@ -339,7 +339,7 @@ test('SSR rendering: server markup contains NO vendor script, no emrldco.com and
 
 // 6. Client Consent Gate and Revoke Cleanup Tests
 test('consent and cleanup: loads script only on granted marketing consent and cleans up on revoke', async () => {
-  const { TravelpayoutsDriveExperiment, hasDriveMarketingConsent } = loadTs(
+  const { hasDriveMarketingConsent } = loadTs(
     'app/components/ads/TravelpayoutsDriveExperiment.tsx',
     {
       'next/navigation': {
@@ -353,7 +353,9 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
   assert.equal(hasDriveMarketingConsent('denied'), false);
   assert.equal(hasDriveMarketingConsent('granted'), true);
 
-  const { shouldReloadDriveDocument } = loadTs('app/components/ads/TravelpayoutsDriveExperiment.tsx');
+  const { shouldReloadDriveDocument, shouldSuppressDriveRender } = loadTs(
+    'app/components/ads/TravelpayoutsDriveExperiment.tsx'
+  );
   assert.equal(
     shouldReloadDriveDocument({ driveWasEnabled: false, routeEligible: false, hasConsent: false, pathnameChanged: true }),
     false,
@@ -379,56 +381,25 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
     true,
     'SPA navigation between eligible pages must reload Drive with the new page URL and marker'
   );
+  assert.equal(
+    shouldSuppressDriveRender({ canRender: true, activePathname: '/cs/article/old', pathname: '/cs/article/new' }),
+    true,
+    'The new route must not render a second vendor script before the full reload'
+  );
+  assert.equal(
+    shouldSuppressDriveRender({ canRender: true, activePathname: '/cs/article/old', pathname: '/cs/article/old' }),
+    false,
+    'The active route remains renderable while its pathname is unchanged'
+  );
 
   // Full DOM effect lifecycle verification
   const { TravelpayoutsDriveInner } = loadTs('app/components/ads/TravelpayoutsDriveExperiment.tsx');
   assert.ok(TravelpayoutsDriveInner, 'TravelpayoutsDriveInner component must be exported for direct verification');
 
-  // Case 1: Consent denied -> Inner effect must NOT append any script (double consent gate)
-  {
-    const fakeContainer = {
-      children: [],
-      replaceChildren() { this.children = []; },
-      appendChild(child) { this.children.push(child); return child; },
-    };
-    let scriptCreated = false;
-    const originalWindow = global.window;
-    const originalDocument = global.document;
+  // Case 1: denied consent must fail closed before any script insertion.
+  assert.equal(hasDriveMarketingConsent('denied'), false);
 
-    try {
-      global.window = {
-        localStorage: {
-          getItem: (key) => (key === 'cookie_consent' ? 'denied' : null),
-        },
-      };
-      global.document = {
-        createElement: (tag) => {
-          if (tag === 'script') scriptCreated = true;
-          return {};
-        },
-      };
-
-      // Extract effect logic:
-      // Inner effect re-checks consent before DOM manipulation
-      let effectRan = false;
-      const fakeReact = {
-        useRef: () => ({ current: fakeContainer }),
-        useEffect: (fn) => {
-          effectRan = true;
-          const cleanup = fn();
-          if (cleanup) cleanup();
-        },
-      };
-
-      // Verify that with denied consent, zero script tags are created
-      assert.equal(hasDriveMarketingConsent(global.window.localStorage.getItem('cookie_consent')), false);
-    } finally {
-      global.window = originalWindow;
-      global.document = originalDocument;
-    }
-  }
-
-  // Case 2: Consent granted -> Inner effect creates controlled script, appends to container, and cleans up on unmount/revoke
+  // Case 2: granted consent uses only controlled script attributes and cleanup.
   {
     const fakeContainer = {
       children: [],
@@ -469,7 +440,6 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
 
       // Simulate the inner component effect execution
       const scriptSrc = 'https://emrldco.com/NTcyOTEw.js?t=572910&marker=776456.test';
-      const subId = 'test';
 
       // Verify double-check logic
       const consent = global.window.localStorage.getItem('cookie_consent');
@@ -479,7 +449,6 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
       const script = global.document.createElement('script');
       script.async = true;
       script.setAttribute('data-cmp-ab', '2');
-      script.setAttribute('data-sub-id', subId);
       script.id = 'travelpayouts-drive-script';
       script.referrerPolicy = 'strict-origin-when-cross-origin';
       script.src = scriptSrc;
@@ -488,7 +457,6 @@ test('consent and cleanup: loads script only on granted marketing consent and cl
       assert.equal(fakeContainer.children.length, 1);
       assert.equal(script.async, true);
       assert.equal(script.attrs['data-cmp-ab'], '2');
-      assert.equal(script.attrs['data-sub-id'], 'test');
       assert.equal(script.referrerPolicy, 'strict-origin-when-cross-origin');
       assert.equal(script.src, scriptSrc);
 

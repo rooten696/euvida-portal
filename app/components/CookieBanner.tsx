@@ -48,7 +48,18 @@ export default function CookieBanner() {
     setShowBanner(false);
   };
 
-  if (!showBanner) return null;
+  if (!showBanner) {
+    return (
+      <button
+        type="button"
+        onClick={() => setShowBanner(true)}
+        className="fixed bottom-4 left-4 z-50 rounded-full border border-white/10 bg-slate-900/90 px-4 py-2 text-xs font-semibold text-slate-300 shadow-lg backdrop-blur transition-colors hover:text-white"
+        aria-label="Otevřít nastavení cookies"
+      >
+        Nastavení cookies
+      </button>
+    );
+  }
 
   return (
     <div className="fixed bottom-6 left-6 right-6 z-[100] md:max-w-md md:left-auto">
