@@ -1,6 +1,7 @@
 import CountryArticleExplorer from '@/app/components/country/CountryArticleExplorer';
 import DestinationCard from '@/app/components/destination/DestinationCard';
 import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
+import DestinationPartnerOffers from '@/app/components/destination/DestinationPartnerOffers';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import SafeImage from '@/app/components/SafeImage';
@@ -266,6 +267,23 @@ export default async function CountryPage({ params }: CountryPageParams) {
     countryResult.data as CountryDestination,
     locale
   );
+
+  let destinationPromotions = null;
+  try {
+    const { data: promoData, error: promoError } = await supabase
+      .from('promotions')
+      .select('id, campaign_id, provider, placement, title, description, call_to_action, links, active, sort_order, start_at, end_at')
+      .eq('target_type', 'country')
+      .eq('target_key', id)
+      .eq('active', true)
+      .order('sort_order', { ascending: true });
+    if (!promoError && promoData && promoData.length > 0) {
+      destinationPromotions = promoData;
+    }
+  } catch {
+    destinationPromotions = null;
+  }
+
   const rawRegions = (regionsResult.data ?? []) as RegionDestination[];
   const articles = sortArticles((articlesResult.data ?? []) as Article[]);
   const articleCountByRegion = countBy(articles, (article) => article.region_id);
@@ -442,6 +460,14 @@ export default async function CountryPage({ params }: CountryPageParams) {
             ))}
           </section>
         )}
+
+        <DestinationPartnerOffers
+          targetType="country"
+          targetId={id}
+          locale={locale}
+          destinationName={displayCountry.name}
+          promotions={destinationPromotions}
+        />
 
         {regions.length > 0 && (
           <section id="regions">

@@ -22,8 +22,9 @@ function load(relativePath, links = generated) {
   new Function('require', 'exports', 'module', code)((id) => {
     if (id === '@/data/affiliate-offers.json') return catalog;
     if (id === '@/data/affiliate-links.json') return links;
-    if (id === '@/lib/affiliate-link-validation.mjs') return require(path.resolve('lib/affiliate-link-validation.mjs'));
-    if (id === '@/lib/affiliateOffers') return load('lib/affiliateOffers.ts', links);
+    if (id === '@/lib/affiliate-link-validation.mjs' || id === './affiliate-link-validation.mjs') return require(path.resolve('lib/affiliate-link-validation.mjs'));
+    if (id === '@/lib/destination-promotions.mjs' || id === './destination-promotions.mjs') return require(path.resolve('lib/destination-promotions.mjs'));
+    if (id === '@/lib/affiliateOffers' || id === './affiliateOffers') return load('lib/affiliateOffers.ts', links);
     return require(id);
   }, moduleObj.exports, moduleObj);
   return moduleObj.exports;

@@ -1,4 +1,5 @@
 import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
+import DestinationPartnerOffers from '@/app/components/destination/DestinationPartnerOffers';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
 import FavoriteButton from '@/app/components/FavoriteButton';
 import RegionArticleExplorer from '@/app/components/region/RegionArticleExplorer';
@@ -312,6 +313,22 @@ export default async function RegionPage({ params }: RegionPageParams) {
   const categories = categoryOptions(articles, locale);
   const countryHref = `/${locale}/country/${displayRegion.country_id}`;
 
+  let destinationPromotions = null;
+  try {
+    const { data: promoData, error: promoError } = await supabase
+      .from('promotions')
+      .select('id, campaign_id, provider, placement, title, description, call_to_action, links, active, sort_order, start_at, end_at')
+      .eq('target_type', 'region')
+      .eq('target_key', id)
+      .eq('active', true)
+      .order('sort_order', { ascending: true });
+    if (!promoError && promoData && promoData.length > 0) {
+      destinationPromotions = promoData;
+    }
+  } catch {
+    destinationPromotions = null;
+  }
+
   const seasons: SeasonTemperature[] = [
     {
       label: getDestinationLabel(locale, 'spring'),
@@ -543,6 +560,14 @@ export default async function RegionPage({ params }: RegionPageParams) {
             </div>
           </section>
         )}
+
+        <DestinationPartnerOffers
+          targetType="region"
+          targetId={id}
+          locale={locale}
+          destinationName={displayRegion.name}
+          promotions={destinationPromotions}
+        />
 
         <section className="grid grid-cols-1 gap-5 md:grid-cols-2">
           {sections.map((section) => (

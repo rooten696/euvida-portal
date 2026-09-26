@@ -1,6 +1,7 @@
 import catalog from '@/data/affiliate-offers.json';
 import generatedLinks from '@/data/affiliate-links.json';
 import { isValidAffiliateUrl } from '@/lib/affiliate-link-validation.mjs';
+import { buildDestinationSubId } from '@/lib/destination-promotions.mjs';
 import type {
   Article,
   LegacyPracticalInfoPartnerOffers,
@@ -21,41 +22,61 @@ type LinkCatalog = Record<string, Partial<Record<SupportedLocale, Record<string,
 export const affiliateLabels = {
   cs: {
     heading: 'Naplánujte si pobyt',
+    regionHeading: 'Naplánujte si cestu do regionu',
+    countryHeading: 'Naplánujte si cestu do země',
     label: 'Partnerské nabídky',
     stayAction: 'Vybrat ubytování',
     activityAction: 'Ověřit termín a cenu',
+    flightAction: 'Najít letenky',
+    carAction: 'Půjčit auto',
     newTab: 'Otevře se v nové záložce',
     disclosure: 'Při rezervaci přes tyto odkazy může Euvida získat provizi. Cenu a podmínky rezervace ověřte u partnera.',
   },
   en: {
     heading: 'Plan your stay',
+    regionHeading: 'Plan your trip to the region',
+    countryHeading: 'Plan your trip to the country',
     label: 'Affiliate offers',
     stayAction: 'Find a place to stay',
     activityAction: 'Check dates and prices',
+    flightAction: 'Find flights',
+    carAction: 'Rent a car',
     newTab: 'Opens in a new tab',
     disclosure: 'Euvida may earn a commission when you book through these links. Check prices and booking terms with the partner.',
   },
   de: {
     heading: 'Planen Sie Ihren Aufenthalt',
+    regionHeading: 'Planen Sie Ihre Reise in die Region',
+    countryHeading: 'Planen Sie Ihre Reise in das Land',
     label: 'Partnerangebote',
     stayAction: 'Unterkunft finden',
     activityAction: 'Termine und Preise prüfen',
+    flightAction: 'Flüge finden',
+    carAction: 'Mietwagen buchen',
     newTab: 'Öffnet sich in einem neuen Tab',
     disclosure: 'Bei einer Buchung über diese Links erhält Euvida möglicherweise eine Provision. Preise und Buchungsbedingungen finden Sie beim Partner.',
   },
   fr: {
     heading: 'Préparez votre séjour',
+    regionHeading: 'Préparez votre voyage dans la région',
+    countryHeading: 'Préparez votre voyage dans le pays',
     label: 'Offres partenaires',
     stayAction: 'Trouver un hébergement',
     activityAction: 'Voir les dates et les tarifs',
+    flightAction: 'Trouver des vols',
+    carAction: 'Louer une voiture',
     newTab: "S'ouvre dans un nouvel onglet",
     disclosure: 'Euvida peut percevoir une commission si vous réservez via ces liens. Vérifiez les tarifs et les conditions de réservation auprès du partenaire.',
   },
   es: {
     heading: 'Organiza tu estancia',
+    regionHeading: 'Organiza tu viaje a la región',
+    countryHeading: 'Organiza tu viaje al país',
     label: 'Ofertas de afiliados',
     stayAction: 'Buscar alojamiento',
     activityAction: 'Consultar fechas y precios',
+    flightAction: 'Buscar vuelos',
+    carAction: 'Alquilar un coche',
     newTab: 'Se abre en una pestaña nueva',
     disclosure: 'Euvida puede recibir una comisión si reservas a través de estos enlaces. Consulta los precios y las condiciones de reserva con el colaborador.',
   },
@@ -212,3 +233,82 @@ export function getAffiliateOffers(
     }];
   });
 }
+
+export type DestinationPromotion = {
+  id?: string;
+  campaign_id: string;
+  provider: string;
+  placement?: string;
+  title: Record<string, string>;
+  description: Record<string, string>;
+  call_to_action?: Record<string, string>;
+  links: Record<string, { url: string; subId?: string; sourceUrl?: string }>;
+  active?: boolean;
+  sort_order?: number;
+  start_at?: string | null;
+  end_at?: string | null;
+};
+
+export function getDestinationAffiliateOffers(
+  targetType: 'region' | 'country',
+  targetId: string,
+  locale: SupportedLocale,
+  promotions?: DestinationPromotion[] | null
+) {
+  if (!Object.hasOwn(affiliateLabels, locale)) return [];
+  if (!Array.isArray(promotions) || promotions.length === 0) return [];
+
+  return promotions
+    .filter((promo) => isPromotionPubliclyVisible(promo))
+    .flatMap((promo) => {
+      const title = promo.title?.[locale];
+      const description = promo.description?.[locale];
+      if (!title || !description) return [];
+
+      const rawLink = promo.links?.[locale];
+      let href: string | undefined;
+      let sourceUrl: string | undefined;
+      let expectedSubId: string;
+      try {
+        expectedSubId = buildDestinationSubId(targetType, targetId, promo.campaign_id, locale);
+      } catch {
+        return [];
+      }
+
+      if (rawLink && typeof rawLink === 'object' && typeof rawLink.url === 'string') {
+        href = rawLink.url;
+        sourceUrl = rawLink.sourceUrl;
+        if (rawLink.subId && rawLink.subId !== expectedSubId) return [];
+      }
+
+      if (!href || !isValidAffiliateUrl(href, expectedSubId, sourceUrl) || new URL(href).hostname !== 'tp.media') {
+        return [];
+      }
+
+      let defaultAction = affiliateLabels[locale].stayAction;
+      if (promo.campaign_id === 'stay') {
+        defaultAction = affiliateLabels[locale].stayAction;
+      } else if (promo.campaign_id === 'flight' || promo.campaign_id === 'flights') {
+        defaultAction = affiliateLabels[locale].flightAction;
+      } else if (promo.campaign_id === 'car_rental' || promo.campaign_id === 'cars') {
+        defaultAction = affiliateLabels[locale].carAction;
+      } else {
+        defaultAction = affiliateLabels[locale].activityAction;
+      }
+
+      const action = promo.call_to_action?.[locale] || defaultAction;
+
+      return [
+        {
+          id: promo.campaign_id,
+          provider: promo.provider,
+          title,
+          description,
+          href,
+          subId: expectedSubId,
+          action,
+        },
+      ];
+    });
+}
+
