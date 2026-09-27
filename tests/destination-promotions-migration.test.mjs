@@ -92,6 +92,23 @@ test('destination promotions migration: defines promotions table with 5-locale c
   assert.match(migration, /grant\s+select,\s*insert,\s*update,\s*delete\s+on\s+table\s+public\.promotions\s+to\s+service_role/i);
 });
 
+test('destination promotions migration: scopes effective ACL checks to owned promotion tables', () => {
+  const migration = fs.readFileSync(MIGRATION_PATH, 'utf8');
+
+  assert.doesNotMatch(
+    migration,
+    /array\['public\.articles',\s*'public\.regions',\s*'public\.countries'\]/i,
+    'Migration must not reject legitimate authenticated admin writes on existing catalog tables',
+  );
+  assert.match(
+    migration,
+    /array\['public\.promotion_targets',\s*'public\.promotions'\]/i,
+    'Postflight must inspect both migration-owned tables',
+  );
+  assert.match(migration, /has_table_privilege\(v_role,\s*v_table,\s*'SELECT'\)/i);
+  assert.match(migration, /array\['INSERT',\s*'UPDATE',\s*'DELETE',\s*'TRUNCATE'\]/i);
+});
+
 test('destination promotions migration: integrates with audit trail', () => {
   const migration = fs.readFileSync(MIGRATION_PATH, 'utf8');
 

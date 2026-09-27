@@ -3,30 +3,9 @@
 
 begin;
 
--- 1. Fail closed on pre-existing effective write privileges for browser roles on core catalog
-do $acl$
-declare
-  v_role name;
-  v_table text;
-  v_priv text;
-begin
-  for v_role in
-    select rolname from pg_catalog.pg_roles where rolname in ('anon', 'authenticated')
-  loop
-    for v_table in select unnest(array['public.articles', 'public.regions', 'public.countries'])
-    loop
-      for v_priv in select unnest(array['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'])
-      loop
-        if has_table_privilege(v_role, v_table, v_priv) then
-          raise exception using
-            errcode = '42501',
-            message = format('unsafe effective ACL: role %s can %s %s', v_role, v_priv, v_table);
-        end if;
-      end loop;
-    end loop;
-  end loop;
-end
-$acl$;
+-- 1. Existing catalog ACLs are intentionally left unchanged. The authenticated role
+-- may legitimately maintain articles, regions, and countries through the admin UI.
+-- This migration owns and locks down only promotion_targets and promotions below.
 
 -- 2. Ensure public.articles has unique (id, slug) for composite foreign key
 do $$
@@ -260,5 +239,36 @@ grant select on table public.promotion_targets to anon, authenticated;
 grant select on table public.promotions to anon, authenticated;
 grant select, insert, update, delete on table public.promotion_targets to service_role;
 grant select, insert, update, delete on table public.promotions to service_role;
+
+-- 9. Postflight: browser roles must have read-only effective access to the new tables.
+do $acl$
+declare
+  v_role name;
+  v_table text;
+  v_priv text;
+begin
+  for v_role in
+    select rolname from pg_catalog.pg_roles where rolname in ('anon', 'authenticated')
+  loop
+    for v_table in select unnest(array['public.promotion_targets', 'public.promotions'])
+    loop
+      if not has_table_privilege(v_role, v_table, 'SELECT') then
+        raise exception using
+          errcode = '42501',
+          message = format('missing effective ACL: role %s cannot SELECT %s', v_role, v_table);
+      end if;
+
+      for v_priv in select unnest(array['INSERT', 'UPDATE', 'DELETE', 'TRUNCATE'])
+      loop
+        if has_table_privilege(v_role, v_table, v_priv) then
+          raise exception using
+            errcode = '42501',
+            message = format('unsafe effective ACL: role %s can %s %s', v_role, v_priv, v_table);
+        end if;
+      end loop;
+    end loop;
+  end loop;
+end
+$acl$;
 
 commit;
