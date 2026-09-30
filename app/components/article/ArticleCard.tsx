@@ -8,8 +8,9 @@ import {
 } from '@/lib/articleFallbackImages';
 import { getArticleLabel } from '@/lib/articleLabels';
 import { getDestinationLabel } from '@/lib/destinationLabels';
+import { withBrowseContext } from '@/lib/browseContext';
 import SafeImage from '@/app/components/SafeImage';
-import Link from 'next/link';
+import ContextualLink from '@/app/components/ContextualLink';
 
 type ArticleCardProps = {
   article: ArticleCardData;
@@ -19,6 +20,7 @@ type ArticleCardProps = {
   priority?: boolean;
   showFeaturedBadge?: boolean;
   fallbackIndex?: number;
+  browseContextQuery?: string;
 };
 
 function locationLabel(
@@ -44,6 +46,7 @@ export default function ArticleCard({
   priority = false,
   showFeaturedBadge = true,
   fallbackIndex,
+  browseContextQuery = '',
 }: ArticleCardProps) {
   const location = locationLabel(article, country, region);
   const fallbackImageUrl = getArticleFallbackImage(article.category, article.slug, fallbackIndex);
@@ -53,8 +56,8 @@ export default function ArticleCard({
     : article.imageAlt;
 
   return (
-    <Link
-      href={getArticleHref(article, locale)}
+    <ContextualLink
+      href={withBrowseContext(getArticleHref(article, locale), browseContextQuery)}
       className="group flex min-h-full flex-col overflow-hidden rounded-2xl border border-white/5 bg-slate-900/50 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
     >
       <div className="relative aspect-[16/10] overflow-hidden bg-slate-800">
@@ -120,6 +123,6 @@ export default function ArticleCard({
           )}
         </div>
       </div>
-    </Link>
+    </ContextualLink>
   );
 }

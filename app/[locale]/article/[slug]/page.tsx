@@ -7,6 +7,8 @@ import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
 import SourcesSection from '@/app/components/article/SourcesSection';
 import WaterQualityBox from '@/app/components/article/WaterQualityBox';
+import RelatedArticles from '@/app/components/article/RelatedArticles';
+import ContextualLink from '@/app/components/ContextualLink';
 import {
   getArticleFallbackAlt,
   getArticleFallbackImage,
@@ -33,6 +35,7 @@ import {
 import { canonicalMetadataBase } from '@/lib/siteConfig';
 import { createClient } from '@supabase/supabase-js';
 import { getWaterQualityForArticle } from '@/lib/waterQuality';
+import { getRelatedArticleCards } from '@/lib/relatedArticles';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -218,9 +221,9 @@ function Breadcrumb({
     <nav aria-label="Breadcrumb" className="mb-8 text-sm text-slate-400">
       <ol className="flex flex-wrap items-center gap-2">
         <li>
-          <Link href={`/${locale}`} className="font-semibold text-emerald-400 hover:text-emerald-300">
+          <ContextualLink href={`/${locale}`} className="font-semibold text-emerald-400 hover:text-emerald-300">
             {getArticleLabel(locale, 'home')}
-          </Link>
+          </ContextualLink>
         </li>
         {country && countryName && (
           <>
@@ -359,8 +362,11 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
-  const { country, region } = await getLocationData(article);
-  const panelPlacement = await getPanelPlacement();
+  const [{ country, region }, panelPlacement, relatedArticles] = await Promise.all([
+    getLocationData(article),
+    getPanelPlacement(),
+    getRelatedArticleCards(article, locale),
+  ]);
 
 
   const localizedArticle = getLocalizedArticle(article, locale);
@@ -502,6 +508,8 @@ export default async function ArticlePage({ params }: PageProps) {
           </aside>
 
         </div>
+
+        <RelatedArticles locale={locale} items={relatedArticles} />
 
         <MobileInfoDrawer
           locale={locale}
