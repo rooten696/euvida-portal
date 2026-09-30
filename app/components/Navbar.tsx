@@ -12,6 +12,7 @@ import CountryNav from './CountryNav';
 import ArticleCategoryNav from './ArticleCategoryNav';
 import HeaderCountryDropdown from './HeaderCountryDropdown';
 import HideOnScrollHeader from './HideOnScrollHeader';
+import ContextualLink from './ContextualLink';
 
 type Country = {
   id: string;
@@ -111,9 +112,9 @@ export default function Navbar() {
         
         {/* LEVÁ ČÁST: Logo a výběr obecných info o státech */}
         <div className="flex items-center gap-6">
-          <Link href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0">
+          <ContextualLink href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0">
             EU<span className="text-emerald-400 transition-colors duration-200">VIDA</span><span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">.EU</span>
-          </Link>
+          </ContextualLink>
           <div className="hidden md:block">
             <HeaderCountryDropdown locale={locale} countries={countries} />
           </div>
@@ -121,15 +122,15 @@ export default function Navbar() {
 
         {/* STŘEDNÍ ČÁST: Hlavní navigace (Desktop) */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-          <Link href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
+          <ContextualLink href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
             Domů
-          </Link>
-          <Link href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
+          </ContextualLink>
+          <ContextualLink href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
             Země
-          </Link>
-          <Link href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
+          </ContextualLink>
+          <ContextualLink href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
             Články
-          </Link>
+          </ContextualLink>
           <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors duration-150">
             O nás
           </Link>
@@ -143,7 +144,7 @@ export default function Navbar() {
           {/* DESKTOPOVÝ PŘEPÍNAČ JAZYKŮ (Používá SVG obrázky podle kódu jazyka) */}
           <div className="hidden md:flex items-center gap-2 bg-slate-900/80 p-1 rounded-full border border-white/10">
             {languages.map(lang => (
-              <Link
+              <ContextualLink
                 key={lang.code}
                 href={switchLanguage(lang.code)}
                 title={lang.label}
@@ -156,10 +157,10 @@ export default function Navbar() {
                   src={`/flags/${lang.code}.svg`} 
                   alt={lang.label} 
                   width={32} 
-                  height={32} 
+                  height={32}
                   className="w-full h-full object-cover shrink-0"
                 />
-              </Link>
+              </ContextualLink>
             ))}
           </div>
 
@@ -204,7 +205,7 @@ export default function Navbar() {
           {/* MOBILNÍ PŘEPÍNAČ JAZYKŮ (Emoji) */}
           <div className="flex justify-center gap-4 mb-4 pb-4 border-b border-white/5 shrink-0">
             {languages.map(lang => (
-              <Link
+              <ContextualLink
                 key={lang.code}
                 href={switchLanguage(lang.code)}
                 onClick={() => setIsMenuOpen(false)}
@@ -215,7 +216,7 @@ export default function Navbar() {
                     : 'grayscale opacity-60 hover:opacity-100 hover:grayscale-0'}`}
               >
                 {lang.flag}
-              </Link>
+              </ContextualLink>
             ))}
           </div>
 

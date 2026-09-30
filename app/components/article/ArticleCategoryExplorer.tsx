@@ -4,6 +4,7 @@ import ArticleCard from '@/app/components/article/ArticleCard';
 import { toArticleCardData, type ArticleCardData } from '@/lib/articleCards';
 import type { Article } from '@/lib/articleTypes';
 import { getDestinationLabel } from '@/lib/destinationLabels';
+import { getBrowseContextQuery } from '@/lib/browseContext';
 import { supabase } from '@/lib/supabaseBrowserClient';
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -91,6 +92,7 @@ function ArticleCategoryExplorerInner({
   const searchParams = useSearchParams();
   const urlCategory = searchParams.get('category') || '';
   const urlCountry = searchParams.get('country') || '';
+  const browseContextQuery = useMemo(() => getBrowseContextQuery(searchParams), [searchParams]);
   
   const [category, setCategory] = useState(urlCategory);
   const [country, setCountry] = useState(urlCountry);
@@ -249,6 +251,7 @@ function ArticleCategoryExplorerInner({
                 key={article.slug}
                 article={article}
                 locale={locale}
+                browseContextQuery={browseContextQuery}
                 priority={index < 3}
                 showFeaturedBadge={showFeaturedBadges}
                 fallbackIndex={index}
