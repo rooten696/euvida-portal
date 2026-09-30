@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabaseBrowserClient';
 
 const CATEGORIES: { id: string; name: string; icon: string }[] = [
   { id: 'all',                name: 'Vše',                     icon: '✨' },
-  { id: 'places',             name: 'Památky',                 icon: '🏰' },
   { id: 'camping',            name: 'Kemping',                 icon: '⛺' },
   { id: 'bike_trail',         name: 'Bike parky',              icon: '🚴' },
   { id: 'natural_swimming',   name: 'Přírodní koupání',        icon: '🏊' },
