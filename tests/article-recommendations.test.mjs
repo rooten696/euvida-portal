@@ -31,8 +31,13 @@ test('extractArticleCoordinates supports localized legacy GPS and modern access 
   );
 });
 
-test('extractArticleCoordinates rejects invalid ranges and never treats addresses as GPS', () => {
+test('extractArticleCoordinates rejects invalid, incomplete, and nonnumeric coordinates', () => {
   assert.equal(extractArticleCoordinates({ cs: { gps: '190, 95' } }, 'cs'), null);
+  assert.equal(extractArticleCoordinates({ cs: { gps: { lat: null, lng: null } } }, 'cs'), null);
+  assert.equal(extractArticleCoordinates({ cs: { gps: { lat: '', lng: '   ' } } }, 'cs'), null);
+  assert.equal(extractArticleCoordinates({ cs: { gps: { lat: true, lng: false } } }, 'cs'), null);
+  assert.equal(extractArticleCoordinates({ cs: { gps: { lat: 50 } } }, 'cs'), null);
+  assert.equal(extractArticleCoordinates({ cs: { gps: { lat: 'north', lng: 'east' } } }, 'cs'), null);
   assert.equal(
     extractArticleCoordinates({ cs: { address: 'Example street 12, 34' } }, 'cs'),
     null

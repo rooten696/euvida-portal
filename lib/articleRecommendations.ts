@@ -19,11 +19,24 @@ export type RankedRelatedArticle<T extends RelatedArticleCandidate> = {
   distanceKm?: number;
 };
 
-function normalizeCoordinates(latitude: unknown, longitude: unknown): ArticleCoordinates | null {
-  const lat = typeof latitude === 'number' ? latitude : Number(latitude);
-  const lng = typeof longitude === 'number' ? longitude : Number(longitude);
+function toCoordinateNumber(value: unknown): number | null {
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? value : null;
+  }
 
-  if (!Number.isFinite(lat) || !Number.isFinite(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+  if (typeof value !== 'string' || value.trim() === '') {
+    return null;
+  }
+
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeCoordinates(latitude: unknown, longitude: unknown): ArticleCoordinates | null {
+  const lat = toCoordinateNumber(latitude);
+  const lng = toCoordinateNumber(longitude);
+
+  if (lat === null || lng === null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
     return null;
   }
 
