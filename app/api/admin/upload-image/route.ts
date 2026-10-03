@@ -5,7 +5,7 @@ import sharp from 'sharp';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
 const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
-const maxSourceImageBytes = 40 * 1024 * 1024;
+const maxSourceImageBytes = 3500 * 1024;
 const maxOptimizedImageBytes = 12 * 1024 * 1024;
 const optimizedImageContentType = 'image/webp';
 
@@ -21,7 +21,7 @@ function safePathSegment(value: string): string {
 }
 
 async function optimizeImage(buffer: Buffer): Promise<Buffer> {
-  return sharp(buffer, { animated: false })
+  return sharp(buffer, { animated: false, limitInputPixels: 40000000 })
     .rotate()
     .resize({
       width: 1920,
@@ -37,7 +37,7 @@ function uploadErrorMessage(message: string): string {
   return `Chyba uploadu: ${message}`;
 }
 
-function revalidateArticlePaths(slug?: string | null) {
+function revalidateArticlePaths(slug?: string | null, scope?: { country_id?: string | null; region_id?: string | null }) {
   revalidatePath('/sitemap.xml');
 
   for (const locale of supportedLocales) {
@@ -47,6 +47,8 @@ function revalidateArticlePaths(slug?: string | null) {
     if (slug) {
       revalidatePath(`/${locale}/article/${slug}`);
     }
+    if (scope?.country_id) revalidatePath(`/${locale}/country/${scope.country_id}`);
+    if (scope?.region_id) revalidatePath(`/${locale}/region/${scope.region_id}`);
   }
 }
 
@@ -69,7 +71,7 @@ export async function POST(request: NextRequest) {
 
   if (file.size > maxSourceImageBytes) {
     return NextResponse.json(
-      { ok: false, error: 'Zdrojový obrázek je větší než 40 MB. Použijte menší soubor nebo náhled.' },
+      { ok: false, error: 'Obrázek nebyl před odesláním zmenšen pod limit 3,5 MB.' },
       { status: 400 }
     );
   }
@@ -121,7 +123,7 @@ export async function POST(request: NextRequest) {
       .from('articles')
       .update({ image_url: publicUrl })
       .eq('id', articleId)
-      .select('id, slug');
+    .select('id, slug, country_id, region_id');
 
     if (dbError) {
       return NextResponse.json(
@@ -144,7 +146,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    revalidateArticlePaths(articleRows[0]?.slug);
+    revalidateArticlePaths(articleRows[0]?.slug, articleRows[0]);
   }
 
   return NextResponse.json({ ok: true, publicUrl });

@@ -1,5 +1,6 @@
 'use client';
 
+import { prepareImageUpload } from '@/lib/prepareImageUpload';
 import type { ImageCredit, SupportedLocale } from '@/lib/articleTypes';
 import { useId, useState } from 'react';
 
@@ -94,7 +95,7 @@ export default function ImageManager({
       }
 
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', await prepareImageUpload(file));
       formData.append('entityType', entityType);
       formData.append('entityId', entityId || 'new');
       if (articleId) {

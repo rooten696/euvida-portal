@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 
 type HideOnScrollHeaderProps = {
@@ -14,26 +14,7 @@ export default function HideOnScrollHeader({
   className = '',
   forceVisible = false,
 }: HideOnScrollHeaderProps) {
-  const headerRef = useRef<HTMLElement | null>(null);
   const [isHidden, setIsHidden] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(0);
-
-  useEffect(() => {
-    const header = headerRef.current;
-    if (!header) return;
-
-    const updateHeight = () => setHeaderHeight(header.offsetHeight);
-    updateHeight();
-
-    const observer = new ResizeObserver(updateHeight);
-    observer.observe(header);
-    window.addEventListener('resize', updateHeight);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', updateHeight);
-    };
-  }, []);
 
   useEffect(() => {
     let lastScrollY = window.scrollY;
@@ -67,14 +48,12 @@ export default function HideOnScrollHeader({
   return (
     <>
       <header
-        ref={headerRef}
         className={`${className} transform-gpu transition-transform duration-300 ease-out ${
           isHidden && !forceVisible ? '-translate-y-full' : 'translate-y-0'
         }`}
       >
         {children}
       </header>
-      <div aria-hidden="true" style={{ height: headerHeight }} />
     </>
   );
 }

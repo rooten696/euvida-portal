@@ -7,6 +7,7 @@ import { getDestinationLabel } from '@/lib/destinationLabels';
 import { supabase } from '@/lib/supabaseBrowserClient';
 import { useMemo, useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { getArticleListingSelect, normalizeArticleListing } from '@/lib/articleListing';
 
 export type ArticleCategoryOption = {
   value: string;
@@ -23,31 +24,11 @@ type ArticleCategoryExplorerProps = {
   showFeaturedBadges?: boolean;
   countryNamesById?: Record<string, string>;
   regionNamesById?: Record<string, string>;
+  countryId?: string;
+  regionId?: string;
 };
 
-const categoryOrder = [
-  'places',
-  'place',
-  'landmark',
-  'bike_trail',
-  'natural_swimming',
-  'fkk',
-  'beach',
-  'camping',
-  'trail',
-  'cycling_route',
-  'cycling',
-  'castle',
-  'chateau',
-  'ski_area',
-  'ski',
-  'city_tip',
-  'city',
-  'nature',
-];
 
-const filteredArticleSelect =
-  'id, slug, title, excerpt, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 const maxFilteredArticles = 1000;
 
 function splitParam(value: string): string[] {
@@ -57,10 +38,6 @@ function splitParam(value: string): string[] {
     .filter(Boolean);
 }
 
-function getCategoryRank(category: string): number {
-  const index = categoryOrder.indexOf(category);
-  return index === -1 ? categoryOrder.length : index;
-}
 
 function hasFkkCategory(article: ArticleCardData): boolean {
   return article.category === 'fkk' || article.categoryTags?.includes('fkk') === true;
@@ -78,32 +55,23 @@ function matchesActiveCategories(article: ArticleCardData, activeCategories: str
   );
 }
 
-function ArticleCategoryExplorerInner({
+function ArticleCategoryExplorerState({
   locale,
   articles,
-  categories,
   defaultVisibleCount,
   showMoreLabel,
   showFeaturedBadges = true,
   countryNamesById,
   regionNamesById,
-}: ArticleCategoryExplorerProps) {
-  const searchParams = useSearchParams();
-  const urlCategory = searchParams.get('category') || '';
-  const urlCountry = searchParams.get('country') || '';
-  
-  const [category, setCategory] = useState(urlCategory);
-  const [country, setCountry] = useState(urlCountry);
+  countryId,
+  regionId,
+  category,
+  country,
+}: ArticleCategoryExplorerProps & { category: string; country: string }) {
   const [visiblePageCount, setVisiblePageCount] = useState(1);
   const [remoteArticles, setRemoteArticles] = useState<ArticleCardData[] | null>(null);
-  const [isLoadingRemoteArticles, setIsLoadingRemoteArticles] = useState(false);
+  const [isLoadingRemoteArticles, setIsLoadingRemoteArticles] = useState(Boolean(category || country));
   const [remoteArticlesError, setRemoteArticlesError] = useState(false);
-
-  // Zajištění interaktivity s URL (např. z Navbar sub-baru)
-  useEffect(() => {
-    setCategory(searchParams.get('category') || '');
-    setCountry(searchParams.get('country') || '');
-  }, [searchParams]);
 
   const activeCategories = useMemo(() => splitParam(category), [category]);
   const activeCountries = useMemo(
@@ -115,18 +83,12 @@ function ArticleCategoryExplorerInner({
   const activeCountryKey = activeCountries.join(',');
 
   useEffect(() => {
-    setVisiblePageCount(1);
-  }, [activeCategoryKey, activeCountryKey]);
-
-  useEffect(() => {
     if (!hasActiveFilters) {
-      setRemoteArticles(null);
-      setIsLoadingRemoteArticles(false);
-      setRemoteArticlesError(false);
       return;
     }
 
     let cancelled = false;
+    const controller = new AbortController();
 
     async function loadFilteredArticles() {
       setIsLoadingRemoteArticles(true);
@@ -134,10 +96,13 @@ function ArticleCategoryExplorerInner({
 
       let query = supabase
         .from('articles')
-        .select(filteredArticleSelect)
+        .select(getArticleListingSelect(locale))
         .eq('published', true)
         .order('created_at', { ascending: false })
         .limit(maxFilteredArticles);
+
+      if (countryId) query = query.eq('country_id', countryId);
+      if (regionId) query = query.eq('region_id', regionId);
 
       if (activeCountries.length > 0) {
         query = query.in('country_id', activeCountries);
@@ -151,7 +116,7 @@ function ArticleCategoryExplorerInner({
         query = query.in('category', activeCategories);
       }
 
-      const { data, error } = await query;
+      const { data, error } = await query.abortSignal(controller.signal);
 
       if (cancelled) {
         return;
@@ -166,7 +131,7 @@ function ArticleCategoryExplorerInner({
       }
 
       setRemoteArticles(
-        ((data ?? []) as Article[]).map((article) =>
+        normalizeArticleListing<Article>(data, locale).map((article) =>
           toArticleCardData(article, locale, {
             countryName: article.country_id ? countryNamesById?.[article.country_id] : null,
             regionName: article.region_id ? regionNamesById?.[article.region_id] : null,
@@ -180,6 +145,7 @@ function ArticleCategoryExplorerInner({
 
     return () => {
       cancelled = true;
+      controller.abort();
     };
   }, [
     activeCategoryKey,
@@ -190,21 +156,9 @@ function ArticleCategoryExplorerInner({
     hasActiveFilters,
     locale,
     regionNamesById,
+    countryId,
+    regionId,
   ]);
-
-  const sortedCategories = useMemo(
-    () =>
-      [...categories].sort((left, right) => {
-        const rank = getCategoryRank(left.value) - getCategoryRank(right.value);
-
-        if (rank !== 0) {
-          return rank;
-        }
-
-        return left.label.localeCompare(right.label, locale);
-      }),
-    [categories, locale]
-  );
 
   const filteredArticles = useMemo(() => {
     let result = remoteArticles ?? articles;
@@ -220,7 +174,7 @@ function ArticleCategoryExplorerInner({
     return result;
   }, [activeCategories, activeCountries, articles, remoteArticles]);
 
-  const shouldLimitArticles = !hasActiveFilters && typeof defaultVisibleCount === 'number';
+  const shouldLimitArticles = typeof defaultVisibleCount === 'number';
   const visibleCount = shouldLimitArticles
     ? defaultVisibleCount * visiblePageCount
     : filteredArticles.length;
@@ -249,7 +203,6 @@ function ArticleCategoryExplorerInner({
                 key={article.slug}
                 article={article}
                 locale={locale}
-                priority={index < 3}
                 showFeaturedBadge={showFeaturedBadges}
                 fallbackIndex={index}
               />
@@ -277,6 +230,14 @@ function ArticleCategoryExplorerInner({
       )}
     </section>
   );
+}
+
+function ArticleCategoryExplorerInner(props: ArticleCategoryExplorerProps) {
+  const params = useSearchParams();
+  const category = params.get('category') || '';
+  const country = params.get('country') || '';
+  return <ArticleCategoryExplorerState key={`${props.locale}:${props.countryId || ''}:${props.regionId || ''}:${category}:${country}`}
+    {...props} category={category} country={country} />;
 }
 
 export default function ArticleCategoryExplorer(props: ArticleCategoryExplorerProps) {

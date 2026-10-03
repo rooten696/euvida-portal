@@ -141,11 +141,7 @@ export default async function LocaleLayout({
         />
         <ThemeInitializer />
         <NextIntlClientProvider messages={messages} locale={locale}>
-          <div className="flex min-h-screen flex-col relative overflow-hidden">
-            {/* Subtle Ambient Background Gradients */}
-            <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute top-1/3 right-1/4 w-[600px] h-[600px] bg-teal-500/5 rounded-full blur-[150px] pointer-events-none" />
-            
+          <div className="flex min-h-screen flex-col relative overflow-clip">
             <Navbar /> 
             {headerPlacement && (
               <div className="mx-auto w-full max-w-[1360px] px-4 md:px-6 z-20">

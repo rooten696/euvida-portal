@@ -129,7 +129,7 @@ export default function CountryNav({ locale, countries }: CountryNavProps) {
     <div className="relative inline-block text-left w-full sm:w-[320px]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2 px-3 py-2 bg-transparent hover:bg-white/5 rounded-xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white transition-all cursor-pointer"
+        className="h-10 w-full flex items-center justify-between gap-2 px-3 py-2 bg-transparent hover:bg-white/5 rounded-xl text-xs sm:text-sm font-bold text-slate-200 hover:text-white transition-all cursor-pointer"
       >
         <span className="flex items-center gap-2 truncate">
           <span className="shrink-0 text-lg flex items-center">

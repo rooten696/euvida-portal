@@ -1,3 +1,4 @@
+import { getArticleListingSelect, normalizeArticleListing } from '@/lib/articleListing';
 import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
 import DestinationPartnerOffers from '@/app/components/destination/DestinationPartnerOffers';
 import LanguageSwitcher from '@/app/components/LanguageSwitcher';
@@ -49,9 +50,6 @@ export async function generateStaticParams() {
   }
   return params;
 }
-
-const articleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 
 type RegionPageParams = {
   params: Promise<{ locale: string; id: string }>;
@@ -295,7 +293,7 @@ export default async function RegionPage({ params }: RegionPageParams) {
 
   const { data: articleRows, error: articlesError } = await supabase
     .from('articles')
-    .select(articleSelect)
+    .select(getArticleListingSelect(locale))
     .eq('published', true)
     .eq('region_id', id);
 
@@ -303,7 +301,7 @@ export default async function RegionPage({ params }: RegionPageParams) {
     console.error('Chyba při načítání článků:', articlesError);
   }
 
-  const articles = sortArticles((articleRows ?? []) as Article[]);
+  const articles = sortArticles(normalizeArticleListing<Article>(articleRows, locale));
   const articleCards: ArticleCardData[] = articles.map((article) =>
     toArticleCardData(article, locale, {
       countryName: displayCountry?.name,
@@ -488,6 +486,7 @@ export default async function RegionPage({ params }: RegionPageParams) {
             </div>
 
             <RegionArticleExplorer
+              regionId={id}
               locale={locale}
               articles={articleCards}
               categories={categories}

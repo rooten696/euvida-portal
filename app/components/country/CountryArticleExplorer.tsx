@@ -15,12 +15,14 @@ type CountryArticleExplorerProps = {
   locale: string;
   articles: ArticleCardData[];
   categories: FilterOption[];
+  countryId: string;
 };
 
 export default function CountryArticleExplorer({
   locale,
   articles,
   categories,
+  countryId,
 }: CountryArticleExplorerProps) {
   if (articles.length === 0) {
     return (
@@ -48,6 +50,7 @@ export default function CountryArticleExplorer({
 
   return (
     <ArticleCategoryExplorer
+      countryId={countryId}
       locale={locale}
       articles={articles}
       categories={categories}

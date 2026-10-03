@@ -4,7 +4,7 @@ import { verifyAdminRequest } from '@/lib/adminAuth';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
 
-function revalidateArticlePaths(slug?: string | null) {
+function revalidateArticlePaths(slug?: string | null, scope?: { country_id?: string | null; region_id?: string | null }) {
   revalidatePath('/sitemap.xml');
 
   for (const locale of supportedLocales) {
@@ -16,6 +16,8 @@ function revalidateArticlePaths(slug?: string | null) {
     if (slug) {
       revalidatePath(`/${locale}/article/${slug}`);
     }
+    if (scope?.country_id) revalidatePath(`/${locale}/country/${scope.country_id}`);
+    if (scope?.region_id) revalidatePath(`/${locale}/region/${scope.region_id}`);
   }
 }
 
@@ -47,7 +49,7 @@ export async function PATCH(request: NextRequest) {
       source_info: body.source_info || null,
     })
     .eq('id', body.id)
-    .select('id, slug');
+    .select('id, slug, country_id, region_id');
 
   if (error) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
@@ -64,7 +66,7 @@ export async function PATCH(request: NextRequest) {
     );
   }
 
-  revalidateArticlePaths(data[0]?.slug ?? body.slug);
+  revalidateArticlePaths(data[0]?.slug ?? body.slug, data[0]);
 
   return NextResponse.json({ ok: true, slug: data[0]?.slug ?? body.slug ?? null });
 }
