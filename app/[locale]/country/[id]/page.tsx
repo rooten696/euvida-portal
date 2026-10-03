@@ -1,3 +1,4 @@
+import { getArticleListingSelect, normalizeArticleListing } from '@/lib/articleListing';
 import CountryArticleExplorer from '@/app/components/country/CountryArticleExplorer';
 import DestinationCard from '@/app/components/destination/DestinationCard';
 import DestinationMarkdownSection from '@/app/components/destination/DestinationMarkdownSection';
@@ -48,9 +49,6 @@ export async function generateStaticParams() {
   }
   return params;
 }
-
-const articleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 
 type CountryPageParams = {
   params: Promise<{ locale: string; id: string }>;
@@ -246,7 +244,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
       .order('name'),
     supabase
       .from('articles')
-      .select(articleSelect)
+      .select(getArticleListingSelect(locale))
       .eq('published', true)
       .eq('country_id', id),
   ]);
@@ -285,7 +283,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
   }
 
   const rawRegions = (regionsResult.data ?? []) as RegionDestination[];
-  const articles = sortArticles((articlesResult.data ?? []) as Article[]);
+  const articles = sortArticles(normalizeArticleListing<Article>(articlesResult.data, locale));
   const articleCountByRegion = countBy(articles, (article) => article.region_id);
 
   const regions = rawRegions
@@ -438,6 +436,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
             </div>
 
             <CountryArticleExplorer
+              countryId={id}
               locale={locale}
               articles={articleCards}
               categories={categories}
@@ -516,6 +515,7 @@ export default async function CountryPage({ params }: CountryPageParams) {
             </div>
 
             <CountryArticleExplorer
+              countryId={id}
               locale={locale}
               articles={articleCards}
               categories={categories}

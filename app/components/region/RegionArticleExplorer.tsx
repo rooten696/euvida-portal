@@ -17,6 +17,7 @@ type RegionArticleExplorerProps = {
   categories: FilterOption[];
   countryHref: string;
   countryName?: string | null;
+  regionId: string;
 };
 
 export default function RegionArticleExplorer({
@@ -25,6 +26,7 @@ export default function RegionArticleExplorer({
   categories,
   countryHref,
   countryName,
+  regionId,
 }: RegionArticleExplorerProps) {
   if (articles.length === 0) {
     return (
@@ -53,6 +55,8 @@ export default function RegionArticleExplorer({
   }
 
   return (
-    <ArticleCategoryExplorer locale={locale} articles={articles} categories={categories} />
+    <ArticleCategoryExplorer locale={locale} articles={articles} categories={categories}
+      regionId={regionId} defaultVisibleCount={12}
+      showMoreLabel={getDestinationLabel(locale, 'showMoreArticles')} />
   );
 }

@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache';
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { isCronAuthorized } from '@/lib/cronAuth';
 import { getWaterQualityForArticle } from '@/lib/waterQuality';
 import type { SourceInfo } from '@/lib/articleTypes';
 
@@ -15,16 +16,6 @@ type WaterArticle = {
   source_info: SourceInfo | null;
 };
 
-function isAuthorized(request: NextRequest): boolean {
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (!cronSecret) {
-    return request.headers.has('x-vercel-cron');
-  }
-
-  return request.headers.get('authorization') === `Bearer ${cronSecret}`;
-}
-
 function revalidateArticle(slug: string) {
   for (const locale of supportedLocales) {
     revalidatePath(`/${locale}/article/${slug}`);
@@ -32,7 +23,7 @@ function revalidateArticle(slug: string) {
 }
 
 export async function GET(request: NextRequest) {
-  if (!isAuthorized(request)) {
+  if (!isCronAuthorized(request.headers)) {
     return NextResponse.json({ ok: false, error: 'Unauthorized.' }, { status: 401 });
   }
 

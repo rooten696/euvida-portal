@@ -2,6 +2,7 @@
 
 import Image, { type ImageProps } from 'next/image';
 import { useState } from 'react';
+import { canOptimizeImage } from '@/lib/imageDelivery';
 
 type SafeImageProps = ImageProps & {
   fallbackClassName?: string;
@@ -9,60 +10,37 @@ type SafeImageProps = ImageProps & {
   fallbackSrc?: string;
 };
 
-function shouldUseDirectImage(src: ImageProps['src']): boolean {
-  if (typeof src !== 'string') {
-    return false;
-  }
-
-  if (src.endsWith('.svg')) {
-    return true;
-  }
-
-  try {
-    const { protocol } = new URL(src);
-
-    return protocol === 'http:' || protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-export default function SafeImage({
+function ImageWithFallback({
   alt,
-  fallbackClassName,
-  fallbackLabel = 'Euvida',
   fallbackSrc = '/placeholder.png',
   onError,
   src,
   unoptimized,
   ...props
-}: SafeImageProps) {
-  const [failed, setFailed] = useState(false);
+}: ImageProps & { fallbackSrc?: string }) {
+  const [stage, setStage] = useState(0);
   const fallbackImageSrc = fallbackSrc.trim().length > 0 ? fallbackSrc : '/placeholder.png';
-  const imageSrc = src && typeof src === 'string' && src.trim().length > 0 ? src : fallbackImageSrc;
-
-  if (failed) {
-    return (
-      <Image
-        {...props}
-        alt={alt}
-        src={fallbackImageSrc}
-        unoptimized
-      />
-    );
-  }
+  const original = typeof src === 'string' && !src.trim() ? fallbackImageSrc : src;
+  const optimized = unoptimized !== true && (typeof original !== 'string' || canOptimizeImage(original));
 
   return (
     <Image
       {...props}
       alt={alt}
-      src={imageSrc}
-      unoptimized={unoptimized ?? shouldUseDirectImage(imageSrc)}
-      className={`${props.className ?? ''} contrast-[1.08]`.trim()}
+      src={stage === 2 ? fallbackImageSrc : original}
+      unoptimized={!optimized || stage > 0}
       onError={(event) => {
-        setFailed(true);
+        // An optimizer limit must not hide a working original photograph.
+        setStage((current) => current === 0 && optimized ? 1 : 2);
         onError?.(event);
       }}
     />
   );
+}
+
+export default function SafeImage({ fallbackClassName, fallbackLabel, ...props }: SafeImageProps) {
+  void fallbackClassName;
+  void fallbackLabel;
+  const sourceKey = typeof props.src === 'string' ? props.src : JSON.stringify(props.src);
+  return <ImageWithFallback key={`${sourceKey}:${props.fallbackSrc}`} {...props} />;
 }

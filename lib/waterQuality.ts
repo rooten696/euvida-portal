@@ -279,8 +279,11 @@ export async function getWaterQualityForArticle(
   const urls = getWaterSourceUrls(sourceInfo);
 
   for (const sourceUrl of urls) {
+    // This parser supports HTML only; avoid downloading uncachable PDF reports.
+    if (/\.pdf(?:[?#]|$)/i.test(sourceUrl)) continue;
     try {
       const response = await fetch(sourceUrl, {
+        signal: AbortSignal.timeout(10000),
         next: { revalidate: 6 * 60 * 60 },
         headers: {
           'user-agent': 'Euvida water-quality preview (+https://www.euvida.eu/)',

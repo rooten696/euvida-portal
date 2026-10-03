@@ -1,3 +1,4 @@
+import { getArticleListingSelect, normalizeArticleListing } from '@/lib/articleListing';
 import DestinationCard from '@/app/components/destination/DestinationCard';
 import HomeArticleExplorer from '@/app/components/home/HomeArticleExplorer';
 import SmartSearch, { type SmartSearchItem } from '@/app/components/search/SmartSearch';
@@ -32,8 +33,6 @@ const supabase = createClient(
 const heroImage =
   'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?q=80&w=2021&auto=format&fit=crop';
 const homepageArticleLimit = 120;
-const homepageArticleSelect =
-  'id, slug, title, excerpt, content, translations, image_url, image_alt, country_id, region_id, category, visit_info, published, featured, created_at, reading_time_minutes';
 const articleCountSelect = 'country_id, region_id';
 
 const homeMetadata: Record<SupportedLocale, { title: string; description: string }> = {
@@ -198,7 +197,7 @@ export default async function HomePage({ params }: PageProps) {
 
   let articlesQuery = supabase
     .from('articles')
-    .select(homepageArticleSelect)
+    .select(getArticleListingSelect(locale))
     .eq('published', true);
   let articleCountsQuery = supabase
     .from('articles')
@@ -239,7 +238,7 @@ export default async function HomePage({ params }: PageProps) {
     warnHomepageLoadError('regiony', regionsResult.error);
   }
 
-  const articles = (articlesResult.data ?? []) as Article[];
+  const articles = normalizeArticleListing<Article>(articlesResult.data, locale);
   const articleCountRows = (articleCountsResult.data ?? []) as Pick<
     Article,
     'country_id' | 'region_id'

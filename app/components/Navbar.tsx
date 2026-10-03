@@ -33,7 +33,6 @@ export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [countries, setCountries] = useState<Country[]>([]);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   
   const router = useRouter();
   const pathname = usePathname();
@@ -71,16 +70,15 @@ export default function Navbar() {
   useEffect(() => {
     const fetchCountries = async () => {
       // Stahujeme 'id' (pro SVG) i 'flag' (pro emoji na mobilu)
-      const { data } = await supabase.from('countries').select('id, name, flag, translations');
+      const language = ['cs', 'en', 'de', 'fr', 'es'].includes(locale) ? locale : 'cs';
+      const { data } = await supabase.from('countries').select(`id, name, flag, localized_name:translations->${language}->>name`);
       
       if (data) {
-        const translatedData = data.map((country) => {
-          const allTranslations = country.translations as Record<string, { name: string }> | null;
-          const translation = allTranslations?.[locale];
-          
+        const translatedData = (data as unknown as Array<Country & { localized_name?: string }>).map((country) => {
           return {
-            ...country,
-            name: translation?.name || country.name
+            id: country.id,
+            flag: country.flag,
+            name: country.localized_name || country.name
           };
         });
 
@@ -105,7 +103,7 @@ export default function Navbar() {
   return (
     <HideOnScrollHeader
       forceVisible={isMenuOpen}
-      className="fixed left-0 top-0 z-50 w-full border-b border-white/5 bg-slate-950/80 backdrop-blur-md"
+      className="sticky top-0 z-50 w-full shrink-0 border-b border-white/5 bg-slate-950/80 backdrop-blur-md"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
@@ -244,11 +242,11 @@ export default function Navbar() {
       <div className="border-t border-white/5 bg-slate-950/40 py-2.5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-center">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-0 bg-slate-900/90 border border-white/10 rounded-2xl p-1.5 shadow-xl max-w-4xl w-full sm:w-auto z-40">
-            <Suspense fallback={<div className="h-9 w-48 bg-slate-900/50 animate-pulse rounded-xl" />}>
+            <Suspense fallback={<div className="h-10 w-full sm:w-[320px] bg-slate-900/50 animate-pulse rounded-xl" />}>
               <ArticleCategoryNav locale={locale} />
             </Suspense>
             <div className="h-6 w-[1px] bg-white/10 shrink-0 hidden sm:block mx-1.5" />
-            <Suspense fallback={<div className="h-9 w-48 bg-slate-900/50 animate-pulse rounded-xl" />}>
+            <Suspense fallback={<div className="h-10 w-full sm:w-[320px] bg-slate-900/50 animate-pulse rounded-xl" />}>
               <CountryNav locale={locale} countries={countries} />
             </Suspense>
           </div>

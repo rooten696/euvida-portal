@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 import { verifyAdminRequest } from '@/lib/adminAuth';
 import sharp from 'sharp';
+import { downloadRemoteImage } from '@/lib/remoteImage';
 
 const supportedLocales = ['cs', 'en', 'de', 'fr', 'es'];
 const imageBucket = process.env.NEXT_PUBLIC_SUPABASE_IMAGE_BUCKET ?? 'article-images';
-const maxSourceImageBytes = 40 * 1024 * 1024;
 const maxOptimizedImageBytes = 12 * 1024 * 1024;
 const optimizedImageContentType = 'image/webp';
 
@@ -20,16 +20,9 @@ function safePathSegment(value: string): string {
     .toLowerCase();
 }
 
-function extensionFromContentType(contentType: string): string | null {
-  if (contentType.includes('image/jpeg')) return 'jpg';
-  if (contentType.includes('image/png')) return 'png';
-  if (contentType.includes('image/webp')) return 'webp';
-  if (contentType.includes('image/gif')) return 'gif';
-  return null;
-}
 
 async function optimizeImage(buffer: Buffer): Promise<Buffer> {
-  return sharp(buffer, { animated: false })
+  return sharp(buffer, { animated: false, limitInputPixels: 40000000 })
     .rotate()
     .resize({
       width: 1920,
@@ -41,78 +34,8 @@ async function optimizeImage(buffer: Buffer): Promise<Buffer> {
     .toBuffer();
 }
 
-function normalizedRemoteImageUrl(imageUrl: string): string {
-  try {
-    const url = new URL(imageUrl);
 
-    if (
-      url.hostname === 'commons.wikimedia.org' &&
-      /^\/wiki\/Special:(FilePath|Redirect\/file)\//i.test(url.pathname) &&
-      !url.searchParams.has('width')
-    ) {
-      url.searchParams.set('width', '1600');
-      return url.toString();
-    }
-  } catch {
-    return imageUrl;
-  }
 
-  return imageUrl;
-}
-
-function extractHtmlImageUrl(html: string, baseUrl: string): string | null {
-  const patterns = [
-    /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
-    /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
-    /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i,
-  ];
-
-  for (const pattern of patterns) {
-    const match = html.match(pattern);
-    if (match?.[1]) {
-      return new URL(match[1].replace(/&amp;/g, '&'), baseUrl).toString();
-    }
-  }
-
-  return null;
-}
-
-async function fetchRemoteImage(imageUrl: string, depth = 0): Promise<{ response?: Response; error?: string }> {
-  let response: Response;
-  const requestUrl = depth === 0 ? normalizedRemoteImageUrl(imageUrl) : imageUrl;
-
-  try {
-    response = await fetch(requestUrl, {
-      headers: {
-        Accept: 'image/avif,image/webp,image/png,image/jpeg,image/*;q=0.8,text/html;q=0.4,*/*;q=0.2',
-        'User-Agent': 'Euvida image admin import (contact: euvida@seznam.cz)',
-      },
-    });
-  } catch {
-    return { error: 'Obrázek se nepodařilo stáhnout.' };
-  }
-
-  if (!response.ok) {
-    return { error: `Obrázek se nepodařilo stáhnout. HTTP ${response.status}` };
-  }
-
-  const contentType = response.headers.get('content-type') || '';
-  if (extensionFromContentType(contentType)) {
-    return { response };
-  }
-
-  if (depth === 0 && contentType.includes('text/html')) {
-    const html = await response.text();
-    const extractedUrl = extractHtmlImageUrl(html, response.url || requestUrl);
-    if (extractedUrl) {
-      return fetchRemoteImage(extractedUrl, depth + 1);
-    }
-    return { error: 'URL vede na HTML stránku a nepodařilo se z ní najít náhledový obrázek.' };
-  }
-
-  return { error: 'Adresa nevrátila podporovaný obrázek JPG, PNG, WEBP nebo GIF.' };
-}
 
 export async function POST(request: NextRequest) {
   const auth = await verifyAdminRequest(request);
@@ -137,50 +60,19 @@ export async function POST(request: NextRequest) {
 
   try {
     const parsed = new URL(imageUrl);
-    if (!['https:', 'http:'].includes(parsed.protocol)) {
+    if (parsed.protocol !== 'https:') {
       throw new Error('Unsupported protocol');
     }
   } catch {
     return NextResponse.json({ ok: false, error: 'URL obrázku není platná.' }, { status: 400 });
   }
 
-  const remoteImage = await fetchRemoteImage(imageUrl);
-  if (remoteImage.error || !remoteImage.response) {
-    return NextResponse.json({ ok: false, error: remoteImage.error }, { status: 400 });
-  }
-
-  const response = remoteImage.response;
-  const contentType = response.headers.get('content-type') || '';
-  const extension = extensionFromContentType(contentType);
-  if (!extension) {
-    return NextResponse.json(
-      { ok: false, error: 'Adresa nevrátila podporovaný obrázek JPG, PNG, WEBP nebo GIF.' },
-      { status: 400 }
-    );
-  }
-
-  const contentLength = Number(response.headers.get('content-length') || '0');
-  if (contentLength > maxSourceImageBytes) {
-    return NextResponse.json(
-      { ok: false, error: 'Zdrojový obrázek je větší než 40 MB. Použijte menší soubor nebo náhled.' },
-      { status: 400 }
-    );
-  }
-
-  const arrayBuffer = await response.arrayBuffer();
-  if (arrayBuffer.byteLength > maxSourceImageBytes) {
-    return NextResponse.json(
-      { ok: false, error: 'Zdrojový obrázek je větší než 40 MB. Použijte menší soubor nebo náhled.' },
-      { status: 400 }
-    );
-  }
-
   let optimizedBuffer: Buffer;
   try {
-    optimizedBuffer = await optimizeImage(Buffer.from(arrayBuffer));
+    optimizedBuffer = await optimizeImage(await downloadRemoteImage(imageUrl));
   } catch {
     return NextResponse.json(
-      { ok: false, error: 'Obrázek se nepodařilo zmenšit/optimalizovat.' },
+      { ok: false, error: 'Obrázek se nepodařilo bezpečně stáhnout nebo optimalizovat. Použijte veřejnou HTTPS adresu JPG, PNG, WEBP nebo GIF (nejvýše 40 MB).' },
       { status: 400 }
     );
   }
@@ -219,7 +111,7 @@ export async function POST(request: NextRequest) {
       .from('articles')
       .update({ image_url: publicUrl })
       .eq('id', articleId)
-      .select('id, slug');
+      .select('id, slug, country_id, region_id');
 
     if (dbError) {
       return NextResponse.json(
@@ -249,6 +141,8 @@ export async function POST(request: NextRequest) {
       if (articleRows[0]?.slug) {
         revalidatePath(`/${locale}/article/${articleRows[0].slug}`);
       }
+      if (articleRows[0]?.country_id) revalidatePath(`/${locale}/country/${articleRows[0].country_id}`);
+      if (articleRows[0]?.region_id) revalidatePath(`/${locale}/region/${articleRows[0].region_id}`);
     }
   }
 
