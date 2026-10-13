@@ -9,17 +9,29 @@ const CATEGORIES: { id: string; name: string; icon: string }[] = [
   { id: 'places',             name: 'Památky',                 icon: '🏰' },
   { id: 'camping',            name: 'Kemping',                 icon: '⛺' },
   { id: 'bike_trail',         name: 'Bike parky',              icon: '🚴' },
+  { id: 'ski_area',           name: 'Ski areály',              icon: '⛷️' },
   { id: 'natural_swimming',   name: 'Přírodní koupání',        icon: '🏊' },
   { id: 'fkk',                name: 'FKK pláže',               icon: '☀️' },
   { id: 'outdoor_pool',       name: 'Bazény a aquaparky',      icon: '🌊' },
   { id: 'trip',               name: 'Výlety',                  icon: '🥾' },
 ];
 
+const skiAreaNames: Record<string, string> = {
+  cs: 'Ski areály',
+  en: 'Ski areas',
+  de: 'Skigebiete',
+  fr: 'Domaines skiables',
+  es: 'Estaciones de esquí',
+};
+
 interface ArticleCategoryNavProps {
   locale: string;
 }
 
 export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) {
+  const categories = CATEGORIES.map((category) => category.id === 'ski_area'
+    ? { ...category, name: Object.hasOwn(skiAreaNames, locale) ? skiAreaNames[locale] : skiAreaNames.cs }
+    : category);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -119,7 +131,7 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
   let activeLabel = 'Vše';
 
   if (activeCategories.length === 1) {
-    const activeOption = CATEGORIES.find(c => c.id === activeCategories[0]);
+    const activeOption = categories.find(c => c.id === activeCategories[0]);
     if (activeOption) {
       activeIcon = activeOption.icon;
       activeLabel = activeOption.name;
@@ -127,7 +139,7 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
   } else if (activeCategories.length > 1) {
     activeIcon = '✔️';
     const labels = activeCategories.map(cId => {
-      const option = CATEGORIES.find(c => c.id === cId);
+      const option = categories.find(c => c.id === cId);
       return option ? option.name : '';
     });
     activeLabel = labels.filter(Boolean).join(', ');
@@ -156,7 +168,7 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
       {isOpen && (
         <div className="absolute left-0 mt-2 w-full sm:w-[320px] origin-top rounded-xl bg-slate-900 border border-white/10 shadow-2xl backdrop-blur-md z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
-            {CATEGORIES.map((category) => {
+            {categories.map((category) => {
               const isSelected = activeCategories.includes(category.id) || (category.id === 'all' && activeCategories.length === 0);
 
               return (

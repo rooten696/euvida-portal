@@ -9,7 +9,7 @@ import {
 import { getArticleLabel } from '@/lib/articleLabels';
 import { getDestinationLabel } from '@/lib/destinationLabels';
 import SafeImage from '@/app/components/SafeImage';
-import Link from 'next/link';
+import FilterContextLink from '@/app/components/FilterContextLink';
 
 type ArticleCardProps = {
   article: ArticleCardData;
@@ -53,7 +53,7 @@ export default function ArticleCard({
     : article.imageAlt;
 
   return (
-    <Link
+    <FilterContextLink
       href={getArticleHref(article, locale)}
       className="group flex min-h-full flex-col overflow-hidden rounded-2xl border border-white/5 bg-slate-900/50 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl hover:shadow-emerald-900/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
     >
@@ -120,6 +120,6 @@ export default function ArticleCard({
           )}
         </div>
       </div>
-    </Link>
+    </FilterContextLink>
   );
 }

@@ -70,7 +70,7 @@ function ArticleCategoryExplorerState({
 }: ArticleCategoryExplorerProps & { category: string; country: string }) {
   const [visiblePageCount, setVisiblePageCount] = useState(1);
   const [remoteArticles, setRemoteArticles] = useState<ArticleCardData[] | null>(null);
-  const [isLoadingRemoteArticles, setIsLoadingRemoteArticles] = useState(Boolean(category || country));
+  const [isLoadingRemoteArticles, setIsLoadingRemoteArticles] = useState(Boolean(category || country || regionId));
   const [remoteArticlesError, setRemoteArticlesError] = useState(false);
 
   const activeCategories = useMemo(() => splitParam(category), [category]);
@@ -78,7 +78,7 @@ function ArticleCategoryExplorerState({
     () => splitParam(country).map((countryId) => countryId.toUpperCase()),
     [country]
   );
-  const hasActiveFilters = activeCategories.length > 0 || activeCountries.length > 0;
+  const hasActiveFilters = activeCategories.length > 0 || activeCountries.length > 0 || Boolean(regionId);
   const activeCategoryKey = activeCategories.join(',');
   const activeCountryKey = activeCountries.join(',');
 
@@ -165,6 +165,8 @@ function ArticleCategoryExplorerState({
 
     result = result.filter((article) => matchesActiveCategories(article, activeCategories));
 
+    if (regionId) result = result.filter((article) => article.regionId === regionId);
+
     if (activeCountries.length > 0) {
       result = result.filter(
         (article) => article.countryId && activeCountries.includes(article.countryId.toUpperCase())
@@ -172,7 +174,7 @@ function ArticleCategoryExplorerState({
     }
 
     return result;
-  }, [activeCategories, activeCountries, articles, remoteArticles]);
+  }, [activeCategories, activeCountries, articles, remoteArticles, regionId]);
 
   const shouldLimitArticles = typeof defaultVisibleCount === 'number';
   const visibleCount = shouldLimitArticles
@@ -236,8 +238,9 @@ function ArticleCategoryExplorerInner(props: ArticleCategoryExplorerProps) {
   const params = useSearchParams();
   const category = params.get('category') || '';
   const country = params.get('country') || '';
-  return <ArticleCategoryExplorerState key={`${props.locale}:${props.countryId || ''}:${props.regionId || ''}:${category}:${country}`}
-    {...props} category={category} country={country} />;
+  const regionId = props.regionId || params.get('region') || undefined;
+  return <ArticleCategoryExplorerState key={`${props.locale}:${props.countryId || ''}:${regionId || ''}:${category}:${country}`}
+    {...props} regionId={regionId} category={category} country={country} />;
 }
 
 export default function ArticleCategoryExplorer(props: ArticleCategoryExplorerProps) {

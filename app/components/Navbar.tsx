@@ -3,6 +3,7 @@
 import { supabase } from '@/lib/supabaseBrowserClient';
 import Image from 'next/image';
 import Link from 'next/link';
+import FilterContextLink from './FilterContextLink';
 import type { User } from '@supabase/supabase-js';
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
@@ -10,6 +11,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import ThemeSwitcher from './ThemeSwitcher';
 import CountryNav from './CountryNav';
 import ArticleCategoryNav from './ArticleCategoryNav';
+import ResetFilters from './ResetFilters';
 import HeaderCountryDropdown from './HeaderCountryDropdown';
 import HideOnScrollHeader from './HideOnScrollHeader';
 
@@ -109,9 +111,9 @@ export default function Navbar() {
         
         {/* LEVÁ ČÁST: Logo a výběr obecných info o státech */}
         <div className="flex items-center gap-6">
-          <Link href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0">
+          <FilterContextLink href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0">
             EU<span className="text-emerald-400 transition-colors duration-200">VIDA</span><span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">.EU</span>
-          </Link>
+          </FilterContextLink>
           <div className="hidden md:block">
             <HeaderCountryDropdown locale={locale} countries={countries} />
           </div>
@@ -119,15 +121,15 @@ export default function Navbar() {
 
         {/* STŘEDNÍ ČÁST: Hlavní navigace (Desktop) */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
-          <Link href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
+          <FilterContextLink href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
             Domů
-          </Link>
-          <Link href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
+          </FilterContextLink>
+          <FilterContextLink href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
             Země
-          </Link>
-          <Link href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
+          </FilterContextLink>
+          <FilterContextLink href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
             Články
-          </Link>
+          </FilterContextLink>
           <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors duration-150">
             O nás
           </Link>
@@ -248,6 +250,9 @@ export default function Navbar() {
             <div className="h-6 w-[1px] bg-white/10 shrink-0 hidden sm:block mx-1.5" />
             <Suspense fallback={<div className="h-10 w-full sm:w-[320px] bg-slate-900/50 animate-pulse rounded-xl" />}>
               <CountryNav locale={locale} countries={countries} />
+            </Suspense>
+            <Suspense fallback={<div className="h-10 w-full sm:w-32" />}>
+              <ResetFilters locale={locale} />
             </Suspense>
           </div>
         </div>
