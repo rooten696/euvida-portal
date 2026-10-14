@@ -1,6 +1,10 @@
 {
   "Navigation": {
     "home": "Home",
+    "countries": "Countries",
+    "flights": "Flights",
+    "articles": "Articles",
+    "about": "About",
     "destinations": "Destinations",
     "favorites": "Favorites",
     "profile": "Profile",

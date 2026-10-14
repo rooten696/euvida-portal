@@ -1,4 +1,4 @@
-import DestinationCard from '@/app/components/destination/DestinationCard';
+import CountryBatchExplorer from '@/app/components/destination/CountryBatchExplorer';
 import { normalizeLocale } from '@/lib/articleLocalization';
 import type { SupportedLocale } from '@/lib/articleTypes';
 import { supportedLocales } from '@/lib/articleTypes';
@@ -172,38 +172,13 @@ export default async function CountriesPage({ params }: CountriesPageProps) {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-20 md:px-6">
-        {displayCountries.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {displayCountries.map((country) => (
-              <DestinationCard
-                key={country.id}
-                href={`/${locale}/country/${country.id}`}
-                title={country.name}
-                description={country.description}
-                imageUrl={country.image_url}
-                imageAlt={country.name}
-                badge={getDestinationLabel(locale, 'countryGuide')}
-                flag={country.flag}
-                flagSrc={`/flags/${country.id.toLowerCase()}.svg`}
-                stats={[
-                  {
-                    label: getDestinationLabel(locale, 'articlesCount'),
-                    value: country.articleCount,
-                  },
-                  {
-                    label: getDestinationLabel(locale, 'regionsCount'),
-                    value: country.regionCount,
-                  },
-                ]}
-                actionLabel={getDestinationLabel(locale, 'exploreCountry')}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-white/10 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm backdrop-blur">
-            {getDestinationLabel(locale, 'noData')}
-          </div>
-        )}
+        <CountryBatchExplorer
+          locale={locale}
+          countries={displayCountries}
+          defaultVisibleCount={18}
+          batchSize={18}
+          showScrollToTop={true}
+        />
       </section>
     </main>
   );

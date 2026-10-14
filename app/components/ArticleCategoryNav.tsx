@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabaseBrowserClient';
 
 const CATEGORIES: { id: string; name: string; icon: string }[] = [
   { id: 'all',                name: 'Vše',                     icon: '✨' },
-  { id: 'places',             name: 'Památky',                 icon: '🏰' },
   { id: 'camping',            name: 'Kemping',                 icon: '⛺' },
   { id: 'bike_trail',         name: 'Bike parky',              icon: '🚴' },
   { id: 'ski_area',           name: 'Ski areály',              icon: '⛷️' },
@@ -23,6 +22,13 @@ const skiAreaNames: Record<string, string> = {
   fr: 'Domaines skiables',
   es: 'Estaciones de esquí',
 };
+
+function normalizeMenuCategoryId(id: string): string {
+  if (id === 'places' || id === 'landmark') {
+    return 'trip';
+  }
+  return id;
+}
 
 interface ArticleCategoryNavProps {
   locale: string;
@@ -110,8 +116,16 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
     } else {
       let newCategories = [...activeCategories].filter(c => c !== 'all');
       
-      if (newCategories.includes(categoryId)) {
-        newCategories = newCategories.filter(c => c !== categoryId);
+      const isAlreadySelected = (categoryId === 'trip')
+        ? (newCategories.includes('trip') || newCategories.includes('places') || newCategories.includes('landmark'))
+        : newCategories.includes(categoryId);
+
+      if (isAlreadySelected) {
+        if (categoryId === 'trip') {
+          newCategories = newCategories.filter(c => c !== 'trip' && c !== 'places' && c !== 'landmark');
+        } else {
+          newCategories = newCategories.filter(c => c !== categoryId);
+        }
       } else {
         newCategories.push(categoryId);
       }
@@ -130,15 +144,17 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
   let activeIcon = '✨';
   let activeLabel = 'Vše';
 
-  if (activeCategories.length === 1) {
-    const activeOption = categories.find(c => c.id === activeCategories[0]);
+  const normalizedActiveCategories = [...new Set(activeCategories.map(normalizeMenuCategoryId))];
+
+  if (normalizedActiveCategories.length === 1) {
+    const activeOption = categories.find(c => c.id === normalizedActiveCategories[0]);
     if (activeOption) {
       activeIcon = activeOption.icon;
       activeLabel = activeOption.name;
     }
-  } else if (activeCategories.length > 1) {
+  } else if (normalizedActiveCategories.length > 1) {
     activeIcon = '✔️';
-    const labels = activeCategories.map(cId => {
+    const labels = normalizedActiveCategories.map(cId => {
       const option = categories.find(c => c.id === cId);
       return option ? option.name : '';
     });
@@ -169,7 +185,9 @@ export default function ArticleCategoryNav({ locale }: ArticleCategoryNavProps) 
         <div className="absolute left-0 mt-2 w-full sm:w-[320px] origin-top rounded-xl bg-slate-900 border border-white/10 shadow-2xl backdrop-blur-md z-50 p-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="flex flex-col gap-1 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
             {categories.map((category) => {
-              const isSelected = activeCategories.includes(category.id) || (category.id === 'all' && activeCategories.length === 0);
+              const isSelected = (category.id === 'trip')
+                ? (activeCategories.includes('trip') || activeCategories.includes('places') || activeCategories.includes('landmark'))
+                : (activeCategories.includes(category.id) || (category.id === 'all' && activeCategories.length === 0));
 
               return (
                 <button

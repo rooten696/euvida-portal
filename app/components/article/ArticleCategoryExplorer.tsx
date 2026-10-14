@@ -30,6 +30,7 @@ type ArticleCategoryExplorerProps = {
 
 
 const maxFilteredArticles = 1000;
+const minArticlesForScrollTop = 12;
 
 function splitParam(value: string): string[] {
   return value
@@ -43,16 +44,34 @@ function hasFkkCategory(article: ArticleCardData): boolean {
   return article.category === 'fkk' || article.categoryTags?.includes('fkk') === true;
 }
 
+function matchCategory(articleCategory: string | null | undefined, targetCategory: string): boolean {
+  if (!articleCategory) return false;
+  if (targetCategory === 'trip' || targetCategory === 'places' || targetCategory === 'landmark') {
+    return articleCategory === 'trip' || articleCategory === 'places' || articleCategory === 'landmark';
+  }
+  if (targetCategory === 'camping') {
+    return articleCategory === 'camping' || articleCategory === 'camp';
+  }
+  return articleCategory === targetCategory;
+}
+
 function matchesActiveCategories(article: ArticleCardData, activeCategories: string[]): boolean {
   if (activeCategories.length === 0) {
     return true;
   }
 
-  return activeCategories.some((activeCategory) =>
-    activeCategory === 'fkk'
-      ? hasFkkCategory(article)
-      : article.category === activeCategory || article.categoryTags?.includes(activeCategory) === true
-  );
+  return activeCategories.some((activeCategory) => {
+    if (activeCategory === 'fkk') {
+      return hasFkkCategory(article);
+    }
+    if (matchCategory(article.category, activeCategory)) {
+      return true;
+    }
+    if (article.categoryTags?.some((tag) => matchCategory(tag, activeCategory))) {
+      return true;
+    }
+    return false;
+  });
 }
 
 function ArticleCategoryExplorerState({
@@ -72,6 +91,29 @@ function ArticleCategoryExplorerState({
   const [remoteArticles, setRemoteArticles] = useState<ArticleCardData[] | null>(null);
   const [isLoadingRemoteArticles, setIsLoadingRemoteArticles] = useState(Boolean(category || country || regionId));
   const [remoteArticlesError, setRemoteArticlesError] = useState(false);
+  const [isScrolledDown, setIsScrolledDown] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    function handleScroll() {
+      setIsScrolledDown(window.scrollY > 400);
+    }
+
+    handleScroll();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleScrollToTop = () => {
+    if (typeof window !== 'undefined') {
+      const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ?? false;
+      window.scrollTo({
+        top: 0,
+        behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      });
+    }
+  };
 
   const activeCategories = useMemo(() => splitParam(category), [category]);
   const activeCountries = useMemo(
@@ -113,7 +155,20 @@ function ArticleCategoryExplorerState({
         !activeCategories.includes('fkk') &&
         !activeCategories.includes('natural_swimming')
       ) {
-        query = query.in('category', activeCategories);
+        const queryCategories = [
+          ...new Set(
+            activeCategories.flatMap((cat) => {
+              if (cat === 'trip' || cat === 'places' || cat === 'landmark') {
+                return ['trip', 'places', 'landmark'];
+              }
+              if (cat === 'camping') {
+                return ['camping', 'camp'];
+              }
+              return [cat];
+            })
+          ),
+        ];
+        query = query.in('category', queryCategories);
       }
 
       const { data, error } = await query.abortSignal(controller.signal);
@@ -176,6 +231,13 @@ function ArticleCategoryExplorerState({
     return result;
   }, [activeCategories, activeCountries, articles, remoteArticles, regionId]);
 
+  const activeHasCategory = activeCategories.length > 0;
+  const effectiveShowMoreLabel =
+    showMoreLabel ??
+    (activeHasCategory
+      ? getDestinationLabel(locale, 'loadMoreArticlesCategory')
+      : getDestinationLabel(locale, 'loadMoreArticles'));
+
   const shouldLimitArticles = typeof defaultVisibleCount === 'number';
   const visibleCount = shouldLimitArticles
     ? defaultVisibleCount * visiblePageCount
@@ -184,7 +246,8 @@ function ArticleCategoryExplorerState({
     ? filteredArticles.slice(0, visibleCount)
     : filteredArticles;
   const hasMoreArticles =
-    Boolean(showMoreLabel) && shouldLimitArticles && visibleArticles.length < filteredArticles.length;
+    Boolean(effectiveShowMoreLabel) && shouldLimitArticles && visibleArticles.length < filteredArticles.length;
+  const hasManyArticles = visibleArticles.length > minArticlesForScrollTop || visiblePageCount > 1;
 
   return (
     <section className="space-y-6">
@@ -193,7 +256,7 @@ function ArticleCategoryExplorerState({
         protože filtrace probíhá z hlavního Sub-baru navigace.
       */}
 
-      {isLoadingRemoteArticles && hasActiveFilters && !remoteArticles ? (
+      {isLoadingRemoteArticles && hasActiveFilters && !remoteArticles && visibleArticles.length === 0 ? (
         <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm">
           {getDestinationLabel(locale, 'loading')}
         </div>
@@ -218,9 +281,36 @@ function ArticleCategoryExplorerState({
                 onClick={() => setVisiblePageCount((currentCount) => currentCount + 1)}
                 className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
-                {showMoreLabel}
+                {effectiveShowMoreLabel}
               </button>
             </div>
+          )}
+
+          {hasManyArticles && (
+            <button
+              type="button"
+              onClick={handleScrollToTop}
+              tabIndex={isScrolledDown ? 0 : -1}
+              aria-hidden={!isScrolledDown}
+              className={`group fixed bottom-6 right-6 z-40 flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-emerald-500/30 bg-slate-900/90 text-emerald-400 shadow-xl backdrop-blur-md transition-all duration-300 hover:border-emerald-500/60 hover:bg-emerald-500/20 hover:text-white hover:scale-110 active:scale-95 motion-reduce:transition-none motion-reduce:hover:transform-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 cursor-pointer ${
+                isScrolledDown
+                  ? 'opacity-100 translate-y-0 pointer-events-auto visible'
+                  : 'opacity-0 translate-y-4 pointer-events-none invisible'
+              }`}
+              aria-label={getDestinationLabel(locale, 'scrollToTop')}
+              title={getDestinationLabel(locale, 'scrollToTop')}
+            >
+              <svg
+                className="h-5 w-5 sm:h-6 sm:w-6 transition-transform group-hover:-translate-y-0.5 motion-reduce:group-hover:transform-none"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2.5}
+                aria-hidden="true"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+            </button>
           )}
         </>
       ) : (

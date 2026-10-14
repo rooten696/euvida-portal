@@ -18,6 +18,9 @@ type RegionArticleExplorerProps = {
   countryHref: string;
   countryName?: string | null;
   regionId: string;
+  defaultVisibleCount?: number;
+  countryNamesById?: Record<string, string>;
+  regionNamesById?: Record<string, string>;
 };
 
 export default function RegionArticleExplorer({
@@ -27,6 +30,9 @@ export default function RegionArticleExplorer({
   countryHref,
   countryName,
   regionId,
+  defaultVisibleCount = 18,
+  countryNamesById,
+  regionNamesById,
 }: RegionArticleExplorerProps) {
   if (articles.length === 0) {
     return (
@@ -55,8 +61,14 @@ export default function RegionArticleExplorer({
   }
 
   return (
-    <ArticleCategoryExplorer locale={locale} articles={articles} categories={categories}
-      regionId={regionId} defaultVisibleCount={12}
-      showMoreLabel={getDestinationLabel(locale, 'showMoreArticles')} />
+    <ArticleCategoryExplorer
+      locale={locale}
+      articles={articles}
+      categories={categories}
+      regionId={regionId}
+      defaultVisibleCount={defaultVisibleCount}
+      countryNamesById={countryNamesById}
+      regionNamesById={regionNamesById}
+    />
   );
 }

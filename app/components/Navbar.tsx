@@ -110,44 +110,71 @@ export default function Navbar() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex justify-between items-center">
         
         {/* LEVÁ ČÁST: Logo a výběr obecných info o státech */}
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 lg:gap-5">
           <FilterContextLink href={`/${locale}`} className="text-2xl font-extrabold text-white tracking-tighter hover:opacity-80 transition-opacity flex items-center shrink-0">
             EU<span className="text-emerald-400 transition-colors duration-200">VIDA</span><span className="text-xs text-emerald-500 font-bold bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded ml-1">.EU</span>
           </FilterContextLink>
-          <div className="hidden md:block">
+          <div className="hidden md:flex items-center gap-2">
             <HeaderCountryDropdown locale={locale} countries={countries} />
+            <Link
+              href={`/${locale}/letenky`}
+              className={`group flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all duration-200 motion-reduce:transition-none ${
+                pathname && (
+                  pathname === `/${locale}/letenky` ||
+                  pathname.startsWith(`/${locale}/letenky/`) ||
+                  pathname === `/${locale}/flights` ||
+                  pathname.startsWith(`/${locale}/flights/`)
+                )
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm shadow-emerald-950/40'
+                  : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 hover:text-emerald-300 border border-emerald-500/20 hover:border-emerald-500/40 shadow-sm'
+              }`}
+            >
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="w-4 h-4 shrink-0 transition-transform duration-200 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:group-hover:translate-none"
+              >
+                <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3c-1-.5-3 0-4.5 1.5L13 8 4.8 6.2c-.5-.1-.9.1-1.1.5l-.3.5c-.2.5-.1 1 .3 1.3L9 12l-2 3H4l-1 1 3 2 2 3 1-1v-3l3-2 3.5 5.3c.3.4.8.5 1.3.3l.5-.2c.4-.3.6-.7.5-1.2z" />
+              </svg>
+              <span>{t('flights')}</span>
+            </Link>
           </div>
         </div>
 
         {/* STŘEDNÍ ČÁST: Hlavní navigace (Desktop) */}
-        <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
+        <nav className="hidden lg:flex items-center gap-4 xl:gap-8 text-sm font-medium text-slate-300 whitespace-nowrap">
           <FilterContextLink href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
-            Domů
+            {t('home')}
           </FilterContextLink>
           <FilterContextLink href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
-            Země
+            {t('countries')}
           </FilterContextLink>
           <FilterContextLink href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
-            Články
+            {t('articles')}
           </FilterContextLink>
           <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors duration-150">
-            O nás
+            {t('about')}
           </Link>
         </nav>
 
         {/* PRAVÁ ČÁST: Přihlášení, tlačítka a přepínač jazyka */}
-        <div className="flex items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-3 lg:gap-4 xl:gap-6">
           
           <ThemeSwitcher />
 
           {/* DESKTOPOVÝ PŘEPÍNAČ JAZYKŮ (Používá SVG obrázky podle kódu jazyka) */}
-          <div className="hidden md:flex items-center gap-2 bg-slate-900/80 p-1 rounded-full border border-white/10">
+          <div className="hidden lg:flex items-center gap-1.5 xl:gap-2 bg-slate-900/80 p-1 rounded-full border border-white/10 shrink-0">
             {languages.map(lang => (
               <Link
                 key={lang.code}
                 href={switchLanguage(lang.code)}
                 title={lang.label}
-                className={`w-8 h-8 flex items-center justify-center rounded-full transition-all overflow-hidden border-2
+                className={`w-7 h-7 xl:w-8 xl:h-8 flex items-center justify-center rounded-full transition-all overflow-hidden border-2
                   ${locale === lang.code 
                     ? 'border-emerald-500 shadow-sm scale-110 grayscale-0' 
                     : 'border-transparent hover:border-emerald-500/50 hover:scale-105 grayscale-[0.6] hover:opacity-100 hover:grayscale-0'}`}
@@ -182,13 +209,13 @@ export default function Navbar() {
               </button>
             </>
           ) : (
-            <Link href={`/${locale}/login`} className="bg-emerald-500 text-slate-950 px-6 py-2 rounded-xl text-sm font-bold hover:bg-emerald-400 transition-all shadow-md hover:shadow-lg">
+            <Link href={`/${locale}/login`} className="bg-emerald-500 text-slate-950 px-5 lg:px-6 py-2 rounded-xl text-sm font-bold hover:bg-emerald-400 transition-all shadow-md hover:shadow-lg whitespace-nowrap">
               {t('login')}
             </Link>
           )}
 
           <button 
-            className="md:hidden text-slate-300 text-2xl w-8 text-center" 
+            className="lg:hidden text-slate-300 text-2xl w-8 text-center" 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
           >
             {isMenuOpen ? '✖' : '☰'}
@@ -217,6 +244,24 @@ export default function Navbar() {
                 {lang.flag}
               </Link>
             ))}
+          </div>
+
+          {/* RYCHLÉ ODKAZY NA MOBILU */}
+          <div className="grid grid-cols-2 gap-2 mb-4 pb-4 border-b border-white/5 shrink-0">
+            <FilterContextLink
+              href={`/${locale}`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-emerald-400 hover:bg-white/5 rounded-xl transition-colors text-center"
+            >
+              {t('home')}
+            </FilterContextLink>
+            <Link
+              href={`/${locale}/letenky`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-3 py-2 text-sm font-semibold bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/25 rounded-xl transition-colors text-center flex items-center justify-center gap-1.5"
+            >
+              <span>✈️</span> {t('flights')}
+            </Link>
           </div>
 
           <div className="px-2 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">
