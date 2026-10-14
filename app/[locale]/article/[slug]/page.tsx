@@ -7,6 +7,8 @@ import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
 import SourcesSection from '@/app/components/article/SourcesSection';
 import WaterQualityBox from '@/app/components/article/WaterQualityBox';
+import RelatedArticles from '@/app/components/article/RelatedArticles';
+import { getRelatedArticleCards } from '@/lib/relatedArticles';
 import {
   getArticleFallbackAlt,
   getArticleFallbackImage,
@@ -359,8 +361,14 @@ export default async function ArticlePage({ params }: PageProps) {
     notFound();
   }
 
-  const { country, region } = await getLocationData(article);
-  const panelPlacement = await getPanelPlacement();
+  const [{ country, region }, panelPlacement, relatedArticles] = await Promise.all([
+    getLocationData(article),
+    getPanelPlacement(),
+    getRelatedArticleCards(article, locale).catch((error: unknown) => {
+      console.error('Unable to load optional related articles:', error instanceof Error ? error.message : 'Unknown error');
+      return [];
+    }),
+  ]);
 
 
   const localizedArticle = getLocalizedArticle(article, locale);
@@ -502,6 +510,8 @@ export default async function ArticlePage({ params }: PageProps) {
           </aside>
 
         </div>
+
+        <RelatedArticles locale={locale} items={relatedArticles} />
 
         <MobileInfoDrawer
           locale={locale}

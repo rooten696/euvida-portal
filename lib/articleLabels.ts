@@ -48,6 +48,10 @@ export const articleUiLabels: LabelMap = {
     crowdLevel: 'Vytíženost',
     placeType: 'Typ místa',
     category: 'Kategorie',
+    relatedArticles: 'Tipy v okolí',
+    relatedDistance: 'Nedaleko',
+    relatedRegion: 'Stejný region',
+    relatedCategory: 'Podobné místo',
   },
   en: {
     home: 'Euvida',
@@ -93,6 +97,10 @@ export const articleUiLabels: LabelMap = {
     crowdLevel: 'Crowds',
     placeType: 'Place type',
     category: 'Category',
+    relatedArticles: 'Nearby tips',
+    relatedDistance: 'Nearby',
+    relatedRegion: 'Same region',
+    relatedCategory: 'Similar place',
   },
   de: {
     home: 'Euvida',
@@ -138,6 +146,10 @@ export const articleUiLabels: LabelMap = {
     crowdLevel: 'Andrang',
     placeType: 'Ortstyp',
     category: 'Kategorie',
+    relatedArticles: 'Tipps in der Nähe',
+    relatedDistance: 'In der Nähe',
+    relatedRegion: 'Gleiche Region',
+    relatedCategory: 'Ähnlicher Ort',
   },
   fr: {
     home: 'Euvida',
@@ -183,6 +195,10 @@ export const articleUiLabels: LabelMap = {
     crowdLevel: 'Affluence',
     placeType: 'Type de lieu',
     category: 'Catégorie',
+    relatedArticles: 'Idées à proximité',
+    relatedDistance: 'À proximité',
+    relatedRegion: 'Même région',
+    relatedCategory: 'Lieu similaire',
   },
   es: {
     home: 'Euvida',
@@ -228,6 +244,10 @@ export const articleUiLabels: LabelMap = {
     crowdLevel: 'Afluencia',
     placeType: 'Tipo de lugar',
     category: 'Categoría',
+    relatedArticles: 'Ideas cercanas',
+    relatedDistance: 'Cerca',
+    relatedRegion: 'Misma región',
+    relatedCategory: 'Lugar similar',
   },
 };
 
