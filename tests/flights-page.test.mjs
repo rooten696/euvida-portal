@@ -231,3 +231,25 @@ test('KiwiFlightWidget: supports exactScriptSrc override', () => {
   const html = renderToStaticMarkup(React.createElement(KiwiFlightWidget, { locale: 'cs', exactScriptSrc: customSrc }));
   assert.ok(html.includes('data-testid="kiwi-widget-holder"'));
 });
+
+// 10. Navbar renders highlighted flights link with icon next to HeaderCountryDropdown
+test('Navbar: places highlighted flights link next to country dropdown, not inside central nav', () => {
+  const content = fs.readFileSync('app/components/Navbar.tsx', 'utf8');
+
+  // Verify it is placed in the left section next to HeaderCountryDropdown
+  const leftHeaderSection = content.match(/<HeaderCountryDropdown[^>]*\/>[\s\S]*?<Link[^>]*href=\{`\/\$\{locale\}\/letenky`\}[\s\S]*?<\/Link>/);
+  assert.ok(leftHeaderSection, 'Flights link must be positioned adjacent to HeaderCountryDropdown');
+
+  // Verify highlighting styling and airplane SVG icon
+  const flightsLinkSnippet = leftHeaderSection[0];
+  assert.ok(flightsLinkSnippet.includes('bg-emerald-500/10'), 'Flights link must be highlighted with subtle emerald styling');
+  assert.ok(flightsLinkSnippet.includes('<svg') && flightsLinkSnippet.includes('d="M17.8 19.2'), 'Flights link must include airplane SVG icon');
+
+  // Verify it was removed from the central desktop nav
+  const centralNav = content.match(/<nav className="hidden (?:md|lg):flex[^"]*">([\s\S]*?)<\/nav>/);
+  assert.ok(centralNav, 'Central nav must exist');
+  assert.ok(!centralNav[1].includes('/letenky'), 'Central nav must not duplicate the flights link');
+
+  // Verify mobile quick links include flights
+  assert.ok(content.includes('href={`/${locale}/letenky`}'), 'Mobile menu must include flights link');
+});
