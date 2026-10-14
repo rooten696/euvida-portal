@@ -1,6 +1,10 @@
 {
   "Navigation": {
     "home": "Inicio",
+    "countries": "Países",
+    "flights": "Vuelos",
+    "articles": "Artículos",
+    "about": "Sobre nosotros",
     "destinations": "Destinos",
     "favorites": "Favoritos",
     "profile": "Perfil",

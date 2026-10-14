@@ -1,6 +1,10 @@
 {
   "Navigation": {
     "home": "Domů",
+    "countries": "Země",
+    "flights": "Letenky",
+    "articles": "Články",
+    "about": "O nás",
     "destinations": "Destinace",
     "favorites": "Oblíbené",
     "profile": "Profil",

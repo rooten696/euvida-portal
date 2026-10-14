@@ -27,6 +27,9 @@ export default function Footer({ locale = 'cs' }: FooterProps) {
           {/* Odkazy (zarovnáno doprava na desktopu) */}
           <div className="flex flex-wrap justify-center md:justify-end gap-x-8 gap-y-2 text-sm text-slate-400 font-medium">
             <Link href={`/${locale}`} className="hover:text-emerald-400 transition-colors">Domů</Link>
+            <Link href={`/${locale}/letenky`} className="hover:text-emerald-400 transition-colors">
+              {locale === 'cs' ? 'Letenky' : locale === 'de' ? 'Flüge' : locale === 'es' ? 'Vuelos' : locale === 'fr' ? 'Vols' : 'Flights'}
+            </Link>
             <Link href={`/${locale}/oblibene`} className="hover:text-emerald-400 transition-colors">Oblíbené</Link>
             <Link href={`/${locale}/profile`} className="hover:text-emerald-400 transition-colors">Profil</Link>
             <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors">O nás</Link>

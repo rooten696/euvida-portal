@@ -122,16 +122,19 @@ export default function Navbar() {
         {/* STŘEDNÍ ČÁST: Hlavní navigace (Desktop) */}
         <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
           <FilterContextLink href={`/${locale}`} className="hover:text-emerald-400 transition-colors duration-150">
-            Domů
+            {t('home')}
           </FilterContextLink>
           <FilterContextLink href={`/${locale}#countries`} className="hover:text-emerald-400 transition-colors duration-150">
-            Země
+            {t('countries')}
           </FilterContextLink>
+          <Link href={`/${locale}/letenky`} className="hover:text-emerald-400 transition-colors duration-150">
+            {t('flights')}
+          </Link>
           <FilterContextLink href={`/${locale}#articles`} className="hover:text-emerald-400 transition-colors duration-150">
-            Články
+            {t('articles')}
           </FilterContextLink>
           <Link href={`/${locale}/about`} className="hover:text-emerald-400 transition-colors duration-150">
-            O nás
+            {t('about')}
           </Link>
         </nav>
 
@@ -217,6 +220,24 @@ export default function Navbar() {
                 {lang.flag}
               </Link>
             ))}
+          </div>
+
+          {/* RYCHLÉ ODKAZY NA MOBILU */}
+          <div className="grid grid-cols-2 gap-2 mb-4 pb-4 border-b border-white/5 shrink-0">
+            <FilterContextLink
+              href={`/${locale}`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-emerald-400 hover:bg-white/5 rounded-xl transition-colors text-center"
+            >
+              {t('home')}
+            </FilterContextLink>
+            <Link
+              href={`/${locale}/letenky`}
+              onClick={() => setIsMenuOpen(false)}
+              className="px-3 py-2 text-sm font-semibold text-slate-300 hover:text-emerald-400 hover:bg-white/5 rounded-xl transition-colors text-center flex items-center justify-center gap-1.5"
+            >
+              <span>✈️</span> {t('flights')}
+            </Link>
           </div>
 
           <div className="px-2 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider shrink-0">

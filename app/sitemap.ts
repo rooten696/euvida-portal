@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
   // 1. Static routes across all 5 supported locales
-  const staticPaths = ['', '/countries', '/regions', '/articles', '/about'];
+  const staticPaths = ['', '/countries', '/regions', '/articles', '/about', '/letenky'];
 
   for (const path of staticPaths) {
     const languageAlternates: Record<string, string> = {};
