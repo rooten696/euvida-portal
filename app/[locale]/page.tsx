@@ -403,14 +403,6 @@ export default async function HomePage({ params }: PageProps) {
             countryNamesById={countryNamesById}
             regionNamesById={regionNamesById}
           />
-          <div className="mt-8 flex justify-center">
-            <a
-              href={`/${locale}/articles`}
-              className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20"
-            >
-              {getDestinationLabel(locale, 'showAllArticles')}
-            </a>
-          </div>
         </section>
       )}
 

@@ -43,16 +43,34 @@ function hasFkkCategory(article: ArticleCardData): boolean {
   return article.category === 'fkk' || article.categoryTags?.includes('fkk') === true;
 }
 
+function matchCategory(articleCategory: string | null | undefined, targetCategory: string): boolean {
+  if (!articleCategory) return false;
+  if (targetCategory === 'trip' || targetCategory === 'places' || targetCategory === 'landmark') {
+    return articleCategory === 'trip' || articleCategory === 'places' || articleCategory === 'landmark';
+  }
+  if (targetCategory === 'camping') {
+    return articleCategory === 'camping' || articleCategory === 'camp';
+  }
+  return articleCategory === targetCategory;
+}
+
 function matchesActiveCategories(article: ArticleCardData, activeCategories: string[]): boolean {
   if (activeCategories.length === 0) {
     return true;
   }
 
-  return activeCategories.some((activeCategory) =>
-    activeCategory === 'fkk'
-      ? hasFkkCategory(article)
-      : article.category === activeCategory || article.categoryTags?.includes(activeCategory) === true
-  );
+  return activeCategories.some((activeCategory) => {
+    if (activeCategory === 'fkk') {
+      return hasFkkCategory(article);
+    }
+    if (matchCategory(article.category, activeCategory)) {
+      return true;
+    }
+    if (article.categoryTags?.some((tag) => matchCategory(tag, activeCategory))) {
+      return true;
+    }
+    return false;
+  });
 }
 
 function ArticleCategoryExplorerState({
@@ -113,7 +131,20 @@ function ArticleCategoryExplorerState({
         !activeCategories.includes('fkk') &&
         !activeCategories.includes('natural_swimming')
       ) {
-        query = query.in('category', activeCategories);
+        const queryCategories = [
+          ...new Set(
+            activeCategories.flatMap((cat) => {
+              if (cat === 'trip' || cat === 'places' || cat === 'landmark') {
+                return ['trip', 'places', 'landmark'];
+              }
+              if (cat === 'camping') {
+                return ['camping', 'camp'];
+              }
+              return [cat];
+            })
+          ),
+        ];
+        query = query.in('category', queryCategories);
       }
 
       const { data, error } = await query.abortSignal(controller.signal);
@@ -176,6 +207,13 @@ function ArticleCategoryExplorerState({
     return result;
   }, [activeCategories, activeCountries, articles, remoteArticles, regionId]);
 
+  const activeHasCategory = activeCategories.length > 0;
+  const effectiveShowMoreLabel =
+    showMoreLabel ??
+    (activeHasCategory
+      ? getDestinationLabel(locale, 'loadMoreArticlesCategory')
+      : getDestinationLabel(locale, 'loadMoreArticles'));
+
   const shouldLimitArticles = typeof defaultVisibleCount === 'number';
   const visibleCount = shouldLimitArticles
     ? defaultVisibleCount * visiblePageCount
@@ -184,7 +222,7 @@ function ArticleCategoryExplorerState({
     ? filteredArticles.slice(0, visibleCount)
     : filteredArticles;
   const hasMoreArticles =
-    Boolean(showMoreLabel) && shouldLimitArticles && visibleArticles.length < filteredArticles.length;
+    Boolean(effectiveShowMoreLabel) && shouldLimitArticles && visibleArticles.length < filteredArticles.length;
 
   return (
     <section className="space-y-6">
@@ -193,7 +231,7 @@ function ArticleCategoryExplorerState({
         protože filtrace probíhá z hlavního Sub-baru navigace.
       */}
 
-      {isLoadingRemoteArticles && hasActiveFilters && !remoteArticles ? (
+      {isLoadingRemoteArticles && hasActiveFilters && !remoteArticles && visibleArticles.length === 0 ? (
         <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm">
           {getDestinationLabel(locale, 'loading')}
         </div>
@@ -218,7 +256,7 @@ function ArticleCategoryExplorerState({
                 onClick={() => setVisiblePageCount((currentCount) => currentCount + 1)}
                 className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2"
               >
-                {showMoreLabel}
+                {effectiveShowMoreLabel}
               </button>
             </div>
           )}
