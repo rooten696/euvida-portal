@@ -1,5 +1,6 @@
 import { getArticleListingSelect, normalizeArticleListing } from '@/lib/articleListing';
-import DestinationCard from '@/app/components/destination/DestinationCard';
+import CountryBatchExplorer from '@/app/components/destination/CountryBatchExplorer';
+import RegionBatchExplorer from '@/app/components/destination/RegionBatchExplorer';
 import HomeArticleExplorer from '@/app/components/home/HomeArticleExplorer';
 import SmartSearch, { type SmartSearchItem } from '@/app/components/search/SmartSearch';
 import {
@@ -288,8 +289,7 @@ export default async function HomePage({ params }: PageProps) {
       }
 
       return left.name.localeCompare(right.name, locale);
-    })
-    .slice(0, 6);
+    });
   const homepageCountries = [...countriesWithArticles, ...extraCountries];
   const regionsWithCounts = regions.map((region) => ({
     ...region,
@@ -304,8 +304,7 @@ export default async function HomePage({ params }: PageProps) {
       }
 
       return left.name.localeCompare(right.name, locale);
-    })
-    .slice(0, 8);
+    });
   const articlesCountLabel = getDestinationLabel(locale, 'articlesCount');
   const regionsCountLabel = getDestinationLabel(locale, 'regionsCount');
   const searchItems: SmartSearchItem[] = [
@@ -422,48 +421,14 @@ export default async function HomePage({ params }: PageProps) {
           </p>
         </div>
 
-        {homepageCountries.length > 0 ? (
-          <>
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {homepageCountries.map((country) => (
-                <DestinationCard
-                  key={country.id}
-                  href={`/${locale}/country/${country.id}`}
-                  title={country.name}
-                  description={country.description}
-                  imageUrl={country.image_url}
-                  imageAlt={country.name}
-                  badge={getDestinationLabel(locale, 'countryGuide')}
-                  flag={country.flag}
-                  flagSrc={`/flags/${country.id.toLowerCase()}.svg`}
-                  stats={[
-                    {
-                      label: getDestinationLabel(locale, 'articlesCount'),
-                      value: country.articleCount,
-                    },
-                    {
-                      label: getDestinationLabel(locale, 'regionsCount'),
-                      value: country.regionCount,
-                    },
-                  ]}
-                  actionLabel={getDestinationLabel(locale, 'exploreCountry')}
-                />
-              ))}
-            </div>
-            <div className="mt-8 flex justify-center">
-              <a
-                href={`/${locale}/countries`}
-                className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20"
-              >
-                {getDestinationLabel(locale, 'showAllCountries')}
-              </a>
-            </div>
-          </>
-        ) : (
-          <div className="rounded-2xl border border-white/5 bg-slate-900/50 p-8 text-center text-sm font-medium text-slate-400 shadow-sm">
-            {t('no_countries')}
-          </div>
-        )}
+        <CountryBatchExplorer
+          locale={locale}
+          countries={homepageCountries}
+          defaultVisibleCount={6}
+          batchSize={6}
+          allCountriesHref={`/${locale}/countries`}
+          emptyMessage={t('no_countries')}
+        />
       </section>
 
       {selectedRegions.length > 0 && (
@@ -479,34 +444,14 @@ export default async function HomePage({ params }: PageProps) {
               {getDestinationLabel(locale, 'regions')}
             </h2>
           </div>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {selectedRegions.map((region) => (
-              <DestinationCard
-                key={region.id}
-                href={`/${locale}/region/${region.id}`}
-                title={region.name}
-                description={region.description}
-                imageUrl={region.image_url}
-                imageAlt={region.name}
-                badge={getDestinationLabel(locale, 'regionGuide')}
-                stats={[
-                  {
-                    label: getDestinationLabel(locale, 'articlesCount'),
-                    value: region.articleCount,
-                  },
-                ]}
-                actionLabel={getDestinationLabel(locale, 'exploreRegion')}
-              />
-            ))}
-          </div>
-          <div className="mt-8 flex justify-center">
-            <a
-              href={`/${locale}/regions`}
-              className="inline-flex rounded-full border border-emerald-500/20 bg-emerald-500/10 px-5 py-3 text-sm font-extrabold text-emerald-400 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/20 hover:shadow-lg hover:shadow-emerald-900/20"
-            >
-              {getDestinationLabel(locale, 'allRegions')}
-            </a>
-          </div>
+          <RegionBatchExplorer
+            locale={locale}
+            regions={selectedRegions}
+            defaultVisibleCount={8}
+            batchSize={8}
+            columns="4"
+            allRegionsHref={`/${locale}/regions`}
+          />
         </section>
       )}
     </main>

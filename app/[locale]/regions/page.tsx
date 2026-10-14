@@ -1,4 +1,4 @@
-import DestinationCard from '@/app/components/destination/DestinationCard';
+import RegionBatchExplorer from '@/app/components/destination/RegionBatchExplorer';
 import { normalizeLocale } from '@/lib/articleLocalization';
 import type { SupportedLocale } from '@/lib/articleTypes';
 import { supportedLocales } from '@/lib/articleTypes';
@@ -183,36 +183,15 @@ export default async function RegionsPage({ params }: RegionsPageProps) {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 pb-20 md:px-6">
-        {displayRegions.length > 0 ? (
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {displayRegions.map((region) => (
-              <DestinationCard
-                key={region.id}
-                href={`/${locale}/region/${region.id}`}
-                title={region.name}
-                description={region.description}
-                imageUrl={region.image_url}
-                imageAlt={region.name}
-                badge={getDestinationLabel(locale, 'regionGuide')}
-                stats={[
-                  {
-                    label: getDestinationLabel(locale, 'articlesCount'),
-                    value: region.articleCount,
-                  },
-                  {
-                    label: getDestinationLabel(locale, 'countries'),
-                    value: region.countryName ?? getDestinationLabel(locale, 'noData'),
-                  },
-                ]}
-                actionLabel={getDestinationLabel(locale, 'exploreRegion')}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-2xl border border-white/10 bg-slate-900 p-8 text-center text-sm font-medium text-slate-400 shadow-md">
-            {getDestinationLabel(locale, 'noData')}
-          </div>
-        )}
+        <RegionBatchExplorer
+          locale={locale}
+          regions={displayRegions}
+          defaultVisibleCount={18}
+          batchSize={18}
+          columns="3"
+          showCountryInStats={true}
+          showScrollToTop={true}
+        />
       </section>
     </main>
   );
