@@ -44,11 +44,11 @@ function load(file, overrides = {}, suffix = '') {
 test('Load more labels are localized in all 5 languages with category and generic variants', () => {
   const { getDestinationLabel } = load('lib/destinationLabels.ts');
   const expectedCategory = {
-    cs: 'Načíst další články (v kategorii)',
-    en: 'Load more articles (in category)',
-    de: 'Weitere Artikel laden (in der Kategorie)',
-    fr: 'Charger plus d’articles (dans la catégorie)',
-    es: 'Cargar más artículos (en la categoría)',
+    cs: 'Načíst další články v kategorii',
+    en: 'Load more articles in category',
+    de: 'Weitere Artikel laden in der Kategorie',
+    fr: 'Charger plus d’articles dans la catégorie',
+    es: 'Cargar más artículos en la categoría',
   };
   const expectedGeneric = {
     cs: 'Načíst další články',
@@ -56,6 +56,13 @@ test('Load more labels are localized in all 5 languages with category and generi
     de: 'Weitere Artikel laden',
     fr: 'Charger plus d’articles',
     es: 'Cargar más artículos',
+  };
+  const expectedScrollToTop = {
+    cs: 'Zpět nahoru',
+    en: 'Back to top',
+    de: 'Nach oben',
+    fr: 'Retour en haut',
+    es: 'Volver arriba',
   };
 
   for (const [locale, label] of Object.entries(expectedCategory)) {
@@ -71,6 +78,14 @@ test('Load more labels are localized in all 5 languages with category and generi
       getDestinationLabel(locale, 'loadMoreArticles'),
       label,
       `${locale} generic load more label mismatch`
+    );
+  }
+
+  for (const [locale, label] of Object.entries(expectedScrollToTop)) {
+    assert.equal(
+      getDestinationLabel(locale, 'scrollToTop'),
+      label,
+      `${locale} scrollToTop label mismatch`
     );
   }
 });
@@ -235,7 +250,7 @@ test('Explorer client reveal: increments visible count, prevents duplicates, hid
       '@/lib/articleCards': {},
       '@/lib/destinationLabels': {
         getDestinationLabel: (locale, key) => {
-          if (key === 'loadMoreArticlesCategory') return 'Načíst další články (v kategorii)';
+          if (key === 'loadMoreArticlesCategory') return 'Načíst další články v kategorii';
           if (key === 'loadMoreArticles') return 'Načíst další články';
           return key;
         },
@@ -255,7 +270,7 @@ test('Explorer client reveal: increments visible count, prevents duplicates, hid
   });
   const markup1 = renderToStaticMarkup(tree1.type(tree1.props));
   assert.equal((markup1.match(/article-card/g) || []).length, 10);
-  assert.ok(markup1.includes('Načíst další články (v kategorii)'));
+  assert.ok(markup1.includes('Načíst další články v kategorii'));
 
   // Batch 2 (visiblePageCount = 2) -> 20 articles visible
   stateVal = 2;
@@ -267,7 +282,7 @@ test('Explorer client reveal: increments visible count, prevents duplicates, hid
   });
   const markup2 = renderToStaticMarkup(tree2.type(tree2.props));
   assert.equal((markup2.match(/article-card/g) || []).length, 20);
-  assert.ok(markup2.includes('Načíst další články (v kategorii)'));
+  assert.ok(markup2.includes('Načíst další články v kategorii'));
 
   // Batch 3 (visiblePageCount = 3) -> 25 articles visible (all loaded) -> button hidden
   stateVal = 3;
@@ -345,4 +360,196 @@ test('ArticleCategoryExplorerInner key encodes category, country, regionId and l
   });
   assert.equal(changedElement.key, 'cs:::trip:CZ');
   assert.notEqual(initialElement.key, changedElement.key, 'Keys must differ on category change to guarantee page count reset');
+});
+
+// 7. CountryArticleExplorer delegates to ArticleCategoryExplorer with defaultVisibleCount=18 and dynamic load more label
+test('CountryArticleExplorer delegates to ArticleCategoryExplorer with defaultVisibleCount=18 and no hardcoded showMoreLabel', () => {
+  const Component = load('app/components/country/CountryArticleExplorer.tsx', {
+    '@/app/components/article/ArticleCategoryExplorer': {
+      default: (props) => React.createElement('div', { id: 'country-explorer-mock', ...props }),
+    },
+    '@/lib/articleCards': {},
+    '@/lib/destinationLabels': { getDestinationLabel: () => 'label' },
+    'next/link': { default: () => null },
+  }).default;
+
+  const mockArticles = Array.from({ length: 25 }, (_, i) => ({ slug: `article-${i}` }));
+  const element = Component({
+    locale: 'cs',
+    articles: mockArticles,
+    categories: [],
+    countryId: 'CZE',
+  });
+
+  assert.ok(element, 'CountryArticleExplorer must return an element');
+  assert.equal(element.props.countryId, 'CZE');
+  assert.equal(element.props.defaultVisibleCount, 18);
+  assert.equal(element.props.showMoreLabel, undefined, 'showMoreLabel must not be hardcoded to showMoreArticles');
+});
+
+// 8. RegionArticleExplorer delegates to ArticleCategoryExplorer with defaultVisibleCount=18 and dynamic load more label
+test('RegionArticleExplorer delegates to ArticleCategoryExplorer with defaultVisibleCount=18 and no hardcoded showMoreLabel', () => {
+  const Component = load('app/components/region/RegionArticleExplorer.tsx', {
+    '@/app/components/article/ArticleCategoryExplorer': {
+      default: (props) => React.createElement('div', { id: 'region-explorer-mock', ...props }),
+    },
+    '@/lib/articleCards': {},
+    '@/lib/destinationLabels': { getDestinationLabel: () => 'label' },
+    'next/link': { default: () => null },
+  }).default;
+
+  const mockArticles = Array.from({ length: 25 }, (_, i) => ({ slug: `article-${i}` }));
+  const element = Component({
+    locale: 'cs',
+    articles: mockArticles,
+    categories: [],
+    countryHref: '/cs/country/CZE',
+    regionId: 'south-moravia',
+  });
+
+  assert.ok(element, 'RegionArticleExplorer must return an element');
+  assert.equal(element.props.regionId, 'south-moravia');
+  assert.equal(element.props.defaultVisibleCount, 18);
+  assert.equal(element.props.showMoreLabel, undefined, 'showMoreLabel must not be hardcoded to showMoreArticles');
+});
+
+// 9. Floating scroll-to-top button in ArticleCategoryExplorer
+test('ArticleCategoryExplorer renders scroll-to-top button when many articles (>12) are loaded, but hides it when few articles', () => {
+  const exports = load(
+    'app/components/article/ArticleCategoryExplorer.tsx',
+    {
+      react: {
+        ...React,
+        useState: (val) => [typeof val === 'boolean' ? false : val, () => {}],
+        useEffect: () => {},
+        useMemo: (fn) => fn(),
+      },
+      'next/navigation': {
+        useSearchParams: () => new URLSearchParams(''),
+        usePathname: () => '/cs',
+      },
+      '@/app/components/article/ArticleCard': {
+        default: ({ article }) => React.createElement('div', { className: 'article-card' }, article.slug),
+      },
+      '@/lib/articleCards': {},
+      '@/lib/destinationLabels': {
+        getDestinationLabel: (locale, key) => {
+          if (key === 'scrollToTop') return 'Zpět nahoru';
+          return key;
+        },
+      },
+      '@/lib/articleListing': {},
+      '@/lib/supabaseBrowserClient': {},
+    },
+    '\nexport { ArticleCategoryExplorerInner };'
+  );
+
+  // Case A: 12 articles (<= minArticlesForScrollTop=12 and pageCount 1) -> Boundary check: No scroll to top button
+  const boundaryArticles = Array.from({ length: 12 }, (_, i) => ({ slug: `article-${i}` }));
+  const treeBoundary = exports.ArticleCategoryExplorerInner({
+    locale: 'cs',
+    articles: boundaryArticles,
+    categories: [],
+    defaultVisibleCount: 18,
+  });
+  const markupBoundary = renderToStaticMarkup(treeBoundary.type(treeBoundary.props));
+  assert.ok(!markupBoundary.includes('Zpět nahoru'), 'Scroll-to-top button must not render at boundary (12 articles)');
+
+  // Case B: 13 articles (> 12) with isScrolledDown=false -> Button rendered in DOM with hidden/invisible a11y attributes
+  const thirteenArticles = Array.from({ length: 13 }, (_, i) => ({ slug: `article-${i}` }));
+  const treeThirteen = exports.ArticleCategoryExplorerInner({
+    locale: 'cs',
+    articles: thirteenArticles,
+    categories: [],
+    defaultVisibleCount: 18,
+  });
+  const markupThirteen = renderToStaticMarkup(treeThirteen.type(treeThirteen.props));
+  assert.ok(markupThirteen.includes('Zpět nahoru'), 'Scroll-to-top button must render when articles > 12 (13 articles)');
+  assert.ok(markupThirteen.includes('svg'), 'Scroll-to-top button must contain arrow svg');
+  assert.ok(markupThirteen.includes('fixed bottom-6 right-6'), 'Scroll-to-top button must be positioned fixed in bottom right');
+  assert.ok(markupThirteen.includes('group'), 'Button must have group class for hover styling');
+  assert.ok(markupThirteen.includes('aria-hidden="true"'), 'When not scrolled, button must be aria-hidden=true');
+  assert.ok(markupThirteen.includes('tabindex="-1"'), 'When not scrolled, button must have tabIndex=-1');
+  assert.ok(markupThirteen.includes('invisible'), 'When not scrolled, button must have invisible class');
+
+  // Case C: 15 articles with isScrolledDown=true -> Visible, tabIndex=0, aria-hidden=false
+  const exportsScrolled = load(
+    'app/components/article/ArticleCategoryExplorer.tsx',
+    {
+      react: {
+        ...React,
+        useState: (val) => [typeof val === 'boolean' ? true : val, () => {}],
+        useEffect: () => {},
+        useMemo: (fn) => fn(),
+      },
+      'next/navigation': {
+        useSearchParams: () => new URLSearchParams(''),
+        usePathname: () => '/cs',
+      },
+      '@/app/components/article/ArticleCard': {
+        default: ({ article }) => React.createElement('div', { className: 'article-card' }, article.slug),
+      },
+      '@/lib/articleCards': {},
+      '@/lib/destinationLabels': {
+        getDestinationLabel: (locale, key) => {
+          if (key === 'scrollToTop') return 'Zpět nahoru';
+          return key;
+        },
+      },
+      '@/lib/articleListing': {},
+      '@/lib/supabaseBrowserClient': {},
+    },
+    '\nexport { ArticleCategoryExplorerInner };'
+  );
+  const treeScrolled = exportsScrolled.ArticleCategoryExplorerInner({
+    locale: 'cs',
+    articles: thirteenArticles,
+    categories: [],
+    defaultVisibleCount: 18,
+  });
+  const markupScrolled = renderToStaticMarkup(treeScrolled.type(treeScrolled.props));
+  assert.ok(markupScrolled.includes('aria-hidden="false"'), 'When scrolled down, button must have aria-hidden=false');
+  assert.ok(markupScrolled.includes('tabindex="0"'), 'When scrolled down, button must have tabIndex=0');
+  assert.ok(markupScrolled.includes('opacity-100') && markupScrolled.includes('visible'), 'When scrolled down, button must be visible with opacity-100');
+});
+
+// 10. Explicit showMoreLabel override is respected when provided
+test('ArticleCategoryExplorer respects explicitly passed showMoreLabel prop over default', () => {
+  const exports = load(
+    'app/components/article/ArticleCategoryExplorer.tsx',
+    {
+      react: {
+        ...React,
+        useState: (val) => [val, () => {}],
+        useEffect: () => {},
+        useMemo: (fn) => fn(),
+      },
+      'next/navigation': {
+        useSearchParams: () => new URLSearchParams(''),
+        usePathname: () => '/cs',
+      },
+      '@/app/components/article/ArticleCard': {
+        default: ({ article }) => React.createElement('div', { className: 'article-card' }, article.slug),
+      },
+      '@/lib/articleCards': {},
+      '@/lib/destinationLabels': {
+        getDestinationLabel: () => 'default-label',
+      },
+      '@/lib/articleListing': {},
+      '@/lib/supabaseBrowserClient': {},
+    },
+    '\nexport { ArticleCategoryExplorerInner };'
+  );
+
+  const articles = Array.from({ length: 25 }, (_, i) => ({ slug: `article-${i}` }));
+  const tree = exports.ArticleCategoryExplorerInner({
+    locale: 'cs',
+    articles,
+    categories: [],
+    defaultVisibleCount: 10,
+    showMoreLabel: 'Vlastní tlačítko',
+  });
+  const markup = renderToStaticMarkup(tree.type(tree.props));
+  assert.ok(markup.includes('Vlastní tlačítko'), 'Explicit showMoreLabel must override default label');
+  assert.ok(!markup.includes('default-label'), 'Default label must not be rendered when showMoreLabel is provided');
 });

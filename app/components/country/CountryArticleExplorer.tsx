@@ -16,6 +16,9 @@ type CountryArticleExplorerProps = {
   articles: ArticleCardData[];
   categories: FilterOption[];
   countryId: string;
+  defaultVisibleCount?: number;
+  countryNamesById?: Record<string, string>;
+  regionNamesById?: Record<string, string>;
 };
 
 export default function CountryArticleExplorer({
@@ -23,6 +26,9 @@ export default function CountryArticleExplorer({
   articles,
   categories,
   countryId,
+  defaultVisibleCount = 18,
+  countryNamesById,
+  regionNamesById,
 }: CountryArticleExplorerProps) {
   if (articles.length === 0) {
     return (
@@ -54,8 +60,9 @@ export default function CountryArticleExplorer({
       locale={locale}
       articles={articles}
       categories={categories}
-      defaultVisibleCount={12}
-      showMoreLabel={getDestinationLabel(locale, 'showMoreArticles')}
+      defaultVisibleCount={defaultVisibleCount}
+      countryNamesById={countryNamesById}
+      regionNamesById={regionNamesById}
     />
   );
 }
