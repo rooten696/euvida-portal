@@ -215,6 +215,8 @@ export default function KiwiFlightWidget({
     } catch {
       // Ignore
     }
+    setIsLoading(true);
+    setHasScriptError(false);
     setHasConsent(true);
   };
 
@@ -225,8 +227,6 @@ export default function KiwiFlightWidget({
     if (!container) return;
 
     container.replaceChildren();
-    setIsLoading(true);
-    setHasScriptError(false);
 
     let loadTimeout: ReturnType<typeof setTimeout> | null = null;
     let failsafeTimeout: ReturnType<typeof setTimeout> | null = null;

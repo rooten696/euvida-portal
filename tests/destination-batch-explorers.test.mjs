@@ -124,7 +124,7 @@ test('CountryBatchExplorer: renders initial batch, reveals next on click, hides 
       ],
     },
     '@/app/components/destination/DestinationCard': {
-      default: ({ title, stats }) =>
+      default: ({ title }) =>
         React.createElement('div', { className: 'destination-card' }, title),
     },
     '@/app/components/ScrollToTopButton': {
@@ -277,7 +277,7 @@ test('ScrollToTopButton renders with a11y attributes and smooth scroll handler',
   const overrides = {
     react: {
       ...React,
-      useState: (initial) => [false, () => {}],
+      useState: () => [false, () => {}],
       useEffect: () => {},
     },
     '@/lib/destinationLabels': {
