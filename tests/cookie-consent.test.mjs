@@ -279,7 +279,7 @@ test('initially unavailable storage still presents a decision instead of crashin
   assert.equal(app.dialog.open, false);
 });
 
-test('first visit requires a compact native modal decision with equally prominent accept/reject and customization', async (t) => {
+test('first visit requires a compact native modal with primary accept first and accessible reject/customization', async (t) => {
   const app = mount(t);
   await app.settle();
   const modal = app.nodes().find((node) => node.type === 'dialog');
@@ -289,7 +289,12 @@ test('first visit requires a compact native modal decision with equally prominen
   assert.ok(modal.props['aria-describedby']);
   const accept = app.button('Přijmout vše');
   const reject = app.button('Odmítnout volitelné');
-  assert.equal(accept.props.className, reject.props.className, 'Accept and reject must have equal visual weight');
+  const choices = app.nodes().filter((node) => node.type === 'button' && ['Přijmout vše', 'Odmítnout volitelné'].includes(app.text(node)));
+  assert.equal(choices[0], accept, 'Accept must come first in DOM/visual order');
+  assert.match(accept.props.className, /bg-emerald-700/, 'Accept must have accessible primary green styling');
+  assert.match(accept.props.className, /text-\[#fff\]/, 'Primary label stays white even in the light theme');
+  assert.notEqual(accept.props.className, reject.props.className);
+  assert.equal(reject.props.disabled, undefined, 'Reject remains directly available');
   app.button('Přizpůsobit');
   let prevented = false;
   modal.props.onCancel({ preventDefault: () => { prevented = true; } });

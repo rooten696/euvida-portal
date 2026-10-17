@@ -140,8 +140,8 @@ export default function CookieBanner() {
           </fieldset>
         )}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <button type="button" onClick={() => choose(true, true)} className="rounded-xl border border-emerald-700 bg-emerald-700 px-4 py-3 text-sm font-semibold text-[#fff] hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500">{text.accept}</button>
           <button type="button" onClick={() => choose(false, false)} className={choiceClass}>{text.reject}</button>
-          <button type="button" onClick={() => choose(true, true)} className={choiceClass}>{text.accept}</button>
           {customize ? (
             <button type="button" onClick={() => choose(analytics, marketing)} className={`${choiceClass} sm:col-span-2`}>{text.save}</button>
           ) : (
