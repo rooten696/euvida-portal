@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { readCookiePreferences } from '@/lib/cookie-consent';
 import type { SupportedLocale, AdPlacement, AdConsentCategory } from '@/lib/articleTypes';
 import {
   type AdPlacementSlot,
@@ -43,12 +44,7 @@ function TravelpayoutsScriptWidget({
     const container = containerRef.current;
     if (!parsed.valid || !container) return;
 
-    let consent: string | null = null;
-    try {
-      consent = window.localStorage.getItem('cookie_consent');
-    } catch {
-      return;
-    }
+    const consent = readCookiePreferences().marketing ? 'granted' : 'denied';
     if (!hasConsentForPlacement(consentCategory, consent)) return;
 
     container.replaceChildren();
@@ -242,12 +238,7 @@ export default function GlobalAdPlacement(props: GlobalAdPlacementProps) {
         return;
       }
 
-      let consent: string | null = null;
-      try {
-        consent = window.localStorage.getItem('cookie_consent');
-      } catch {
-        // Storage may be disabled. Marketing/statistics must remain fail-closed.
-      }
+      const consent = readCookiePreferences().marketing ? 'granted' : 'denied';
       setCanRender(hasConsentForPlacement(placement.consent_category, consent));
     };
 

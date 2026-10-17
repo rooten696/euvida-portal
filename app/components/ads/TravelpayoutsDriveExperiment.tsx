@@ -1,13 +1,13 @@
 'use client';
 
 import React from 'react';
+import { hasCookiePersistenceFailure, readCookiePreferences } from '@/lib/cookie-consent';
 import { usePathname } from 'next/navigation';
 import {
   isDriveEligibleRoute,
   generateDriveSubId,
   buildDriveScriptUrl,
   parseTravelpayoutsDriveSnippet,
-  COOKIE_CONSENT_KEY,
   COOKIE_CONSENT_GRANTED,
   COOKIE_CONSENT_EVENTS,
 } from '@/lib/travelpayouts-drive';
@@ -69,12 +69,7 @@ export function TravelpayoutsDriveInner({ scriptSrc }: TravelpayoutsDriveInnerPr
     if (!container) return;
 
     // Defense in depth: inner component independently verifies marketing consent
-    let consent: string | null = null;
-    try {
-      consent = window.localStorage.getItem(COOKIE_CONSENT_KEY);
-    } catch {
-      return;
-    }
+    const consent = readCookiePreferences().marketing ? 'granted' : 'denied';
 
     if (!hasDriveMarketingConsent(consent)) {
       return;
@@ -130,12 +125,7 @@ export function TravelpayoutsDriveExperiment() {
       // 1. Route eligibility check
       const eligibility = isDriveEligibleRoute(pathname || '');
       // 2. Marketing consent check
-      let consent: string | null = null;
-      try {
-        consent = window.localStorage.getItem(COOKIE_CONSENT_KEY);
-      } catch {
-        // Storage disabled or unavailable
-      }
+      const consent = readCookiePreferences().marketing ? 'granted' : 'denied';
 
       const hasConsent = hasDriveMarketingConsent(consent);
       const pathnameChanged =
@@ -150,7 +140,8 @@ export function TravelpayoutsDriveExperiment() {
         })
       ) {
         setCanRender(false);
-        if (!reloadRequestedRef.current) {
+        // Reloading would discard runtime denial and revive unreadable-to-write stale grants.
+        if (!reloadRequestedRef.current && !hasCookiePersistenceFailure()) {
           reloadRequestedRef.current = true;
           window.location.reload();
         }
