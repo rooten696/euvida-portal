@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState } from 'react';
+import { readCookiePreferences } from '@/lib/cookie-consent';
 
 export const DEFAULT_TRAVELPAYOUTS_KIWI_SNIPPET =
   '<script async src="https://tpwgt.com/content?currency=eur&trs=572910&shmarker=776456&locale=en&powered_by=true&limit=4&primary_color=00AE98&results_background_color=FFFFFF&form_background_color=FFFFFF&campaign_id=111&promo_id=3411" charset="utf-8"></script>';
@@ -178,23 +179,12 @@ export default function KiwiFlightWidget({
           window.location.hostname !== '127.0.0.1';
         setIsInsecureDev(isLocalInsecure);
 
-        try {
-          const consent = localStorage.getItem('cookie_consent');
-          // If explicitly denied, do not auto-load; if granted, allow
-          setHasConsent(consent === 'granted');
-        } catch {
-          setHasConsent(false);
-        }
+        setHasConsent(readCookiePreferences().marketing);
       }
     }, 10);
 
     const onConsentChange = () => {
-      try {
-        const consent = localStorage.getItem('cookie_consent');
-        setHasConsent(consent === 'granted');
-      } catch {
-        setHasConsent(false);
-      }
+      setHasConsent(readCookiePreferences().marketing);
     };
 
     window.addEventListener('euvida:cookie-consent', onConsentChange);
@@ -217,7 +207,7 @@ export default function KiwiFlightWidget({
     }
     setIsLoading(true);
     setHasScriptError(false);
-    setHasConsent(true);
+    setHasConsent(readCookiePreferences().marketing);
   };
 
   useEffect(() => {

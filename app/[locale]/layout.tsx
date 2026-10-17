@@ -9,7 +9,7 @@ import GlobalAdPlacement from '../components/ads/GlobalAdPlacement';
 import TravelpayoutsDriveExperiment from '../components/ads/TravelpayoutsDriveExperiment';
 import { NextIntlClientProvider } from 'next-intl';
 import { getMessages, setRequestLocale } from 'next-intl/server';
-import { GoogleAnalytics } from '@next/third-parties/google';
+import ConsentGoogleAnalytics from '../components/ConsentGoogleAnalytics';
 import { supportedLocales, type AdPlacement, type SupportedLocale } from '@/lib/articleTypes';
 import Script from 'next/script';
 import { cache } from 'react';
@@ -166,9 +166,9 @@ export default async function LocaleLayout({
           </div>
         </NextIntlClientProvider>
 
-        {/* 🚀 GOOGLE ANALYTICS (přesunuto dovnitř body pro validní HTML) */}
+        {/* GA scripts load only after an explicit analytics opt-in. */}
         {process.env.NEXT_PUBLIC_GA_ID && (
-          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
+          <ConsentGoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />
         )}
         
 
