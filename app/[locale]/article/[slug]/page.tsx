@@ -459,6 +459,7 @@ export default async function ArticlePage({ params }: PageProps) {
           gpsCoords={gpsCoords}
           regionName={regionName}
           countryName={countryName}
+          countryId={country?.id}
           articleSlug={slug}
         />
 
