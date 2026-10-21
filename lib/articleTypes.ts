@@ -194,10 +194,26 @@ export type SourceItem = {
   used_for?: string[] | null;
 };
 
+export type VideoItem = {
+  video_id: string;
+  url?: string | null;
+  channel?: string | null;
+  title?: string | null;
+  audio_language?: string | null;
+  has_subtitles?: boolean | null;
+  verified_at?: string | null;
+  embed_allowed?: boolean | null;
+  quality_note?: string | null;
+};
+
+export type ArticleVideos = Partial<Record<SupportedLocale, VideoItem>>;
+
 export type SourceInfo = {
   images?: ImageCredit[] | null;
   sources?: SourceItem[] | null;
   last_checked?: string | null;
+  videos?: ArticleVideos | null;
+  youtube_videos?: ArticleVideos | null;
 };
 
 export type PartnerOfferLink = {
@@ -279,6 +295,7 @@ export type Article = {
   access_info?: AccessInfo | null;
   visit_info?: VisitInfo | null;
   source_info?: SourceInfo | null;
+  videos?: ArticleVideos | null;
   promotions?: ArticlePromotion[] | null;
   partner_offers?: PartnerOffer[] | null;
   last_checked_at?: string | null;
