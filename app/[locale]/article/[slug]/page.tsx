@@ -2,6 +2,7 @@ import ArticleHero from '@/app/components/article/ArticleHero';
 import AccessSection from '@/app/components/article/AccessSection';
 import ArticleComments from '@/app/components/article/ArticleComments';
 import ArticlePartnerOffers from '@/app/components/article/ArticlePartnerOffers';
+import ArticleVideo from '@/app/components/article/ArticleVideo';
 import PracticalInfoGrid from '@/app/components/article/PracticalInfoGrid';
 import PricesSection from '@/app/components/article/PricesSection';
 import MobileInfoDrawer from '@/app/components/article/MobileInfoDrawer';
@@ -487,6 +488,8 @@ export default async function ArticlePage({ params }: PageProps) {
                 {markdownContent}
               </ReactMarkdown>
             </section>
+
+            <ArticleVideo article={article} locale={locale} />
 
             <ArticlePartnerOffers slug={slug} locale={locale} article={article} />
 
