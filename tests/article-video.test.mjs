@@ -463,7 +463,7 @@ test('ArticleVideoPlayer SSR renders click-to-load surface with ZERO third-party
   assert.ok(html.includes('Trail Hunter'), 'Must render channel name');
 
   // 2. Click-to-load play button and privacy notice must be present
-  assert.ok(html.includes('Přehrát video'), 'Must render play button');
+  assert.ok(html.includes('Povolit video v nastavení cookies'), 'Must render consent settings button');
   assert.ok(html.includes('youtube-nocookie.com'), 'Must reference enhanced privacy domain');
 
   // 3. ZERO third-party requests: NO iframe and NO external img in initial SSR
@@ -520,31 +520,22 @@ function findInTree(tree, predicate) {
   return null;
 }
 
-test('ArticleVideoPlayer interactive lifecycle: click-to-load, play activation, and clean reset on locale switch', () => {
-  let slots = [];
-  let cursor = 0;
+test('ArticleVideoPlayer consent lifecycle: settings, automatic load, locale replacement and withdrawal', () => {
+  let allowed = false;
+  let settingsRequests = 0;
 
   const mockedReact = {
     ...React,
-    useState(initial) {
-      const slot = cursor++;
-      if (!(slot in slots)) {
-        slots[slot] = typeof initial === 'function' ? initial() : initial;
-      }
-      return [
-        slots[slot],
-        (value) => {
-          slots[slot] = typeof value === 'function' ? value(slots[slot]) : value;
-        },
-      ];
-    },
-    useRef(initial) {
-      return { current: initial };
-    },
+    useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
   };
 
   const ArticleVideoPlayerModule = load('app/components/article/ArticleVideoPlayer.tsx', {
     react: mockedReact,
+    '@/lib/cookie-consent': {
+      hasVideoConsent: () => allowed,
+      subscribeCookiePreferences: () => () => {},
+      openCookieSettings: () => { settingsRequests++; },
+    },
   });
   const ArticleVideoPlayer = ArticleVideoPlayerModule.default || ArticleVideoPlayerModule;
 
@@ -569,7 +560,6 @@ test('ArticleVideoPlayer interactive lifecycle: click-to-load, play activation, 
   };
 
   function render(locale) {
-    cursor = 0;
     const resolvedVideo = resolveArticleVideo(article, locale);
     assert.ok(resolvedVideo);
     return ArticleVideoPlayer({ video: resolvedVideo, locale });
@@ -593,6 +583,9 @@ test('ArticleVideoPlayer interactive lifecycle: click-to-load, play activation, 
   const playBtn = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-play-button');
   assert.ok(playBtn, 'Must find play button');
   playBtn.props.onClick();
+  assert.equal(settingsRequests, 1, 'Placeholder opens shared consent settings');
+  assert.equal(findInTree(render('cs'), n => n?.type === 'iframe'), null, 'Clicking settings alone is not consent');
+  allowed = true;
 
   // Re-render after state change
   tree = render('cs');
@@ -611,17 +604,17 @@ test('ArticleVideoPlayer interactive lifecycle: click-to-load, play activation, 
   tree = render('de');
 
   const iframeAfterLocaleSwitch = findInTree(tree, (n) => n?.type === 'iframe');
-  assert.equal(iframeAfterLocaleSwitch, null, 'Old iframe must be unmounted immediately on locale switch');
+  assert.ok(iframeAfterLocaleSwitch, 'Existing video consent applies to the new locale without another prompt');
+  assert.equal(iframeAfterLocaleSwitch.props.src, 'https://www.youtube-nocookie.com/embed/enVideo2222?rel=0');
+  assert.notEqual(iframeAfterLocaleSwitch.key, iframeAfterPlay.key, 'React replaces the old provider frame');
 
   const clickToLoadDe = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-click-to-load');
-  assert.ok(clickToLoadDe, 'Click-to-load surface must be shown for the new locale');
+  assert.equal(clickToLoadDe, null, 'No second consent surface after an initial video grant');
 
   const fallbackBadgeDe = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-fallback-badge');
   assert.ok(fallbackBadgeDe, 'German viewer with English video must see fallback badge');
 
   // --- Step 4: Play English fallback video in German view ---
-  const playBtnDe = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-play-button');
-  playBtnDe.props.onClick();
   tree = render('de');
 
   const iframeDe = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-iframe');
@@ -632,7 +625,9 @@ test('ArticleVideoPlayer interactive lifecycle: click-to-load, play activation, 
   // Must reset isPlaying again and switch video back to native Czech
   tree = render('cs');
   const iframeReturnedToCs = findInTree(tree, (n) => n?.type === 'iframe');
-  assert.equal(iframeReturnedToCs, null, 'Iframe must be unmounted on return to Czech');
+  assert.equal(iframeReturnedToCs.props.src, 'https://www.youtube-nocookie.com/embed/csVideo1111?rel=0');
+  allowed = false;
+  assert.equal(findInTree(render('cs'), n => n?.type === 'iframe'), null, 'Withdrawal removes the active iframe');
 });
 
 test('Article detail page mounts ArticleVideo between content and partner offers', () => {
