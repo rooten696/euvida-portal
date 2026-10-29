@@ -63,6 +63,10 @@ function mount(t, componentPath = 'app/components/CookieBanner.tsx', { stored = 
       return [slots[slot], (value) => { slots[slot] = typeof value === 'function' ? value(slots[slot]) : value; }];
     },
     useRef(initial) { const slot = cursor++; return slots[slot] ??= { current: initial }; },
+    useSyncExternalStore(subscribe, getSnapshot) {
+      hooks.useEffect(() => subscribe(() => {}), [subscribe]);
+      return getSnapshot();
+    },
     useEffect(fn, deps) {
       const slot = cursor++;
       const old = slots[slot];
@@ -78,7 +82,8 @@ function mount(t, componentPath = 'app/components/CookieBanner.tsx', { stored = 
     '@next/third-parties/google': { GoogleAnalytics: function GoogleAnalytics() {} },
     'next/navigation': { usePathname: () => '/cs/article/test' },
   }, cache)[exportName];
-  function nodes(node = tree) {
+  function nodes(node) {
+    if (arguments.length === 0) node = tree;
     if (!node || typeof node !== 'object') return [];
     if (Array.isArray(node)) return node.flatMap((item) => nodes(item));
     return [node, ...nodes(node.props?.children ?? null)];
@@ -111,7 +116,47 @@ function mount(t, componentPath = 'app/components/CookieBanner.tsx', { stored = 
   };
 }
 
-for (const failedWrite of [1, 2]) {
+test('initial Accept all explicitly grants YouTube alongside analytics and flights', async (t) => {
+  const app = mount(t);
+  await app.settle();
+  app.button('Přijmout vše').props.onClick();
+  app.render();
+  assert.equal(app.values.get('cookie_video_consent'), 'granted');
+  assert.equal(app.values.get('cookie_consent'), 'granted');
+  assert.equal(app.values.get('cookie_analytics_consent'), 'granted');
+});
+
+test('initial consent automatically reveals the video without a second click and withdrawal removes it', async (t) => {
+  const app = mount(t);
+  await app.settle();
+  const player = mount(t, 'app/components/article/ArticleVideoPlayer.tsx', { shared: app, props: { video: {
+    requestedLocale: 'cs', resolvedLocale: 'cs', videoId: 'FAeqC8wCyDo', embedUrl: 'https://www.youtube-nocookie.com/embed/FAeqC8wCyDo?rel=0', title: 'Unit test video', audioLanguage: 'cs', isFallback: false,
+  } } });
+  await player.settle();
+  assert.equal(player.nodes().some(n => n.type === 'iframe'), false);
+  app.button('Přijmout vše').props.onClick();
+  app.render(); player.render();
+  const iframe = player.nodes().find(n => n.type === 'iframe');
+  assert.ok(iframe, 'One initial grant must reveal the player without clicking the video');
+  assert.ok(!iframe.props.src.includes('autoplay=1'));
+  app.button('Nastavení cookies').props.onClick(); app.render();
+  app.button('Odmítnout volitelné').props.onClick(); app.render(); player.render();
+  assert.equal(player.nodes().some(n => n.type === 'iframe'), false);
+});
+
+test('video consent can be granted independently of analytics and flight partners', async (t) => {
+  const app = mount(t); await app.settle();
+  app.button('Přizpůsobit').props.onClick(); app.render();
+  const videoChoice = app.nodes().find(n => n.type === 'input' && n.props.name === 'videos');
+  assert.ok(videoChoice, 'YouTube has its own choice');
+  videoChoice.props.onChange({ target: { checked: true } }); app.render();
+  app.button('Uložit výběr').props.onClick(); app.render();
+  assert.equal(app.values.get('cookie_video_consent'), 'granted');
+  assert.equal(app.values.get('cookie_consent'), 'denied');
+  assert.equal(app.values.get('cookie_analytics_consent'), 'denied');
+});
+
+for (const failedWrite of [1, 2, 3]) {
   for (const [componentPath, exportName, props] of [
     ['app/components/ConsentGoogleAnalytics.tsx', 'default', { gaId: 'G-TEST' }],
     ['app/components/ads/GlobalAdPlacement.tsx', 'default', { placement: { active: true, consent_category: 'marketing' } }],
@@ -119,7 +164,7 @@ for (const failedWrite of [1, 2]) {
     ['app/components/ads/TravelpayoutsDriveExperiment.tsx', 'TravelpayoutsDriveExperiment', {}],
   ]) {
     test(`failed write ${failedWrite} and removal deny stale grants in real ${exportName} ${componentPath} handlers`, async (t) => {
-      const app = mount(t, undefined, { stored: { cookie_consent: 'granted', cookie_analytics_consent: 'granted' } });
+      const app = mount(t, undefined, { stored: { cookie_consent: 'granted', cookie_analytics_consent: 'granted', cookie_video_consent: 'granted' } });
       await app.settle();
       const consumer = mount(t, componentPath, { shared: app, exportName, props });
       await consumer.settle();
@@ -139,7 +184,7 @@ for (const failedWrite of [1, 2]) {
       app.render();
       app.button('Odmítnout volitelné').props.onClick();
       app.render();
-      assert.equal(window.localStorage.getItem('cookie_consent'), 'granted', 'Stale storage is still readable');
+      assert.equal(window.localStorage.getItem(failedWrite === 3 ? 'cookie_video_consent' : 'cookie_consent'), 'granted', 'Stale storage is still readable');
       for (const event of ['euvida:cookie-consent', 'cookie_consent_updated', 'storage']) window.dispatchEvent(new Event(event));
       if (componentPath.includes('Kiwi')) {
         consumer.render();
@@ -203,7 +248,7 @@ test('only visitors with an existing decision can close settings without changin
 });
 
 test('reopening settings discards unsaved changes and restores the stored selection', async (t) => {
-  const app = mount(t, undefined, { stored: { cookie_consent: 'denied' } });
+  const app = mount(t, undefined, { stored: { cookie_consent: 'denied', cookie_video_consent: 'denied' } });
   await app.settle();
   assert.equal(app.dialog.open, false);
   app.button('Nastavení cookies').props.onClick();
@@ -245,15 +290,17 @@ test('blocked storage never crashes consent controls', async (t) => {
 });
 
 for (const [name, stored, decided, analytics, marketing] of [
-  ['legacy accept', { cookie_consent: 'granted' }, true, true, true],
-  ['legacy reject', { cookie_consent: 'denied' }, true, false, false],
-  ['analytics only', { cookie_consent: 'denied', cookie_analytics_consent: 'granted' }, true, true, false],
-  ['partners only', { cookie_consent: 'granted', cookie_analytics_consent: 'denied' }, true, false, true],
-  ['reject all', { cookie_consent: 'denied', cookie_analytics_consent: 'denied' }, true, false, false],
+  ['legacy accept', { cookie_consent: 'granted' }, false, true, true],
+  ['legacy reject', { cookie_consent: 'denied' }, false, false, false],
+  ['analytics only before video choice', { cookie_consent: 'denied', cookie_analytics_consent: 'granted' }, false, true, false],
+  ['partners only before video choice', { cookie_consent: 'granted', cookie_analytics_consent: 'denied' }, false, false, true],
+  ['reject all before video choice', { cookie_consent: 'denied', cookie_analytics_consent: 'denied' }, false, false, false],
+  ['current reject all', { cookie_consent: 'denied', cookie_video_consent: 'denied' }, true, false, false],
+  ['current accept all', { cookie_consent: 'granted', cookie_video_consent: 'granted' }, true, true, true],
   ['invalid legacy', { cookie_consent: 'yes' }, false, false, false],
   ['invalid analytics', { cookie_consent: 'denied', cookie_analytics_consent: 'yes' }, false, false, false],
 ]) {
-  test(`stored preferences: ${name} preserves valid decisions without another dialog`, async (t) => {
+  test(`stored preferences: ${name} preserves choices and requires an explicit video decision`, async (t) => {
     const app = mount(t, undefined, { stored });
     await app.settle();
     assert.equal(app.dialog.open, !decided);
@@ -359,7 +406,7 @@ test('Tab wraps both ways through enabled visible dialog controls in every conse
   checkWrap(3);
   app.button('Přizpůsobit').props.onClick();
   app.render();
-  checkWrap(5);
+  checkWrap(6);
   app.button('Odmítnout volitelné').props.onClick();
   app.render();
   app.button('Nastavení cookies').props.onClick();
@@ -367,7 +414,7 @@ test('Tab wraps both ways through enabled visible dialog controls in every conse
   checkWrap(4);
   app.button('Přizpůsobit').props.onClick();
   app.render();
-  checkWrap(6);
+  checkWrap(7);
 });
 
 test('customize saves independent analytics and partner choices without a page reload', async (t) => {
@@ -429,15 +476,19 @@ for (const [locale, title, accept, reject, customize, settings, save] of [
     const app = mount(t, undefined, { locale });
     await app.settle();
     assert.equal(app.text(app.nodes().find((node) => node.type === 'h2')), title);
+    const description = app.nodes().find(n => n.props?.id === 'cookie-description');
+    for (const provider of ['YouTube', 'Kiwi.com', 'Travelpayouts']) assert.ok(app.text(description).includes(provider), `${locale} initial notice discloses ${provider}`);
     app.button(settings);
     app.button(reject);
     app.button(customize).props.onClick();
     app.render();
     app.button(save);
+    assert.equal(app.nodes().find(n => n.type === 'input' && n.props.name === 'videos').props.checked, false, 'New video purpose is never preselected');
     app.button(accept).props.onClick();
     app.render();
     assert.equal(app.values.get('cookie_consent'), 'granted');
     assert.equal(app.values.get('cookie_analytics_consent'), 'granted');
     assert.equal(app.dialog.open, false);
+    assert.equal(app.values.get('cookie_video_consent'), 'granted');
   });
 }

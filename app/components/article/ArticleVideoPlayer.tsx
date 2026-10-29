@@ -1,6 +1,7 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useSyncExternalStore } from 'react';
+import { hasVideoConsent, openCookieSettings, subscribeCookiePreferences } from '@/lib/cookie-consent';
 import {
   getFallbackBadgeText,
   getLanguageDisplayName,
@@ -15,27 +16,8 @@ type ArticleVideoPlayerProps = {
 
 export default function ArticleVideoPlayer({ video, locale }: ArticleVideoPlayerProps) {
   const videoKey = `${video.requestedLocale}-${video.videoId}`;
-  const iframeContainerRef = useRef<HTMLDivElement>(null);
-
-  const [prevVideoKey, setPrevVideoKey] = useState(videoKey);
-  const [rawIsPlaying, setRawIsPlaying] = useState(false);
-
-  // If locale or videoId changes, immediately reset isPlaying during render
-  // so no intermediate frame or old iframe is ever rendered or preserved
-  if (videoKey !== prevVideoKey) {
-    setPrevVideoKey(videoKey);
-    setRawIsPlaying(false);
-  }
-
-  const isPlaying = videoKey === prevVideoKey && rawIsPlaying;
-
-  const handlePlay = () => {
-    setRawIsPlaying(true);
-    // Shift focus to container so keyboard focus is not lost when button unmounts
-    setTimeout(() => {
-      iframeContainerRef.current?.focus();
-    }, 50);
-  };
+  // No provider contact during SSR or before an explicit video grant.
+  const isPlaying = useSyncExternalStore(subscribeCookiePreferences, hasVideoConsent, () => false);
 
   const labels = getVideoUiLabels(locale);
   const audioLangName = video.audioLanguage
@@ -104,7 +86,7 @@ export default function ArticleVideoPlayer({ video, locale }: ArticleVideoPlayer
       </div>
 
       <div
-        ref={iframeContainerRef}
+
         tabIndex={-1}
         className="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-950 border border-white/10 focus:outline-none focus:ring-2 focus:ring-red-500/50"
       >
@@ -116,9 +98,9 @@ export default function ArticleVideoPlayer({ video, locale }: ArticleVideoPlayer
             <button
               type="button"
               data-testid="video-play-button"
-              onClick={handlePlay}
+              onClick={openCookieSettings}
               aria-describedby="video-privacy-notice"
-              aria-label={`${labels.playButton}${video.title ? `: ${video.title}` : ''}`}
+              aria-label={`${labels.consentButton}${video.title ? `: ${video.title}` : ''}`}
               className="group relative flex flex-col items-center gap-4 rounded-xl p-4 transition-transform motion-safe:hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-slate-950"
             >
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-red-600 shadow-lg shadow-red-950/50 transition-colors group-hover:bg-red-500 md:h-20 md:w-20">
@@ -133,7 +115,7 @@ export default function ArticleVideoPlayer({ video, locale }: ArticleVideoPlayer
               </div>
 
               <span className="rounded-lg bg-slate-900/90 px-4 py-1.5 text-sm font-semibold text-white border border-white/10 shadow">
-                {labels.playButton}
+                {labels.consentButton}
               </span>
             </button>
 
@@ -149,6 +131,7 @@ export default function ArticleVideoPlayer({ video, locale }: ArticleVideoPlayer
           </div>
         ) : (
           <iframe
+            key={videoKey}
             data-testid="video-iframe"
             src={video.embedUrl}
             title={video.title || labels.sectionTitle}

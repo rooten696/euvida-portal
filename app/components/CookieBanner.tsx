@@ -7,33 +7,33 @@ import { readCookiePreferences, saveCookiePreferences, updateGoogleConsent } fro
 const copy = {
   cs: {
     title: 'Cookies a soukromí', settings: 'Nastavení cookies', close: 'Zavřít',
-    description: 'Nezbytné cookies zajišťují fungování webu. Volitelné cookies pro Google Analytics a partnerské služby povolíme pouze s vaším souhlasem.',
+    description: 'Nezbytné cookies zajišťují fungování webu. Volitelně povolíte měření Google Analytics, videa YouTube a partnerské služby včetně vyhledávače letenek Kiwi.com / Travelpayouts. Po přijetí se povolený obsah načte automaticky a poskytovatelé mohou získat vaši IP adresu a ukládat data. Videa se sama nepřehrávají. Výběr kdykoli změníte v nastavení cookies.',
     accept: 'Přijmout vše', reject: 'Odmítnout volitelné', customize: 'Přizpůsobit', save: 'Uložit výběr',
-    optional: 'Volitelné cookies', analytics: 'Google Analytics — měření návštěvnosti', marketing: 'Partnerské služby a marketing',
+    optional: 'Volitelné cookies', analytics: 'Google Analytics — měření návštěvnosti', marketing: 'Letenky Kiwi.com / Travelpayouts, partnerské služby a marketing', videos: 'Videa YouTube — načtení přehrávače bez dalšího potvrzení',
   },
   en: {
     title: 'Cookies and privacy', settings: 'Cookie settings', close: 'Close',
-    description: 'Essential cookies keep the site working. Optional cookies for Google Analytics and partner services are enabled only with your consent.',
+    description: 'Essential cookies keep the site working. You can optionally enable Google Analytics, YouTube videos and partner services including Kiwi.com / Travelpayouts flight search. Accepted content loads automatically; providers may receive your IP address and store data. Videos do not autoplay. You can change your choices at any time in cookie settings.',
     accept: 'Accept all', reject: 'Reject optional', customize: 'Customize', save: 'Save choices',
-    optional: 'Optional cookies', analytics: 'Google Analytics — audience measurement', marketing: 'Partner services and marketing',
+    optional: 'Optional cookies', analytics: 'Google Analytics — audience measurement', marketing: 'Kiwi.com / Travelpayouts flights, partner services and marketing', videos: 'YouTube videos — load players without another confirmation',
   },
   de: {
     title: 'Cookies und Datenschutz', settings: 'Cookie-Einstellungen', close: 'Schließen',
-    description: 'Notwendige Cookies sichern die Funktion der Website. Optionale Cookies für Google Analytics und Partnerdienste aktivieren wir nur mit Ihrer Einwilligung.',
+    description: 'Notwendige Cookies sichern die Funktion der Website. Optional können Sie Google Analytics, YouTube-Videos und Partnerdienste einschließlich der Flugsuche von Kiwi.com / Travelpayouts erlauben. Erlaubte Inhalte werden automatisch geladen; Anbieter können Ihre IP-Adresse erhalten und Daten speichern. Videos starten nicht automatisch. Ihre Auswahl können Sie jederzeit in den Cookie-Einstellungen ändern.',
     accept: 'Alle akzeptieren', reject: 'Optionale ablehnen', customize: 'Anpassen', save: 'Auswahl speichern',
-    optional: 'Optionale Cookies', analytics: 'Google Analytics — Reichweitenmessung', marketing: 'Partnerdienste und Marketing',
+    optional: 'Optionale Cookies', analytics: 'Google Analytics — Reichweitenmessung', marketing: 'Kiwi.com / Travelpayouts-Flüge, Partnerdienste und Marketing', videos: 'YouTube-Videos — Player ohne erneute Bestätigung laden',
   },
   fr: {
     title: 'Cookies et confidentialité', settings: 'Paramètres des cookies', close: 'Fermer',
-    description: 'Les cookies essentiels assurent le fonctionnement du site. Les cookies facultatifs de Google Analytics et des services partenaires ne sont activés qu’avec votre consentement.',
+    description: 'Les cookies essentiels assurent le fonctionnement du site. Vous pouvez autoriser Google Analytics, les vidéos YouTube et les services partenaires, dont la recherche de vols Kiwi.com / Travelpayouts. Les contenus autorisés se chargent automatiquement ; les fournisseurs peuvent recevoir votre adresse IP et stocker des données. Les vidéos ne démarrent pas automatiquement. Vos choix restent modifiables dans les paramètres des cookies.',
     accept: 'Tout accepter', reject: 'Refuser les cookies facultatifs', customize: 'Personnaliser', save: 'Enregistrer mes choix',
-    optional: 'Cookies facultatifs', analytics: 'Google Analytics — mesure d’audience', marketing: 'Services partenaires et marketing',
+    optional: 'Cookies facultatifs', analytics: 'Google Analytics — mesure d’audience', marketing: 'Vols Kiwi.com / Travelpayouts, services partenaires et marketing', videos: 'Vidéos YouTube — charger les lecteurs sans nouvelle confirmation',
   },
   es: {
     title: 'Cookies y privacidad', settings: 'Configuración de cookies', close: 'Cerrar',
-    description: 'Las cookies esenciales permiten que el sitio funcione. Las cookies opcionales de Google Analytics y los servicios de socios solo se activan con tu consentimiento.',
+    description: 'Las cookies esenciales permiten que el sitio funcione. Puedes autorizar Google Analytics, vídeos de YouTube y servicios de socios, incluida la búsqueda de vuelos Kiwi.com / Travelpayouts. El contenido autorizado se carga automáticamente; los proveedores pueden recibir tu dirección IP y almacenar datos. Los vídeos no se reproducen automáticamente. Puedes cambiar tus opciones en la configuración de cookies.',
     accept: 'Aceptar todas', reject: 'Rechazar opcionales', customize: 'Personalizar', save: 'Guardar selección',
-    optional: 'Cookies opcionales', analytics: 'Google Analytics — medición de audiencia', marketing: 'Servicios de socios y marketing',
+    optional: 'Cookies opcionales', analytics: 'Google Analytics — medición de audiencia', marketing: 'Vuelos Kiwi.com / Travelpayouts, servicios de socios y marketing', videos: 'Vídeos de YouTube — cargar reproductores sin otra confirmación',
   },
 };
 
@@ -48,6 +48,7 @@ export default function CookieBanner() {
   const [customize, setCustomize] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [marketing, setMarketing] = useState(false);
+  const [videos, setVideos] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export default function CookieBanner() {
       const preferences = readCookiePreferences();
       setAnalytics(preferences.analytics);
       setMarketing(preferences.marketing);
+      setVideos(preferences.videos);
       updateGoogleConsent(preferences.analytics, preferences.marketing);
       setHasDecision(preferences.decided);
       if (!preferences.decided) setShowBanner(true);
@@ -63,15 +65,30 @@ export default function CookieBanner() {
   }, []);
 
   useEffect(() => {
+    const open = () => {
+      const preferences = readCookiePreferences();
+      setAnalytics(preferences.analytics);
+      setMarketing(preferences.marketing);
+      setVideos(preferences.videos);
+      setHasDecision(preferences.decided);
+      setCustomize(true);
+      setShowBanner(true);
+    };
+    window.addEventListener('euvida:open-cookie-settings', open);
+    return () => window.removeEventListener('euvida:open-cookie-settings', open);
+  }, []);
+
+  useEffect(() => {
     if (showBanner && !dialog.current?.open) dialog.current?.showModal();
     if (!showBanner && dialog.current?.open) dialog.current.close();
   }, [showBanner]);
 
-  const choose = (analytics: boolean, marketing: boolean) => {
-    saveCookiePreferences(analytics, marketing);
-    ({ analytics, marketing } = readCookiePreferences());
+  const choose = (analytics: boolean, marketing: boolean, videos: boolean) => {
+    saveCookiePreferences(analytics, marketing, videos);
+    ({ analytics, marketing, videos } = readCookiePreferences());
     setAnalytics(analytics);
     setMarketing(marketing);
+    setVideos(videos);
     updateGoogleConsent(analytics, marketing);
     window.dispatchEvent(new Event('euvida:cookie-consent'));
     window.dispatchEvent(new Event('cookie_consent_updated'));
@@ -88,6 +105,7 @@ export default function CookieBanner() {
           const preferences = readCookiePreferences();
           setAnalytics(preferences.analytics);
           setMarketing(preferences.marketing);
+          setVideos(preferences.videos);
           setCustomize(false);
           setShowBanner(true);
         }}
@@ -137,13 +155,17 @@ export default function CookieBanner() {
               <input type="checkbox" name="marketing" checked={marketing} onChange={(event) => setMarketing(event.target.checked)} />
               {text.marketing}
             </label>
+            <label className="flex min-h-11 items-center gap-3">
+              <input type="checkbox" name="videos" checked={videos} onChange={(event) => setVideos(event.target.checked)} />
+              {text.videos}
+            </label>
           </fieldset>
         )}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <button type="button" onClick={() => choose(true, true)} className="rounded-xl border border-emerald-700 bg-emerald-700 px-4 py-3 text-sm font-semibold text-[#fff] hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500">{text.accept}</button>
-          <button type="button" onClick={() => choose(false, false)} className={choiceClass}>{text.reject}</button>
+          <button type="button" onClick={() => choose(true, true, true)} className="rounded-xl border border-emerald-700 bg-emerald-700 px-4 py-3 text-sm font-semibold text-[#fff] hover:bg-emerald-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500">{text.accept}</button>
+          <button type="button" onClick={() => choose(false, false, false)} className={choiceClass}>{text.reject}</button>
           {customize ? (
-            <button type="button" onClick={() => choose(analytics, marketing)} className={`${choiceClass} sm:col-span-2`}>{text.save}</button>
+            <button type="button" onClick={() => choose(analytics, marketing, videos)} className={`${choiceClass} sm:col-span-2`}>{text.save}</button>
           ) : (
             <button type="button" onClick={() => setCustomize(true)} className={`${choiceClass} sm:col-span-2`}>{text.customize}</button>
           )}

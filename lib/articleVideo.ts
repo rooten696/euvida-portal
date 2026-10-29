@@ -240,6 +240,7 @@ export function resolveArticleVideo(
 export type VideoUiLabels = {
   sectionTitle: string;
   playButton: string;
+  consentButton: string;
   privacyNotice: string;
   audioLanguageLabel: string;
   subtitlesAvailable: string;
@@ -288,7 +289,8 @@ export const VIDEO_UI_LABELS: Record<SupportedLocale, VideoUiLabels> = {
   cs: {
     sectionTitle: 'Video z bikeparku',
     playButton: 'Přehrát video',
-    privacyNotice: 'Přehráním se načte video ze služby YouTube (youtube-nocookie.com). Dojde ke kontaktu serverů Google a může dojít k ukládání dat.',
+    consentButton: 'Povolit video v nastavení cookies',
+    privacyNotice: 'Pro zobrazení přehrávače povolte videa YouTube v nastavení cookies. Po souhlasu se načte youtube-nocookie.com; Google může získat vaši IP adresu a ukládat data. Video se samo nepřehraje.',
     audioLanguageLabel: 'Jazyk audia',
     subtitlesAvailable: 'Titulky',
     externalProviderNotice: 'Poskytovatel: YouTube / Google LLC (youtube-nocookie.com)',
@@ -296,7 +298,8 @@ export const VIDEO_UI_LABELS: Record<SupportedLocale, VideoUiLabels> = {
   en: {
     sectionTitle: 'Bikepark video',
     playButton: 'Play video',
-    privacyNotice: 'Playing loads video from YouTube (youtube-nocookie.com). Google servers are contacted and may store data.',
+    consentButton: 'Enable video in cookie settings',
+    privacyNotice: 'Enable YouTube videos in cookie settings to show the player. After consent, youtube-nocookie.com loads; Google may receive your IP address and store data. The video does not autoplay.',
     audioLanguageLabel: 'Audio language',
     subtitlesAvailable: 'Subtitles',
     externalProviderNotice: 'Provider: YouTube / Google LLC (youtube-nocookie.com)',
@@ -304,7 +307,8 @@ export const VIDEO_UI_LABELS: Record<SupportedLocale, VideoUiLabels> = {
   de: {
     sectionTitle: 'Bikepark-Video',
     playButton: 'Video abspielen',
-    privacyNotice: 'Beim Abspielen wird das Video von YouTube (youtube-nocookie.com) geladen. Dabei werden Google-Server kontaktiert und Daten verarbeitet.',
+    consentButton: 'Video in den Cookie-Einstellungen erlauben',
+    privacyNotice: 'Erlauben Sie YouTube-Videos in den Cookie-Einstellungen. Nach Ihrer Einwilligung wird youtube-nocookie.com geladen; Google kann Ihre IP-Adresse erhalten und Daten speichern. Das Video startet nicht automatisch.',
     audioLanguageLabel: 'Audiosprache',
     subtitlesAvailable: 'Untertitel',
     externalProviderNotice: 'Anbieter: YouTube / Google LLC (youtube-nocookie.com)',
@@ -312,7 +316,8 @@ export const VIDEO_UI_LABELS: Record<SupportedLocale, VideoUiLabels> = {
   fr: {
     sectionTitle: 'Vidéo du bikepark',
     playButton: 'Lire la vidéo',
-    privacyNotice: 'La lecture charge la vidéo depuis YouTube (youtube-nocookie.com). Les serveurs de Google sont contactés et peuvent traiter des données.',
+    consentButton: 'Autoriser la vidéo dans les paramètres des cookies',
+    privacyNotice: 'Autorisez les vidéos YouTube dans les paramètres des cookies. Après votre consentement, youtube-nocookie.com se charge ; Google peut recevoir votre adresse IP et stocker des données. La vidéo ne démarre pas automatiquement.',
     audioLanguageLabel: 'Langue audio',
     subtitlesAvailable: 'Sous-titres',
     externalProviderNotice: 'Fournisseur : YouTube / Google LLC (youtube-nocookie.com)',
@@ -320,7 +325,8 @@ export const VIDEO_UI_LABELS: Record<SupportedLocale, VideoUiLabels> = {
   es: {
     sectionTitle: 'Vídeo del bikepark',
     playButton: 'Reproducir vídeo',
-    privacyNotice: 'Al reproducir se cargará el vídeo de YouTube (youtube-nocookie.com). Se contactará con los servidores de Google y pueden procesarse datos.',
+    consentButton: 'Permitir vídeo en la configuración de cookies',
+    privacyNotice: 'Permite los vídeos de YouTube en la configuración de cookies. Tras tu consentimiento se carga youtube-nocookie.com; Google puede recibir tu dirección IP y almacenar datos. El vídeo no se reproduce automáticamente.',
     audioLanguageLabel: 'Idioma del audio',
     subtitlesAvailable: 'Subtítulos',
     externalProviderNotice: 'Proveedor: YouTube / Google LLC (youtube-nocookie.com)',
