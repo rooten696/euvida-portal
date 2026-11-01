@@ -18,5 +18,5 @@ export default function ArticleVideo({ article, locale }: ArticleVideoProps) {
     return null;
   }
 
-  return <ArticleVideoPlayer video={video} locale={locale} />;
+  return <ArticleVideoPlayer video={video} locale={locale} category={article?.category} />;
 }
