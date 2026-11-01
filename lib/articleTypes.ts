@@ -206,7 +206,18 @@ export type VideoItem = {
   quality_note?: string | null;
 };
 
-export type ArticleVideos = Partial<Record<SupportedLocale, VideoItem>>;
+export type ArticleVideos = Partial<Record<SupportedLocale | string, VideoItem>> &
+  Record<string, VideoItem | undefined>;
+
+export type VideoReviewItem = {
+  status: 'selected' | 'omitted' | string;
+  resolved_locale?: string | null;
+  checked_at?: string | null;
+  reason?: string | null;
+};
+
+export type VideoReviews = Partial<Record<SupportedLocale, VideoReviewItem>> &
+  Record<string, VideoReviewItem | undefined>;
 
 export type SourceInfo = {
   images?: ImageCredit[] | null;
@@ -214,6 +225,9 @@ export type SourceInfo = {
   last_checked?: string | null;
   videos?: ArticleVideos | null;
   youtube_videos?: ArticleVideos | null;
+  video_fallback_order?: string[] | null;
+  video_review?: VideoReviews | null;
+  video_contract_version?: number | string | null;
 };
 
 export type PartnerOfferLink = {

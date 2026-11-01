@@ -58,9 +58,11 @@ const {
   buildYouTubeEmbedUrl,
   getFallbackLocaleChain,
   resolveArticleVideo,
+  getVideoSectionTitle,
   getVideoUiLabels,
   getFallbackBadgeText,
   getLanguageDisplayName,
+  articleHasPlayableVideo,
 } = load('lib/articleVideo.ts');
 
 /* ============================================================================
@@ -264,6 +266,116 @@ test('resolveArticleVideo falls back to en, then cs when requested locale is mis
   assert.equal(resolvedDeCsFallback.audioLanguage, 'cs');
 });
 
+test('resolveArticleVideo resolves foreign quality fallback (e.g. sk, pl, it) when native, en, and cs are missing', () => {
+  const articleSkOnly = {
+    slug: 'spindleruv-mlyn-ski',
+    category: 'ski_area',
+    source_info: {
+      videos: {
+        sk: {
+          video_id: 'rRdEHpKADck',
+          title: 'Špindlerův Mlýn lyžovačka',
+          channel: 'Slovakia Skiers',
+          audio_language: 'sk',
+          embed_allowed: true,
+          quality_note: 'Kvalitní přehled sjezdovek a lanovek',
+        },
+      },
+    },
+  };
+
+  // Czech viewer: cs missing, en missing, falls back to sk
+  const resolvedCs = resolveArticleVideo(articleSkOnly, 'cs');
+  assert.ok(resolvedCs);
+  assert.equal(resolvedCs.videoId, 'rRdEHpKADck');
+  assert.equal(resolvedCs.resolvedLocale, 'sk');
+  assert.equal(resolvedCs.requestedLocale, 'cs');
+  assert.equal(resolvedCs.isFallback, true);
+  assert.equal(resolvedCs.audioLanguage, 'sk');
+  assert.equal(resolvedCs.category, 'ski_area');
+
+  // English viewer: en missing, cs missing, falls back to sk
+  const resolvedEn = resolveArticleVideo(articleSkOnly, 'en');
+  assert.ok(resolvedEn);
+  assert.equal(resolvedEn.videoId, 'rRdEHpKADck');
+  assert.equal(resolvedEn.resolvedLocale, 'sk');
+  assert.equal(resolvedEn.requestedLocale, 'en');
+  assert.equal(resolvedEn.isFallback, true);
+
+  // German viewer: de missing, en missing, cs missing, falls back to sk
+  const resolvedDe = resolveArticleVideo(articleSkOnly, 'de');
+  assert.ok(resolvedDe);
+  assert.equal(resolvedDe.videoId, 'rRdEHpKADck');
+  assert.equal(resolvedDe.resolvedLocale, 'sk');
+
+  // French viewer
+  const resolvedFr = resolveArticleVideo(articleSkOnly, 'fr');
+  assert.ok(resolvedFr);
+  assert.equal(resolvedFr.videoId, 'rRdEHpKADck');
+
+  // Spanish viewer
+  const resolvedEs = resolveArticleVideo(articleSkOnly, 'es');
+  assert.ok(resolvedEs);
+  assert.equal(resolvedEs.videoId, 'rRdEHpKADck');
+});
+
+test('resolveArticleVideo prioritizes video_fallback_order and respects explicit empty disabling', () => {
+  const multiVideoArticle = {
+    slug: 'schladming-4-berge-ski',
+    category: 'ski_area',
+    source_info: {
+      videos: {
+        pl: {
+          video_id: 'plSchlad111',
+          title: 'Schladming po polsku',
+          channel: 'Polski Narciarz',
+          audio_language: 'pl',
+          embed_allowed: true,
+        },
+        sk: {
+          video_id: 'skSchlad222',
+          title: 'Schladming slovensky',
+          channel: 'Tatry Team',
+          audio_language: 'sk',
+          embed_allowed: true,
+        },
+      },
+      video_fallback_order: ['sk', 'pl'],
+    },
+  };
+
+  // cs viewer -> chain: cs -> en -> sk -> pl -> selects sk
+  const resolvedCs = resolveArticleVideo(multiVideoArticle, 'cs');
+  assert.ok(resolvedCs);
+  assert.equal(resolvedCs.videoId, 'skSchlad222');
+  assert.equal(resolvedCs.resolvedLocale, 'sk');
+
+  // If fallback order is changed to ['pl', 'sk'] -> pl is selected first
+  const plFirst = {
+    ...multiVideoArticle,
+    source_info: {
+      ...multiVideoArticle.source_info,
+      video_fallback_order: ['pl', 'sk'],
+    },
+  };
+  const resolvedCsPl = resolveArticleVideo(plFirst, 'cs');
+  assert.ok(resolvedCsPl);
+  assert.equal(resolvedCsPl.videoId, 'plSchlad111');
+  assert.equal(resolvedCsPl.resolvedLocale, 'pl');
+
+  // If video_fallback_order is explicitly empty [], foreign fallback is disabled
+  const disabledFallback = {
+    ...multiVideoArticle,
+    source_info: {
+      ...multiVideoArticle.source_info,
+      video_fallback_order: [],
+    },
+  };
+  assert.equal(resolveArticleVideo(disabledFallback, 'cs'), null);
+  assert.equal(resolveArticleVideo(disabledFallback, 'en'), null);
+  assert.equal(resolveArticleVideo(disabledFallback, 'de'), null);
+});
+
 test('resolveArticleVideo returns to native video when switching back from fallback', () => {
   const article = {
     slug: 'myto-ski-bike',
@@ -323,6 +435,55 @@ test('resolveArticleVideo skips embed_allowed=false and invalid IDs in chain', (
   assert.equal(resolved.videoId, 'csSanMart22');
   assert.equal(resolved.resolvedLocale, 'cs');
   assert.equal(resolved.isFallback, true);
+});
+
+test('resolveArticleVideo rejects entries where audio_language disagrees with slot key', () => {
+  const mismatchedArticle = {
+    slug: 'dishonest-audio-entry',
+    source_info: {
+      videos: {
+        cs: {
+          video_id: 'csVideo1111',
+          audio_language: 'de', // Disagrees with cs key
+          embed_allowed: true,
+        },
+        sk: {
+          video_id: 'skVideo2222',
+          audio_language: 'sk', // Legitimate Slovak audio
+          embed_allowed: true,
+        },
+      },
+    },
+  };
+
+  // cs viewer: cs entry is rejected due to mismatched audio language -> falls back to sk
+  const resolved = resolveArticleVideo(mismatchedArticle, 'cs');
+  assert.ok(resolved);
+  assert.equal(resolved.videoId, 'skVideo2222');
+  assert.equal(resolved.resolvedLocale, 'sk');
+});
+
+test('resolveArticleVideo defensively ignores prototype keys and normalizes fallback order codes', () => {
+  const maliciousArticle = {
+    slug: 'prototype-edge-case',
+    source_info: {
+      videos: {
+        constructor: { video_id: 'badBadBad11', embed_allowed: true },
+        toString: { video_id: 'badBadBad22', embed_allowed: true },
+        sk: {
+          video_id: 'validSkVid1',
+          audio_language: 'sk-SK',
+          embed_allowed: true,
+        },
+      },
+      video_fallback_order: ['__proto__', 'constructor', 'SK', 'invalid-too-long-language-code'],
+    },
+  };
+
+  const resolved = resolveArticleVideo(maliciousArticle, 'cs');
+  assert.ok(resolved);
+  assert.equal(resolved.videoId, 'validSkVid1');
+  assert.equal(resolved.resolvedLocale, 'sk');
 });
 
 test('resolveArticleVideo returns null when no video or only un-embeddable videos exist', () => {
@@ -431,6 +592,105 @@ test('getFallbackBadgeText and language display names localize accurately', () =
   assert.equal(getFallbackBadgeText('en', 'cs'), 'Video in Czech');
 });
 
+test('getVideoSectionTitle and getVideoUiLabels localize correctly for ski, bikepark, and other categories', () => {
+  // 1. Ski area category (ski_area or ski)
+  const skiCategories = ['ski_area', 'ski', ' ski_area '];
+  for (const cat of skiCategories) {
+    assert.equal(getVideoSectionTitle('cs', cat), 'Video ze ski areálu');
+    assert.equal(getVideoSectionTitle('en', cat), 'Ski area video');
+    assert.equal(getVideoSectionTitle('de', cat), 'Skigebiet-Video');
+    assert.equal(getVideoSectionTitle('fr', cat), 'Vidéo du domaine skiable');
+    assert.equal(getVideoSectionTitle('es', cat), 'Vídeo de la estación de esquí');
+
+    assert.equal(getVideoUiLabels('cs', cat).sectionTitle, 'Video ze ski areálu');
+    assert.equal(getVideoUiLabels('en', cat).sectionTitle, 'Ski area video');
+    assert.equal(getVideoUiLabels('de', cat).sectionTitle, 'Skigebiet-Video');
+    assert.equal(getVideoUiLabels('fr', cat).sectionTitle, 'Vidéo du domaine skiable');
+    assert.equal(getVideoUiLabels('es', cat).sectionTitle, 'Vídeo de la estación de esquí');
+  }
+
+  // 2. Bikepark category (bike_trail, bikepark, or omitted/null for backwards compatibility)
+  const bikeCategories = ['bike_trail', 'bikepark', null, undefined, ''];
+  for (const cat of bikeCategories) {
+    assert.equal(getVideoSectionTitle('cs', cat), 'Video z bikeparku');
+    assert.equal(getVideoSectionTitle('en', cat), 'Bikepark video');
+    assert.equal(getVideoSectionTitle('de', cat), 'Bikepark-Video');
+    assert.equal(getVideoSectionTitle('fr', cat), 'Vidéo du bikepark');
+    assert.equal(getVideoSectionTitle('es', cat), 'Vídeo del bikepark');
+
+    assert.equal(getVideoUiLabels('cs', cat).sectionTitle, 'Video z bikeparku');
+    assert.equal(getVideoUiLabels('en', cat).sectionTitle, 'Bikepark video');
+    assert.equal(getVideoUiLabels('de', cat).sectionTitle, 'Bikepark-Video');
+    assert.equal(getVideoUiLabels('fr', cat).sectionTitle, 'Vidéo du bikepark');
+    assert.equal(getVideoUiLabels('es', cat).sectionTitle, 'Vídeo del bikepark');
+  }
+
+  // 3. Generic other category (places, landmark, nature, natural_swimming, trip)
+  const genericCategories = ['places', 'landmark', 'nature', 'natural_swimming', 'trip'];
+  for (const cat of genericCategories) {
+    assert.equal(getVideoSectionTitle('cs', cat), 'Video z místa');
+    assert.equal(getVideoSectionTitle('en', cat), 'Destination video');
+    assert.equal(getVideoSectionTitle('de', cat), 'Video vom Reiseziel');
+    assert.equal(getVideoSectionTitle('fr', cat), 'Vidéo de la destination');
+    assert.equal(getVideoSectionTitle('es', cat), 'Vídeo del destino');
+
+    assert.equal(getVideoUiLabels('cs', cat).sectionTitle, 'Video z místa');
+  }
+});
+
+test('getFallbackBadgeText and language display names localize foreign quality fallback languages (sk, pl, it)', () => {
+  // Slovak
+  assert.equal(getLanguageDisplayName('cs', 'sk'), 'slovenština');
+  assert.equal(getLanguageDisplayName('en', 'sk'), 'Slovak');
+  assert.equal(getLanguageDisplayName('de', 'sk'), 'Slowakisch');
+  assert.equal(getLanguageDisplayName('fr', 'sk'), 'slovaque');
+  assert.equal(getLanguageDisplayName('es', 'sk'), 'eslovaco');
+
+  assert.equal(getFallbackBadgeText('cs', 'sk'), 'Video v jazyce: slovenština');
+  assert.equal(getFallbackBadgeText('en', 'sk'), 'Video in Slovak');
+  assert.equal(getFallbackBadgeText('de', 'sk'), 'Video auf Slowakisch');
+  assert.equal(getFallbackBadgeText('fr', 'sk'), 'Vidéo en slovaque');
+  assert.equal(getFallbackBadgeText('es', 'sk'), 'Vídeo en eslovaco');
+
+  // Polish
+  assert.equal(getLanguageDisplayName('cs', 'pl'), 'polština');
+  assert.equal(getLanguageDisplayName('en', 'pl'), 'Polish');
+  assert.equal(getFallbackBadgeText('cs', 'pl'), 'Video v jazyce: polština');
+
+  // Italian
+  assert.equal(getLanguageDisplayName('cs', 'it'), 'italština');
+  assert.equal(getLanguageDisplayName('en', 'it'), 'Italian');
+  assert.equal(getFallbackBadgeText('cs', 'it'), 'Video v jazyce: italština');
+});
+
+test('articleHasPlayableVideo accurately evaluates video availability without consent dependency', () => {
+  const articleWithVideo = {
+    slug: 'spindl',
+    source_info: {
+      videos: {
+        cs: { video_id: 'rRdEHpKADck', embed_allowed: true },
+      },
+    },
+  };
+  assert.equal(articleHasPlayableVideo(articleWithVideo, 'cs'), true);
+  assert.equal(articleHasPlayableVideo(articleWithVideo, 'en'), true); // falls back to cs
+  assert.equal(articleHasPlayableVideo(articleWithVideo, 'de'), true); // falls back to cs
+
+  const articleWithoutVideo = { slug: 'empty', source_info: { videos: {} } };
+  assert.equal(articleHasPlayableVideo(articleWithoutVideo, 'cs'), false);
+
+  const articleBlocked = {
+    slug: 'blocked',
+    source_info: {
+      videos: { cs: { video_id: 'rRdEHpKADck', embed_allowed: false } },
+    },
+  };
+  assert.equal(articleHasPlayableVideo(articleBlocked, 'cs'), false);
+
+  assert.equal(articleHasPlayableVideo(null, 'cs'), false);
+  assert.equal(articleHasPlayableVideo(undefined, 'cs'), false);
+});
+
 /* ============================================================================
    4. Component SSR Rendering: Safe Consent & Click-To-Load
 ============================================================================ */
@@ -498,6 +758,86 @@ test('ArticleVideo (Server Component) renders player when video exists, returns 
     React.createElement(ArticleVideo, { article: { slug: 'no-video' }, locale: 'cs' })
   );
   assert.equal(htmlNoVideo, '', 'Server component must return null when no video exists');
+});
+
+test('ArticleVideoPlayer SSR renders ski category section title and foreign fallback badge', () => {
+  const ArticleVideoPlayerModule = load('app/components/article/ArticleVideoPlayer.tsx');
+  const ArticleVideoPlayer = ArticleVideoPlayerModule.default || ArticleVideoPlayerModule;
+
+  const video = {
+    videoId: 'rRdEHpKADck',
+    embedUrl: 'https://www.youtube-nocookie.com/embed/rRdEHpKADck?rel=0',
+    title: 'Špindlerův Mlýn lyžování',
+    channel: 'Ski Channel',
+    requestedLocale: 'cs',
+    resolvedLocale: 'sk',
+    isFallback: true,
+    audioLanguage: 'sk',
+    hasSubtitles: false,
+    qualityNote: 'Zimní průvodce Špindlu',
+    category: 'ski_area',
+  };
+
+  const htmlCs = renderToStaticMarkup(
+    React.createElement(ArticleVideoPlayer, { video, locale: 'cs', category: 'ski_area' })
+  );
+  assert.ok(htmlCs.includes('Video ze ski areálu'), 'Must render localized ski title in cs');
+  assert.ok(htmlCs.includes('Video v jazyce: slovenština'), 'Must render Slovak fallback badge');
+
+  const htmlEn = renderToStaticMarkup(
+    React.createElement(ArticleVideoPlayer, { video, locale: 'en', category: 'ski_area' })
+  );
+  assert.ok(htmlEn.includes('Ski area video'), 'Must render localized ski title in en');
+  assert.ok(htmlEn.includes('Video in Slovak'), 'Must render Slovak fallback badge in en');
+
+  const htmlDe = renderToStaticMarkup(
+    React.createElement(ArticleVideoPlayer, { video, locale: 'de', category: 'ski_area' })
+  );
+  assert.ok(htmlDe.includes('Skigebiet-Video'), 'Must render localized ski title in de');
+});
+
+test('ArticleVideo passes category to ArticleVideoPlayer for ski and bikepark articles', () => {
+  const ArticleVideoModule = load('app/components/article/ArticleVideo.tsx');
+  const ArticleVideo = ArticleVideoModule.default || ArticleVideoModule;
+
+  const skiArticle = {
+    slug: 'schladming-4-berge-ski',
+    category: 'ski_area',
+    source_info: {
+      videos: {
+        cs: {
+          video_id: 'Ej0IF72Z7D4',
+          title: 'Schladming 4-Berge',
+          embed_allowed: true,
+        },
+      },
+    },
+  };
+
+  const htmlSki = renderToStaticMarkup(
+    React.createElement(ArticleVideo, { article: skiArticle, locale: 'cs' })
+  );
+  assert.ok(htmlSki.includes('Video ze ski areálu'), 'ArticleVideo must pass category to render ski heading');
+  assert.ok(!htmlSki.includes('Video z bikeparku'), 'Ski article must NOT render bikepark heading');
+
+  const bikeArticle = {
+    slug: 'bikepark-spicak',
+    category: 'bike_trail',
+    source_info: {
+      videos: {
+        cs: {
+          video_id: 'Ej0IF72Z7D4',
+          title: 'Špičák trails',
+          embed_allowed: true,
+        },
+      },
+    },
+  };
+
+  const htmlBike = renderToStaticMarkup(
+    React.createElement(ArticleVideo, { article: bikeArticle, locale: 'cs' })
+  );
+  assert.ok(htmlBike.includes('Video z bikeparku'), 'Bikepark article must render bikepark heading');
 });
 
 /* ============================================================================
@@ -628,6 +968,131 @@ test('ArticleVideoPlayer consent lifecycle: settings, automatic load, locale rep
   assert.equal(iframeReturnedToCs.props.src, 'https://www.youtube-nocookie.com/embed/csVideo1111?rel=0');
   allowed = false;
   assert.equal(findInTree(render('cs'), n => n?.type === 'iframe'), null, 'Withdrawal removes the active iframe');
+});
+
+test('ArticleVideoPlayer interactive lifecycle: article change, foreign language fallback, and clearing after player starts', () => {
+  let allowed = true; // Started with active video consent
+
+  const mockedReact = {
+    ...React,
+    useSyncExternalStore: (_subscribe, getSnapshot) => getSnapshot(),
+  };
+
+  const ArticleVideoPlayerModule = load('app/components/article/ArticleVideoPlayer.tsx', {
+    react: mockedReact,
+    '@/lib/cookie-consent': {
+      hasVideoConsent: () => allowed,
+      subscribeCookiePreferences: () => () => {},
+      openCookieSettings: () => {},
+    },
+  });
+  const ArticleVideoPlayer = ArticleVideoPlayerModule.default || ArticleVideoPlayerModule;
+
+  const ArticleVideoModule = load('app/components/article/ArticleVideo.tsx', {
+    react: mockedReact,
+    './ArticleVideoPlayer': { default: ArticleVideoPlayer },
+    '@/lib/cookie-consent': {
+      hasVideoConsent: () => allowed,
+      subscribeCookiePreferences: () => () => {},
+      openCookieSettings: () => {},
+    },
+  });
+  const ArticleVideo = ArticleVideoModule.default || ArticleVideoModule;
+
+  const skiArticleSpindl = {
+    slug: 'spindleruv-mlyn-ski',
+    category: 'ski_area',
+    source_info: {
+      videos: {
+        sk: {
+          video_id: 'rRdEHpKADck',
+          title: 'Špindlerův Mlýn lyžovačka',
+          channel: 'Slovakia Skiers',
+          audio_language: 'sk',
+          embed_allowed: true,
+        },
+      },
+    },
+  };
+
+  const skiArticleSchladming = {
+    slug: 'schladming-4-berge-ski',
+    category: 'ski_area',
+    source_info: {
+      videos: {
+        en: {
+          video_id: 'JmMRO-IU4cQ',
+          title: 'Schladming English Guide',
+          channel: 'Snowii',
+          audio_language: 'en',
+          embed_allowed: true,
+        },
+      },
+    },
+  };
+
+  const articleWithoutVideo = {
+    slug: 'no-video-destination',
+    category: 'places',
+    source_info: {
+      videos: {},
+    },
+  };
+
+  function render(art, loc) {
+    const el = ArticleVideo({ article: art, locale: loc });
+    if (!el) return null;
+    return ArticleVideoPlayer(el.props);
+  }
+
+  // 1. Render Spindl in German: foreign fallback Slovak is resolved
+  let tree = render(skiArticleSpindl, 'de');
+  let iframe = findInTree(tree, (n) => n?.type === 'iframe');
+  assert.ok(iframe, 'Must mount iframe when consent is active');
+  assert.equal(iframe.props.src, 'https://www.youtube-nocookie.com/embed/rRdEHpKADck?rel=0');
+  let fallbackBadge = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-fallback-badge');
+  assert.equal(fallbackBadge?.props?.children, 'Video auf Slowakisch');
+  let heading = findInTree(tree, (n) => n?.props?.id === 'article-video-title');
+  assert.equal(heading?.props?.children, 'Skigebiet-Video');
+
+  // 2. Switch locale to French on same article
+  tree = render(skiArticleSpindl, 'fr');
+  iframe = findInTree(tree, (n) => n?.type === 'iframe');
+  assert.equal(iframe.props.src, 'https://www.youtube-nocookie.com/embed/rRdEHpKADck?rel=0');
+  fallbackBadge = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-fallback-badge');
+  assert.equal(fallbackBadge?.props?.children, 'Vidéo en slovaque');
+  heading = findInTree(tree, (n) => n?.props?.id === 'article-video-title');
+  assert.equal(heading?.props?.children, 'Vidéo du domaine skiable');
+
+  // 3. Switch locale to Czech on same article
+  tree = render(skiArticleSpindl, 'cs');
+  iframe = findInTree(tree, (n) => n?.type === 'iframe');
+  assert.equal(iframe.props.src, 'https://www.youtube-nocookie.com/embed/rRdEHpKADck?rel=0');
+  fallbackBadge = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-fallback-badge');
+  assert.equal(fallbackBadge?.props?.children, 'Video v jazyce: slovenština');
+  heading = findInTree(tree, (n) => n?.props?.id === 'article-video-title');
+  assert.equal(heading?.props?.children, 'Video ze ski areálu');
+
+  // 4. Switch article to Schladming while player is running
+  tree = render(skiArticleSchladming, 'cs');
+  iframe = findInTree(tree, (n) => n?.type === 'iframe');
+  assert.equal(iframe.props.src, 'https://www.youtube-nocookie.com/embed/JmMRO-IU4cQ?rel=0');
+  fallbackBadge = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-fallback-badge');
+  assert.equal(fallbackBadge?.props?.children, 'Video v jazyce: angličtina');
+  heading = findInTree(tree, (n) => n?.props?.id === 'article-video-title');
+  assert.equal(heading?.props?.children, 'Video ze ski areálu');
+
+  // 5. Switch to article with no video -> unmounts cleanly (returns null)
+  const noVideoTree = render(articleWithoutVideo, 'cs');
+  assert.equal(noVideoTree, null, 'Switching to article without video must unmount player');
+
+  // 6. Clearing / withdrawal: consent revoked
+  allowed = false;
+  tree = render(skiArticleSchladming, 'cs');
+  iframe = findInTree(tree, (n) => n?.type === 'iframe');
+  assert.equal(iframe, null, 'Consent withdrawal unmounts iframe back to click-to-load surface');
+  const clickToLoad = findInTree(tree, (n) => n?.props?.['data-testid'] === 'video-click-to-load');
+  assert.ok(clickToLoad, 'Must show click-to-load placeholder after withdrawal');
 });
 
 test('Article detail page mounts ArticleVideo between content and partner offers', () => {

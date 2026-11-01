@@ -94,9 +94,11 @@ export function buildYouTubeEmbedUrl(videoId: string): string {
   return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0`;
 }
 
+const LANGUAGE_CODE_REGEX = /^[a-z]{2,3}$/;
+
 /**
  * Deterministic fallback order per specification:
- * For locale L: L -> en -> cs (without duplicates).
+ * For locale L: L -> en -> cs -> [additional quality fallbacks] (without duplicates).
  * Example:
  * cs -> ['cs', 'en']
  * en -> ['en', 'cs']
@@ -104,19 +106,30 @@ export function buildYouTubeEmbedUrl(videoId: string): string {
  * fr -> ['fr', 'en', 'cs']
  * es -> ['es', 'en', 'cs']
  */
-export function getFallbackLocaleChain(locale: string): SupportedLocale[] {
+export function getFallbackLocaleChain(
+  locale: string,
+  additionalFallbacks?: readonly string[] | string[] | null
+): string[] {
   const norm = normalizeLocale(locale);
-  const chain: SupportedLocale[] = [];
+  const chain: string[] = [];
 
-  const add = (loc: SupportedLocale) => {
-    if (!chain.includes(loc)) {
-      chain.push(loc);
+  const add = (loc: string | null | undefined) => {
+    if (!loc || typeof loc !== 'string') return;
+    const clean = loc.trim().toLowerCase().split(/[-_]/)[0];
+    if (clean && LANGUAGE_CODE_REGEX.test(clean) && !chain.includes(clean)) {
+      chain.push(clean);
     }
   };
 
   add(norm);
   add('en');
   add('cs');
+
+  if (additionalFallbacks && (Array.isArray(additionalFallbacks) || typeof (additionalFallbacks as unknown as Iterable<string>)[Symbol.iterator] === 'function')) {
+    for (const loc of additionalFallbacks) {
+      add(loc);
+    }
+  }
 
   return chain;
 }
@@ -127,11 +140,12 @@ export type ResolvedVideo = {
   title: string | null;
   channel: string | null;
   requestedLocale: SupportedLocale;
-  resolvedLocale: SupportedLocale;
+  resolvedLocale: string;
   isFallback: boolean;
   audioLanguage: string | null;
   hasSubtitles: boolean;
   qualityNote: string | null;
+  category?: string | null;
 };
 
 /**
@@ -153,7 +167,7 @@ export function getArticleVideosMap(
 
 /**
  * Resolves the appropriate YouTube video for an article and locale,
- * applying the deterministic L -> en -> cs fallback.
+ * applying the deterministic L -> en -> cs -> other quality fallback.
  * Strictly validates data types from JSONB and fails closed to null on any error.
  */
 export function resolveArticleVideo(
@@ -167,9 +181,22 @@ export function resolveArticleVideo(
     }
 
     const requestedLocale = normalizeLocale(locale);
-    const chain = getFallbackLocaleChain(requestedLocale);
+
+    const explicitOrder = Array.isArray(article?.source_info?.video_fallback_order)
+      ? article.source_info.video_fallback_order
+      : null;
+
+    const additionalFallbacks = explicitOrder !== null
+      ? explicitOrder
+      : Object.keys(videosMap);
+
+    const chain = getFallbackLocaleChain(requestedLocale, additionalFallbacks);
 
     for (const candLocale of chain) {
+      if (!Object.hasOwn(videosMap, candLocale)) {
+        continue;
+      }
+
       const item = videosMap[candLocale];
       if (!item || typeof item !== 'object' || Array.isArray(item)) {
         continue;
@@ -177,6 +204,17 @@ export function resolveArticleVideo(
 
       // Disallow explicitly disabled embeds
       if (item.embed_allowed === false || (item.embed_allowed as unknown) === 'false') {
+        continue;
+      }
+
+      // Only record audio language if explicitly provided as a string
+      const audioLanguage = typeof item.audio_language === 'string' && item.audio_language.trim()
+        ? item.audio_language.trim().toLowerCase().split(/[-_]/)[0]
+        : null;
+
+      // Truthful audio language: if declared, verify it agrees with slot key
+      if (audioLanguage && audioLanguage !== candLocale) {
+        // Disagreeing audio language -> fail closed
         continue;
       }
 
@@ -192,11 +230,6 @@ export function resolveArticleVideo(
       }
 
       const isFallback = candLocale !== requestedLocale;
-
-      // Only record audio language if explicitly provided as a string
-      const audioLanguage = typeof item.audio_language === 'string' && item.audio_language.trim()
-        ? item.audio_language.trim().toLowerCase().split(/[-_]/)[0]
-        : null;
 
       const hasSubtitles = item.has_subtitles === true || (item.has_subtitles as unknown) === 'true';
 
@@ -223,6 +256,7 @@ export function resolveArticleVideo(
         audioLanguage,
         hasSubtitles,
         qualityNote,
+        category: article?.category ?? null,
       };
     }
 
@@ -231,6 +265,17 @@ export function resolveArticleVideo(
     // Fail closed: never crash article rendering on corrupted video metadata
     return null;
   }
+}
+
+/**
+ * Contract helper for future "With video" filter preparation.
+ * Deterministic, independent of cookie consent, reusing the exact same resolver.
+ */
+export function articleHasPlayableVideo(
+  article: Article | null | undefined,
+  locale: string
+): boolean {
+  return resolveArticleVideo(article, locale) !== null;
 }
 
 /* ============================================================================
@@ -254,6 +299,9 @@ const LANGUAGE_NAMES: Record<SupportedLocale, Record<string, string>> = {
     de: 'němčina',
     fr: 'francouzština',
     es: 'španělština',
+    sk: 'slovenština',
+    pl: 'polština',
+    it: 'italština',
   },
   en: {
     cs: 'Czech',
@@ -261,6 +309,9 @@ const LANGUAGE_NAMES: Record<SupportedLocale, Record<string, string>> = {
     de: 'German',
     fr: 'French',
     es: 'Spanish',
+    sk: 'Slovak',
+    pl: 'Polish',
+    it: 'Italian',
   },
   de: {
     cs: 'Tschechisch',
@@ -268,6 +319,9 @@ const LANGUAGE_NAMES: Record<SupportedLocale, Record<string, string>> = {
     de: 'Deutsch',
     fr: 'Französisch',
     es: 'Spanisch',
+    sk: 'Slowakisch',
+    pl: 'Polnisch',
+    it: 'Italienisch',
   },
   fr: {
     cs: 'tchèque',
@@ -275,6 +329,9 @@ const LANGUAGE_NAMES: Record<SupportedLocale, Record<string, string>> = {
     de: 'allemand',
     fr: 'français',
     es: 'espagnol',
+    sk: 'slovaque',
+    pl: 'polonais',
+    it: 'italien',
   },
   es: {
     cs: 'checo',
@@ -282,6 +339,9 @@ const LANGUAGE_NAMES: Record<SupportedLocale, Record<string, string>> = {
     de: 'alemán',
     fr: 'francés',
     es: 'español',
+    sk: 'eslovaco',
+    pl: 'polaco',
+    it: 'italiano',
   },
 };
 
@@ -333,9 +393,69 @@ export const VIDEO_UI_LABELS: Record<SupportedLocale, VideoUiLabels> = {
   },
 };
 
-export function getVideoUiLabels(locale: string): VideoUiLabels {
+/**
+ * Returns localized video section title based on article category.
+ * Preserves legacy bikepark titles when category is bike_trail or omitted.
+ */
+export function getVideoSectionTitle(locale: string, category?: string | null): string {
   const norm = normalizeLocale(locale);
-  return VIDEO_UI_LABELS[norm] || VIDEO_UI_LABELS.cs;
+  const cat = category?.trim().toLowerCase().replace(/-/g, '_');
+
+  if (cat === 'ski' || cat === 'ski_area') {
+    switch (norm) {
+      case 'en':
+        return 'Ski area video';
+      case 'de':
+        return 'Skigebiet-Video';
+      case 'fr':
+        return 'Vidéo du domaine skiable';
+      case 'es':
+        return 'Vídeo de la estación de esquí';
+      case 'cs':
+      default:
+        return 'Video ze ski areálu';
+    }
+  }
+
+  if (!cat || cat === 'bike_trail' || cat === 'bikepark') {
+    switch (norm) {
+      case 'en':
+        return 'Bikepark video';
+      case 'de':
+        return 'Bikepark-Video';
+      case 'fr':
+        return 'Vidéo du bikepark';
+      case 'es':
+        return 'Vídeo del bikepark';
+      case 'cs':
+      default:
+        return 'Video z bikeparku';
+    }
+  }
+
+  // Generic destination/activity heading
+  switch (norm) {
+    case 'en':
+      return 'Destination video';
+    case 'de':
+      return 'Video vom Reiseziel';
+    case 'fr':
+      return 'Vidéo de la destination';
+    case 'es':
+      return 'Vídeo del destino';
+    case 'cs':
+    default:
+      return 'Video z místa';
+  }
+}
+
+export function getVideoUiLabels(locale: string, category?: string | null): VideoUiLabels {
+  const norm = normalizeLocale(locale);
+  const base = VIDEO_UI_LABELS[norm] || VIDEO_UI_LABELS.cs;
+  return {
+    ...base,
+    sectionTitle: getVideoSectionTitle(norm, category),
+  };
 }
 
 export function getLanguageDisplayName(displayLocale: string, targetLanguageCode: string): string {

@@ -12,14 +12,15 @@ import {
 type ArticleVideoPlayerProps = {
   video: ResolvedVideo;
   locale: string;
+  category?: string | null;
 };
 
-export default function ArticleVideoPlayer({ video, locale }: ArticleVideoPlayerProps) {
+export default function ArticleVideoPlayer({ video, locale, category }: ArticleVideoPlayerProps) {
   const videoKey = `${video.requestedLocale}-${video.videoId}`;
   // No provider contact during SSR or before an explicit video grant.
   const isPlaying = useSyncExternalStore(subscribeCookiePreferences, hasVideoConsent, () => false);
 
-  const labels = getVideoUiLabels(locale);
+  const labels = getVideoUiLabels(locale, category ?? video.category);
   const audioLangName = video.audioLanguage
     ? getLanguageDisplayName(locale, video.audioLanguage)
     : null;
