@@ -26,6 +26,7 @@ type ArticleHeroProps = {
   gpsCoords?: string | null;
   regionName?: string | null;
   countryName?: string | null;
+  countryId?: string | null;
   articleSlug?: string | null;
 };
 
@@ -45,6 +46,7 @@ export default function ArticleHero({
   gpsCoords,
   regionName,
   countryName,
+  countryId,
   articleSlug,
 }: ArticleHeroProps) {
   const hasHeroImage = Boolean(imageUrl || fallbackImageUrl);
@@ -97,7 +99,10 @@ export default function ArticleHero({
               <WeatherWidget 
                 locationName={weatherLocation} 
                 gps={gpsCoords}
+                countryId={countryId}
+                countryName={countryName}
                 fallbackLocations={[regionName, countryName].filter((item): item is string => Boolean(item))}
+                locale={locale}
                 dark 
               />
             )}

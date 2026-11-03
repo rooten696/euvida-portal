@@ -515,10 +515,13 @@ export default async function RegionPage({ params }: RegionPageParams) {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-              <div className="rounded-2xl border border-blue-500/20 bg-blue-950/30 p-5 text-center">
+              <div className="rounded-2xl border border-blue-500/20 bg-blue-950/30 p-5 text-center flex flex-col items-center justify-center">
                 <WeatherWidget
+                  regionId={displayRegion.id}
+                  countryId={displayRegion.country_id}
+                  countryName={displayCountry?.name}
                   locationName={displayRegion.name}
-                  fallbackLocations={displayCountry?.name ? [displayCountry.name] : []}
+                  locale={locale}
                   dark
                 />
               </div>
